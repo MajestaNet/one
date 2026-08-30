@@ -1,0 +1,567 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Majesta One Marketplace Quick Launch — dedicated install ECS Fargate install (api + worker).
+  Sanitized customer package: images + install identity params only.
+  Does not embed vendor docs, agent plane, or Control IDE.
+  For full reference (WAF, Cognito transitional, CodeCommit, SSM upgrade Automation)
+  see deploy/aws/ecs Terraform.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Install identity
+        Parameters:
+          - CustomerId
+          - InstallId
+          - InstallRole
+          - ProductVersion
+          - MarketplaceSku
+      - Label:
+          default: Container images
+        Parameters:
+          - ApiImage
+          - WorkerImage
+      - Label:
+          default: Networking and TLS
+        Parameters:
+          - CertificateArn
+      - Label:
+          default: Database
+        Parameters:
+          - DbPassword
+          - DbInstanceClass
+      - Label:
+          default: Bootstrap credentials
+        Parameters:
+          - ApiKeys
+      - Label:
+          default: Capacity
+        Parameters:
+          - ApiDesiredCount
+          - WorkerDesiredCount
+
+Parameters:
+  CustomerId:
+    Type: String
+    Description: Shared across this customer's installs (multi-env Deploy).
+    MinLength: 2
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z0-9][a-zA-Z0-9._-]*"
+
+  InstallId:
+    Type: String
+    Description: Unique per environment (e.g. acme-prod-use1).
+    MinLength: 2
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z0-9][a-zA-Z0-9._-]*"
+
+  InstallRole:
+    Type: String
+    Default: prod
+    Description: Free-form install role label (prod, staging, …).
+    MinLength: 1
+    MaxLength: 32
+
+  ProductVersion:
+    Type: String
+    Default: "0.1.0"
+    Description: PRODUCT_VERSION for Deploy compatibility checks.
+
+  MarketplaceSku:
+    Type: String
+    Default: one-standard
+    Description: Informational SKU tag for billing correlation.
+
+  ApiImage:
+    Type: String
+    Description: Fully qualified API image (repo:tag). Go distroless from deploy/Dockerfile CMD=api.
+
+  WorkerImage:
+    Type: String
+    Description: Fully qualified worker image (repo:tag). Go distroless from deploy/Dockerfile CMD=worker.
+
+  CertificateArn:
+    Type: String
+    Description: ACM certificate ARN for the HTTPS ALB listener (required for Marketplace Quick Launch).
+    AllowedPattern: "arn:aws:acm:.+"
+
+  DbPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 16
+    Description: RDS master password (stored in Secrets Manager; never commit).
+
+  ApiKeys:
+    Type: String
+    NoEcho: true
+    MinLength: 16
+    Description: >
+      Bootstrap API_KEYS in Majesta One format
+      (e.g. name:client+metadata+deploy+ops+admin). Rotate after first login. Never commit.
+
+  DbInstanceClass:
+    Type: String
+    Default: db.t4g.medium
+    Description: RDS instance class.
+
+  ApiDesiredCount:
+    Type: Number
+    Default: 2
+    MinValue: 1
+
+  WorkerDesiredCount:
+    Type: Number
+    Default: 1
+    MinValue: 1
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.40.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub one-${InstallId}
+        - Key: marketplace.sku
+          Value: !Ref MarketplaceSku
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.40.0.0/24
+      MapPublicIpOnLaunch: true
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.40.1.0/24
+      MapPublicIpOnLaunch: true
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.40.10.0/24
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.40.11.0/24
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetARouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetBRouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+
+  NatEip:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEip.AllocationId
+      SubnetId: !Ref PublicSubnetA
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnetARouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetA
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSubnetBRouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref PrivateRouteTable
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Majesta One ALB
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  TaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Majesta One ECS tasks
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Majesta One RDS
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref TaskSecurityGroup
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Majesta One private subnets
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: postgres
+      EngineVersion: "16"
+      DBInstanceClass: !Ref DbInstanceClass
+      AllocatedStorage: 50
+      StorageType: gp3
+      MultiAZ: true
+      MasterUsername: one
+      MasterUserPassword: !Ref DbPassword
+      DBName: one
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 7
+      StorageEncrypted: true
+
+  JwtSigningMaterial:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub one/${InstallId}/jwt-signing
+      Description: Install-local AUTH_JWT_SIGNING_KEY material (rotate via Secrets Manager)
+      GenerateSecretString:
+        PasswordLength: 64
+        ExcludePunctuation: true
+
+  InstallSecret:
+    Type: AWS::SecretsManager::Secret
+    DependsOn: Database
+    Properties:
+      Name: !Sub one/${InstallId}/install
+      Description: Majesta One install secrets (values only; never commit).
+      SecretString: !Sub
+        - |
+          {
+            "DATABASE_URL": "postgres://one:${DbPassword}@${DbHost}:5432/one?sslmode=require",
+            "CUSTOMER_ID": "${CustomerId}",
+            "INSTALL_ID": "${InstallId}",
+            "INSTALL_ROLE": "${InstallRole}",
+            "PRODUCT_VERSION": "${ProductVersion}",
+            "API_KEYS": "${ApiKeys}"
+          }
+        - DbPassword: !Ref DbPassword
+          DbHost: !GetAtt Database.Endpoint.Address
+          CustomerId: !Ref CustomerId
+          InstallId: !Ref InstallId
+          InstallRole: !Ref InstallRole
+          ProductVersion: !Ref ProductVersion
+          ApiKeys: !Ref ApiKeys
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref AWS::StackName
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /one/${AWS::StackName}
+      RetentionInDays: 30
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: secrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref InstallSecret
+                  - !Ref JwtSigningMaterial
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: logs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt LogGroup.Arn
+
+  ApiTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub one-${InstallId}-api
+      RequiresCompatibilities: [FARGATE]
+      NetworkMode: awsvpc
+      Cpu: "512"
+      Memory: "1024"
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: api
+          Image: !Ref ApiImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 8080
+          Environment:
+            - Name: APP_ENV
+              Value: production
+            - Name: CUSTOMER_ID
+              Value: !Ref CustomerId
+            - Name: INSTALL_ID
+              Value: !Ref InstallId
+            - Name: INSTALL_ROLE
+              Value: !Ref InstallRole
+            - Name: PRODUCT_VERSION
+              Value: !Ref ProductVersion
+            - Name: MIGRATIONS_PATH
+              Value: /migrations
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "${InstallSecret}:DATABASE_URL::"
+            - Name: API_KEYS
+              ValueFrom: !Sub "${InstallSecret}:API_KEYS::"
+            - Name: AUTH_JWT_SIGNING_KEY
+              ValueFrom: !Ref JwtSigningMaterial
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: api
+
+  WorkerTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub one-${InstallId}-worker
+      RequiresCompatibilities: [FARGATE]
+      NetworkMode: awsvpc
+      Cpu: "512"
+      Memory: "1024"
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ContainerDefinitions:
+        - Name: worker
+          Image: !Ref WorkerImage
+          Essential: true
+          Environment:
+            - Name: APP_ENV
+              Value: production
+            - Name: CUSTOMER_ID
+              Value: !Ref CustomerId
+            - Name: INSTALL_ID
+              Value: !Ref InstallId
+            - Name: INSTALL_ROLE
+              Value: !Ref InstallRole
+            - Name: PRODUCT_VERSION
+              Value: !Ref ProductVersion
+            - Name: MIGRATIONS_PATH
+              Value: /migrations
+          Secrets:
+            - Name: DATABASE_URL
+              ValueFrom: !Sub "${InstallSecret}:DATABASE_URL::"
+            - Name: API_KEYS
+              ValueFrom: !Sub "${InstallSecret}:API_KEYS::"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: worker
+
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub one-${InstallId}
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 8080
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: ip
+      HealthCheckPath: /healthz
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Tags:
+        - Key: Name
+          Value: !Sub one-${InstallId}-api
+
+  HttpsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  ApiService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - HttpsListener
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: !Ref ApiDesiredCount
+      LaunchType: FARGATE
+      TaskDefinition: !Ref ApiTaskDefinition
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref PrivateSubnetA
+            - !Ref PrivateSubnetB
+          SecurityGroups:
+            - !Ref TaskSecurityGroup
+      LoadBalancers:
+        - ContainerName: api
+          ContainerPort: 8080
+          TargetGroupArn: !Ref TargetGroup
+
+  WorkerService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: !Ref WorkerDesiredCount
+      LaunchType: FARGATE
+      TaskDefinition: !Ref WorkerTaskDefinition
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref PrivateSubnetA
+            - !Ref PrivateSubnetB
+          SecurityGroups:
+            - !Ref TaskSecurityGroup
+
+Outputs:
+  AlbDnsName:
+    Description: ALB DNS name for the Majesta One API
+    Value: !GetAtt ALB.DNSName
+  InstallSecretArn:
+    Description: Secrets Manager ARN for install secrets (rotate API_KEYS after deploy)
+    Value: !Ref InstallSecret
+  ClusterName:
+    Value: !Ref ECSCluster
+  CustomerId:
+    Value: !Ref CustomerId
+  InstallId:
+    Value: !Ref InstallId

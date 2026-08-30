@@ -1,0 +1,65 @@
+# Fixture: already-pinned App Spec (version is not 0.1.0).
+# apply-do-app-digests.sh must rewrite digest, tag, and PRODUCT_VERSION.
+name: one-prod
+region: nyc
+
+services:
+  - name: api
+    image:
+      registry_type: GHCR
+      registry: majestanet
+      repository: one-api
+      tag: "0.9.0"
+      digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    http_port: 8080
+    instance_count: 2
+    instance_size_slug: apps-s-1vcpu-1gb
+    envs:
+      - key: PRODUCT_VERSION
+        value: "0.9.0"
+      - key: API_REVISION_CURRENT
+        value: "1"
+      - key: API_REVISION_MIN
+        value: "1"
+      - key: CUSTOMER_ID
+        value: "change-me-customer"
+      - key: INSTALL_ID
+        value: "change-me-prod"
+      - key: INSTALL_ROLE
+        value: "prod"
+      - key: PLATFORM_PUBLIC_URL
+        value: "https://change-me.ondigitalocean.app"
+      - key: DATABASE_URL
+        type: SECRET
+      - key: API_KEYS
+        type: SECRET
+      - key: AUTH_JWT_SIGNING_KEY
+        type: SECRET
+      - key: INSTALL_CLAIM_TOKEN
+        type: SECRET
+
+workers:
+  - name: worker
+    image:
+      registry_type: GHCR
+      registry: majestanet
+      repository: one-worker
+      tag: "0.9.0"
+      digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    envs:
+      - key: PRODUCT_VERSION
+        value: "0.9.0"
+      - key: API_REVISION_CURRENT
+        value: "1"
+      - key: API_REVISION_MIN
+        value: "1"
+      - key: CUSTOMER_ID
+        value: "change-me-customer"
+      - key: INSTALL_ID
+        value: "change-me-prod"
+      - key: INSTALL_ROLE
+        value: "prod"
+      - key: DATABASE_URL
+        type: SECRET

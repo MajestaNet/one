@@ -1,0 +1,58 @@
+apiName: Open_Opportunities_By_Stage
+label: Open Opportunities by Stage
+description: Pipeline-style opportunity canvas with stage summary and ranked table.
+active: true
+ownership: custom
+packageName: customer.default
+layout:
+  mode: sections
+  sections:
+    - id: summary
+      title: Pipeline
+      nodeIds:
+        - hdr
+        - stat-open
+        - note
+    - id: board
+      title: Opportunities
+      nodeIds:
+        - table
+dataBindings:
+  - id: bind-opps
+    objectApiName: Opportunity
+    query:
+      filters:
+        - field: IsClosed
+          op: eq
+          value: false
+      limit: 50
+nodes:
+  - id: hdr
+    kind: sectionHeader
+    title: Open pipeline
+    props:
+      subtitle: CanvasSpec seed — promote to regenerate from a short prompt
+  - id: stat-open
+    kind: stat
+    title: Open opportunities
+    bindingId: bind-opps
+    props:
+      value: 0
+      label: Open opps
+  - id: note
+    kind: markdownNote
+    props:
+      text: Ask the Operate agent to refresh this canvas after data changes.
+  - id: table
+    kind: recordTable
+    title: Opportunities
+    bindingId: bind-opps
+    props:
+      columns:
+        - key: Name
+          label: Name
+        - key: StageName
+          label: Stage
+        - key: Amount
+          label: Amount
+      rows: []

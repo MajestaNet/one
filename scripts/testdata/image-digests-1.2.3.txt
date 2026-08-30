@@ -1,0 +1,4 @@
+api_image=ghcr.io/majestanet/one-api:1.2.3
+api_digest=sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+worker_image=ghcr.io/majestanet/one-worker:1.2.3
+worker_digest=sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd

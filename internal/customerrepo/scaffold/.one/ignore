@@ -1,0 +1,5 @@
+# Paths that must never be packed into a Deploy bundle
+*.secret
+*.pem
+.env
+.env.*

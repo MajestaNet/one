@@ -1,0 +1,81 @@
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: one-worker
+  labels:
+    app: one-worker
+    app.kubernetes.io/name: one
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      app: one-worker
+  template:
+    metadata:
+      labels:
+        app: one-worker
+        app.kubernetes.io/name: one
+        app.kubernetes.io/component: worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: worker
+          {{- if .Values.worker.image.digest }}
+          image: "{{ .Values.worker.image.repository }}@{{ .Values.worker.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: CUSTOMER_ID
+              value: {{ .Values.install.customerId | quote }}
+            - name: INSTALL_ID
+              value: {{ .Values.install.installId | quote }}
+            - name: INSTALL_ROLE
+              value: {{ .Values.install.installRole | quote }}
+            - name: PRODUCT_VERSION
+              value: {{ .Values.install.productVersion | quote }}
+            - name: API_REVISION_CURRENT
+              value: {{ .Values.install.apiRevisionCurrent | default 1 | quote }}
+            - name: API_REVISION_MIN
+              value: {{ .Values.install.apiRevisionMin | default 1 | quote }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.external.urlSecretName }}
+                  key: {{ .Values.postgres.external.urlSecretKey }}
+            - name: AUTH_JWT_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.authJwtSecretName | default .Values.secrets.apiKeysSecretName | default .Values.postgres.external.urlSecretName }}
+                  key: {{ .Values.secrets.authJwtSecretKey | default "AUTH_JWT_SIGNING_KEY" }}
+                  optional: true
+            - name: WORKER_POLL_MS
+              value: "2000"
+            - name: LOG_LEVEL
+              value: {{ .Values.env.LOG_LEVEL | quote }}
+            {{- if .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: "one-worker"
+            {{- if .Values.env.OTEL_LOGS_EXPORTER }}
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.env.OTEL_LOGS_EXPORTER | quote }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+{{- end }}

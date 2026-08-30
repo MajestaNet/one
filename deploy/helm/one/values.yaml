@@ -1,0 +1,120 @@
+# Default Helm values — cloud-agnostic Majesta One install
+#
+# Default topology: **one Prod** install (installRole=prod). First Control IDE
+# connect uses install.platformPublicUrl — see docs/architecture/install-ide-connect-build-plan.md.
+# Optional multi-env = extra Helm releases + peers (docs/multi-env-deploy.md), not this chart alone.
+#
+# Prefer pinning digests from a GitHub Release `image-digests-*.txt` file.
+# Example DOKS overlay: values-doks.yaml
+# Operator guide: docs/self-host.md
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/majestanet/one-api
+  tag: "0.1.0"
+  # Prefer digest when known (takes precedence over tag when set):
+  digest: ""
+  pullPolicy: IfNotPresent
+
+worker:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/majestanet/one-worker
+    tag: "0.1.0"
+    digest: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+# Optional: set type LoadBalancer for DOKS / cloud LB without an Ingress controller
+# service:
+#   type: LoadBalancer
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  #   cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: one.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: one-tls
+  #    hosts:
+  #      - one.example.com
+
+postgres:
+  # Prefer external managed Postgres (DO Managed DB, RDS, Cloud SQL, …).
+  external:
+    urlSecretName: one-db
+    urlSecretKey: DATABASE_URL
+
+install:
+  # Single-Prod default — override customerId / installId per customer install.
+  customerId: "change-me-customer"
+  installId: "change-me-install"
+  installRole: "prod"
+  productVersion: "0.1.0"
+  # Client-pinnable API revision window (ADR-025). Independent of productVersion.
+  apiRevisionCurrent: 1
+  apiRevisionMin: 1
+  # Public HTTPS origin Control IDE connects to (LB / Ingress).
+  platformPublicUrl: "https://one.example.com"
+
+env:
+  FEATURE_FLAGS: ""
+  AUTO_SEED: "1"
+  # Set "0" to skip managed one.controlIde PKCE app (claim/MCP/password still work).
+  SEED_CONTROL_IDE: "1"
+  LOG_LEVEL: info
+  # Optional OTLP (BP-008). Leave empty for no-op.
+  OTEL_EXPORTER_OTLP_ENDPOINT: ""
+  # Optional OTLP logs. Default none even when endpoint is set. Set to otlp to fan-out logs.
+  OTEL_LOGS_EXPORTER: ""
+  IDENTITY_SYNC: "off"
+  # Social login broker (ADR-015). Leave AUTH_LOGIN_PROVIDERS empty to disable.
+  AUTH_LOGIN_PROVIDERS: ""
+  AUTH_AUTO_PROVISION_USERS: "0"
+  AUTH_AUTO_PROVISION_ROLE: "StandardUser"
+  # Set non-empty to mount Google client id/secret from socialLoginSecretName
+  AUTH_GOOGLE_CLIENT_ID: ""
+  # Optional customer OIDC exchange (Okta / Entra / Keycloak / Cognito Hosted UI)
+  OIDC_ISSUER: ""
+  OIDC_AUDIENCE: ""
+  OIDC_JWKS_URI: ""
+  OIDC_DEFAULT_SCOPES: "client"
+  OIDC_AUTO_PROVISION_USERS: "0"
+  # Production installs should use allowlist + DEPLOY_SHARE_SECRET
+  DEPLOY_PEER_MODE: "allowlist"
+
+secrets:
+  apiKeysSecretName: one-api
+  apiKeysSecretKey: API_KEYS
+  installClaimTokenKey: INSTALL_CLAIM_TOKEN
+  # Prefer a dedicated secret holding AUTH_JWT_SIGNING_KEY (+ optional DEPLOY_SHARE_SECRET).
+  authJwtSecretName: one-api
+  authJwtSecretKey: AUTH_JWT_SIGNING_KEY
+  deployShareSecretName: one-api
+  deployShareSecretKey: DEPLOY_SHARE_SECRET
+  authJwtIssuerSecretKey: AUTH_JWT_ISSUER
+  # Optional Google/Apple client secrets (when AUTH_LOGIN_PROVIDERS is set)
+  socialLoginSecretName: one-api
+  googleClientIdKey: AUTH_GOOGLE_CLIENT_ID
+  googleClientSecretKey: AUTH_GOOGLE_CLIENT_SECRET
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

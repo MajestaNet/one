@@ -1,0 +1,48 @@
+apiName: Top_Accounts_Overview
+label: Top Accounts Overview
+description: Account KPI + table template for Operate canvas prompts.
+active: true
+ownership: custom
+packageName: customer.default
+layout:
+  mode: sections
+  sections:
+    - id: summary
+      title: Summary
+      nodeIds:
+        - hdr
+        - stat-count
+    - id: records
+      title: Accounts
+      nodeIds:
+        - table
+dataBindings:
+  - id: bind-accounts
+    objectApiName: Account
+    query:
+      limit: 25
+nodes:
+  - id: hdr
+    kind: sectionHeader
+    title: Accounts
+    props:
+      subtitle: CanvasSpec seed for short-prompt regen
+  - id: stat-count
+    kind: stat
+    title: Accounts in view
+    bindingId: bind-accounts
+    props:
+      value: 0
+      label: Accounts
+  - id: table
+    kind: recordTable
+    title: Accounts
+    bindingId: bind-accounts
+    props:
+      columns:
+        - key: Name
+          label: Name
+        - key: Id
+          label: Id
+          mono: true
+      rows: []

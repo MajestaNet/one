@@ -1,0 +1,44 @@
+appId: net.majesta.one.controlide
+productName: Majesta One Control
+# electron-builder 26 derives the Linux executable from package.json "name"
+# (@one/control-ide → @onecontrol-ide), which AppImage rejects. Pin a
+# path-safe binary name so packaging stays independent of the npm scope.
+executableName: one-control
+copyright: Copyright Majesta One
+directories:
+  output: release
+files:
+  - dist/**/*
+  - dist-electron/**/*
+asar: true
+# Harden the packaged Electron binary (CIDE-02). Applied by electron-builder via @electron/fuses
+# before signing. Keep grantFileProtocolExtraPrivileges off — the app loads from asar/file URLs
+# under sandbox + contextIsolation and does not need the extra file:// privileges.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+# Generic feed for electron-updater. At publish time set UPDATE_FEED_URL to the private CDN
+# (frozen under ADR-030). Placeholder keeps local/unsigned builds from failing when the env is unset.
+publish:
+  provider: generic
+  url: https://updates.example.invalid/control-ide/
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+    - zip
+win:
+  target:
+    - nsis
+linux:
+  category: Development
+  target:
+    - AppImage
+  artifactName: One-Control-${version}.${ext}
+# Signed Mac/Windows publish is frozen under ADR-030 (no AWS / signing secrets yet).
+# Publish channel is desktop installers (no hosted browser product).

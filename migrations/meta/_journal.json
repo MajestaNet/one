@@ -1,0 +1,440 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1720000000000,
+      "tag": "0000_kernel",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1720000001000,
+      "tag": "0001_query_scale",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1720000002000,
+      "tag": "0002_ownership",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1720000003000,
+      "tag": "0003_deploy_bundles",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1720000004000,
+      "tag": "0004_customer_tests",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1720000005000,
+      "tag": "0005_multi_env_deploy",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1720000006000,
+      "tag": "0006_cache_and_worker_leases",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1720000007000,
+      "tag": "0007_oidc_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1720000008000,
+      "tag": "0008_auth_principals",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1720000009000,
+      "tag": "0009_package_installs",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1720000010000,
+      "tag": "0010_ops_upgrades",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1720000011000,
+      "tag": "0011_core_package",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1720000012000,
+      "tag": "0012_drop_legacy_managed_objects",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1720000013000,
+      "tag": "0013_record_audit_and_authz",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1720000014000,
+      "tag": "0014_package_installs_enabled",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1720000015000,
+      "tag": "0015_users_api_key_name",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1720000016000,
+      "tag": "0016_install_exposure_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1720000017000,
+      "tag": "0017_secure_exposure_defaults",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1720000018000,
+      "tag": "0018_agent_specs",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1720000019000,
+      "tag": "0019_high_volume_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1720000020000,
+      "tag": "0020_permission_set_data_access_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1720000021000,
+      "tag": "0021_integration_configs",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1720000022000,
+      "tag": "0022_system_caps_access_mode",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1720000023000,
+      "tag": "0023_automation_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1720000024000,
+      "tag": "0024_code_automations",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1720000025000,
+      "tag": "0025_customer_source_files",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1720000026000,
+      "tag": "0026_identity_directory",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1720000027000,
+      "tag": "0027_idp_agnostic_login",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1720000028000,
+      "tag": "0028_require_user_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1720000029000,
+      "tag": "0029_record_sharing",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1720000030000,
+      "tag": "0030_digitalocean_cloud",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1720000031000,
+      "tag": "0031_drop_records_data_gin",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1720000032000,
+      "tag": "0032_canonical_field_types",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1720000033000,
+      "tag": "0033_outbound_connectors",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1720000034000,
+      "tag": "0034_install_claim_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1720000035000,
+      "tag": "0035_drop_integration_cognito",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1720000036000,
+      "tag": "0036_deploy_cloud_host",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1720000037000,
+      "tag": "0037_records_list_partition",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1720000038000,
+      "tag": "0038_hard_delete_no_default",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1720000039000,
+      "tag": "0039_metadata_canvases",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1720000040000,
+      "tag": "0040_principal_canvas_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1720000041000,
+      "tag": "0041_metadata_experiences",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1720000042000,
+      "tag": "0042_outbound_connector_oauth",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1720000043000,
+      "tag": "0043_field_external_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1720000044000,
+      "tag": "0044_ingest_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1720000045000,
+      "tag": "0045_ide_caps_fls_freeze",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1720000046000,
+      "tag": "0046_toolspec_chrome",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1720000047000,
+      "tag": "0047_ide_run_build_tools_caps",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1720000048000,
+      "tag": "0048_tool_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1720000049000,
+      "tag": "0049_scrub_bootstrap_api_key_secrets",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1720000050000,
+      "tag": "0050_inference",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1720000051000,
+      "tag": "0051_agent_section_harness",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1720000052000,
+      "tag": "0052_agent_conversations",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1720000053000,
+      "tag": "0053_principal_run_graphs",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1720000054000,
+      "tag": "0054_tool_interaction_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1720000055000,
+      "tag": "0055_user_kernel_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1720000056000,
+      "tag": "0056_install_auth_provisioning",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1720000057000,
+      "tag": "0057_record_search",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1720000058000,
+      "tag": "0058_refresh_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1720000059000,
+      "tag": "0059_agent_job_class",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1720000060000,
+      "tag": "0060_drop_messages_and_polymorphic",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1720000061000,
+      "tag": "0061_directory_tags",
+      "breakpoints": true
+    }
+  ]
+}

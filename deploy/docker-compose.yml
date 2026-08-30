@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: one
+      POSTGRES_PASSWORD: one
+      POSTGRES_DB: one
+    ports:
+      - "5432:5432"
+    volumes:
+      - one_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U one -d one"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        CMD: api
+        VERSION: "0.1.0"
+    environment:
+      DATABASE_URL: postgres://one:one@postgres:5432/one
+      PORT: 8080
+      API_KEYS: dev-admin-key+admin,dev-agent-key:client
+      AUTH_JWT_SIGNING_KEY: dev-one-jwt-hmac-secret-change-me
+      INSTALL_CLAIM_TOKEN: local-dev-claim-token-change-me
+      PLATFORM_PUBLIC_URL: http://localhost:8080
+      IDENTITY_SYNC: "off"
+      # Social login (optional): set AUTH_LOGIN_PROVIDERS=google,apple and client secrets
+      # AUTH_LOGIN_PROVIDERS: google,apple
+      # AUTH_GOOGLE_CLIENT_ID: ""
+      # AUTH_GOOGLE_CLIENT_SECRET: ""
+      # AUTH_AUTO_PROVISION_USERS: "1"
+      FEATURE_FLAGS: agents
+      APP_ENV: development
+      MIGRATIONS_PATH: /migrations
+      CUSTOMER_ID: local-customer
+      INSTALL_ID: local
+      INSTALL_ROLE: dev
+      PRODUCT_VERSION: "0.1.0"
+      API_REVISION_CURRENT: "1"
+      API_REVISION_MIN: "1"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        CMD: worker
+        VERSION: "0.1.0"
+    environment:
+      DATABASE_URL: postgres://one:one@postgres:5432/one
+      WEBHOOK_TIMEOUT_MS: 10000
+      WORKER_POLL_MS: 2000
+      MIGRATIONS_PATH: /migrations
+      CUSTOMER_ID: local-customer
+      INSTALL_ID: local
+      INSTALL_ROLE: dev
+      PRODUCT_VERSION: "0.1.0"
+      API_REVISION_CURRENT: "1"
+      API_REVISION_MIN: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+volumes:
+  one_pg:

@@ -1,0 +1,187 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: one-api
+  labels:
+    app: one-api
+    app.kubernetes.io/name: one
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: one-api
+  template:
+    metadata:
+      labels:
+        app: one-api
+        app.kubernetes.io/name: one
+        app.kubernetes.io/component: api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: api
+          {{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: PORT
+              value: "8080"
+            - name: CUSTOMER_ID
+              value: {{ .Values.install.customerId | quote }}
+            - name: INSTALL_ID
+              value: {{ .Values.install.installId | quote }}
+            - name: INSTALL_ROLE
+              value: {{ .Values.install.installRole | quote }}
+            - name: PRODUCT_VERSION
+              value: {{ .Values.install.productVersion | quote }}
+            - name: API_REVISION_CURRENT
+              value: {{ .Values.install.apiRevisionCurrent | default 1 | quote }}
+            - name: API_REVISION_MIN
+              value: {{ .Values.install.apiRevisionMin | default 1 | quote }}
+            - name: PLATFORM_PUBLIC_URL
+              value: {{ .Values.install.platformPublicUrl | quote }}
+            - name: API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.apiKeysSecretName | default .Values.postgres.external.urlSecretName }}
+                  key: {{ .Values.secrets.apiKeysSecretKey | default "API_KEYS" }}
+                  optional: true
+            - name: AUTH_JWT_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.authJwtSecretName | default .Values.secrets.apiKeysSecretName | default .Values.postgres.external.urlSecretName }}
+                  key: {{ .Values.secrets.authJwtSecretKey | default "AUTH_JWT_SIGNING_KEY" }}
+                  optional: true
+            - name: INSTALL_CLAIM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.apiKeysSecretName | default .Values.postgres.external.urlSecretName }}
+                  key: {{ .Values.secrets.installClaimTokenKey | default "INSTALL_CLAIM_TOKEN" }}
+                  optional: true
+            - name: AUTH_JWT_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.authJwtSecretName | default .Values.secrets.apiKeysSecretName | default .Values.postgres.external.urlSecretName }}
+                  key: {{ .Values.secrets.authJwtIssuerSecretKey | default "AUTH_JWT_ISSUER" }}
+                  optional: true
+            - name: DEPLOY_SHARE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.deployShareSecretName | default .Values.secrets.apiKeysSecretName | default .Values.postgres.external.urlSecretName }}
+                  key: {{ .Values.secrets.deployShareSecretKey | default "DEPLOY_SHARE_SECRET" }}
+                  optional: true
+            - name: DEPLOY_PEER_MODE
+              value: {{ .Values.env.DEPLOY_PEER_MODE | default "allowlist" | quote }}
+            - name: FEATURE_FLAGS
+              value: {{ .Values.env.FEATURE_FLAGS | quote }}
+            - name: AUTO_SEED
+              value: {{ .Values.env.AUTO_SEED | quote }}
+            - name: SEED_CONTROL_IDE
+              value: {{ .Values.env.SEED_CONTROL_IDE | default "1" | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.env.LOG_LEVEL | quote }}
+            {{- if .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.env.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: "one-api"
+            {{- if .Values.env.OTEL_LOGS_EXPORTER }}
+            - name: OTEL_LOGS_EXPORTER
+              value: {{ .Values.env.OTEL_LOGS_EXPORTER | quote }}
+            {{- end }}
+            {{- end }}
+            - name: IDENTITY_SYNC
+              value: {{ .Values.env.IDENTITY_SYNC | default "off" | quote }}
+            - name: AUTH_LOGIN_PROVIDERS
+              value: {{ .Values.env.AUTH_LOGIN_PROVIDERS | default "" | quote }}
+            - name: AUTH_AUTO_PROVISION_USERS
+              value: {{ .Values.env.AUTH_AUTO_PROVISION_USERS | default "0" | quote }}
+            - name: AUTH_AUTO_PROVISION_ROLE
+              value: {{ .Values.env.AUTH_AUTO_PROVISION_ROLE | default "StandardUser" | quote }}
+            {{- if .Values.env.AUTH_GOOGLE_CLIENT_ID }}
+            - name: AUTH_GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.socialLoginSecretName | default .Values.secrets.authJwtSecretName | default .Values.secrets.apiKeysSecretName }}
+                  key: {{ .Values.secrets.googleClientIdKey | default "AUTH_GOOGLE_CLIENT_ID" }}
+            - name: AUTH_GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.socialLoginSecretName | default .Values.secrets.authJwtSecretName | default .Values.secrets.apiKeysSecretName }}
+                  key: {{ .Values.secrets.googleClientSecretKey | default "AUTH_GOOGLE_CLIENT_SECRET" }}
+            {{- end }}
+            {{- if .Values.env.OIDC_ISSUER }}
+            - name: OIDC_ISSUER
+              value: {{ .Values.env.OIDC_ISSUER | quote }}
+            - name: OIDC_AUDIENCE
+              value: {{ .Values.env.OIDC_AUDIENCE | quote }}
+            - name: OIDC_JWKS_URI
+              value: {{ .Values.env.OIDC_JWKS_URI | quote }}
+            - name: OIDC_DEFAULT_SCOPES
+              value: {{ .Values.env.OIDC_DEFAULT_SCOPES | default "client" | quote }}
+            - name: OIDC_AUTO_PROVISION_USERS
+              value: {{ .Values.env.OIDC_AUTO_PROVISION_USERS | default "0" | quote }}
+            {{- end }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.external.urlSecretName }}
+                  key: {{ .Values.postgres.external.urlSecretKey }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: one-api
+  labels:
+    app.kubernetes.io/name: one
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: one-api
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+{{- if .Values.podDisruptionBudget.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: one-api
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      app: one-api
+{{- end }}

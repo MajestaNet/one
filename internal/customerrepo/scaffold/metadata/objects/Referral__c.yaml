@@ -1,0 +1,7 @@
+apiName: Referral__c
+label: Referral
+pluralLabel: Referrals
+storageMode: flexible
+ownership: custom
+packageName: customer.default
+features: {}

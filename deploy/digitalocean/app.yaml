@@ -1,0 +1,140 @@
+# Majesta One App Platform app spec (production-shaped example)
+#
+# Replace placeholders before deploy. Pin image digests from the GitHub Release
+# asset image-digests-X.Y.Z.txt — never use :latest.
+#
+# Managed PostgreSQL: create/attach outside this file (or via Deploy API provision).
+# Do NOT add an App Platform development database for real environments.
+#
+# Validate: go run ./scripts/validate-do-app-spec.go deploy/digitalocean/app.yaml
+# After pinning digests on a copy:
+#   go run ./scripts/validate-do-app-spec.go -strict-digest /tmp/one-app.yaml
+# Deploy:   doctl apps create --spec deploy/digitalocean/app.yaml
+#
+name: one-prod
+region: nyc
+
+services:
+  - name: api
+    image:
+      registry_type: GHCR
+      registry: majestanet
+      repository: one-api
+      tag: "0.1.0"
+      # After release, set digest from image-digests-*.txt (api_digest=sha256:…)
+      # digest: sha256:REPLACE_WITH_API_DIGEST
+    http_port: 8080
+    instance_count: 2
+    instance_size_slug: apps-s-1vcpu-1gb
+    routes:
+      - path: /
+    health_check:
+      http_path: /healthz
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: PRODUCT_VERSION
+        value: "0.1.0"
+      - key: API_REVISION_CURRENT
+        value: "1"
+      - key: API_REVISION_MIN
+        value: "1"
+      - key: CUSTOMER_ID
+        value: "change-me-customer"
+      - key: INSTALL_ID
+        value: "change-me-prod"
+      - key: INSTALL_ROLE
+        value: "prod"
+      - key: PLATFORM_PUBLIC_URL
+        value: "https://change-me.ondigitalocean.app"
+      - key: AUTO_SEED
+        value: "1"
+      # Production-shaped default. Use "customer" if you do not maintain an allowlist.
+      - key: DEPLOY_PEER_MODE
+        value: "allowlist"
+      # Optional day-2 cloud management (Deploy API BP-030) — install-local token
+      # - key: DIGITALOCEAN_API_TOKEN
+      #   type: SECRET
+      # - key: DIGITALOCEAN_APP_ID
+      #   value: ""
+      # - key: DIGITALOCEAN_DATABASE_ID
+      #   value: ""
+      # Optional OTLP (BP-008). Leave unset for no-op.
+      # - key: OTEL_EXPORTER_OTLP_ENDPOINT
+      #   value: "https://otlp.example.com"
+      # - key: OTEL_SERVICE_NAME
+      #   value: "one-api"
+      # Optional social broker (ADR-015). Leave AUTH_LOGIN_PROVIDERS empty to disable.
+      # Redirect URIs: https://<PLATFORM_PUBLIC_URL>/auth/v1/callback/<provider>
+      # - key: AUTH_LOGIN_PROVIDERS
+      #   value: "google,apple"
+      # - key: AUTH_GOOGLE_CLIENT_ID
+      #   type: SECRET
+      # - key: AUTH_GOOGLE_CLIENT_SECRET
+      #   type: SECRET
+      # - key: AUTH_APPLE_CLIENT_ID
+      #   type: SECRET
+      # - key: AUTH_APPLE_TEAM_ID
+      #   type: SECRET
+      # - key: AUTH_APPLE_KEY_ID
+      #   type: SECRET
+      # - key: AUTH_APPLE_PRIVATE_KEY
+      #   type: SECRET
+      - key: DATABASE_URL
+        type: SECRET
+      - key: API_KEYS
+        type: SECRET
+      - key: AUTH_JWT_SIGNING_KEY
+        type: SECRET
+      - key: INSTALL_CLAIM_TOKEN
+        type: SECRET
+      - key: WEBHOOK_ENCRYPTION_KEY
+        type: SECRET
+      - key: DEPLOY_SHARE_SECRET
+        type: SECRET
+
+workers:
+  - name: worker
+    image:
+      registry_type: GHCR
+      registry: majestanet
+      repository: one-worker
+      tag: "0.1.0"
+      # digest: sha256:REPLACE_WITH_WORKER_DIGEST
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    envs:
+      - key: APP_ENV
+        value: production
+      - key: PRODUCT_VERSION
+        value: "0.1.0"
+      - key: API_REVISION_CURRENT
+        value: "1"
+      - key: API_REVISION_MIN
+        value: "1"
+      - key: CUSTOMER_ID
+        value: "change-me-customer"
+      - key: INSTALL_ID
+        value: "change-me-prod"
+      - key: INSTALL_ROLE
+        value: "prod"
+      # Optional OTLP (BP-008). Leave unset for no-op.
+      # - key: OTEL_EXPORTER_OTLP_ENDPOINT
+      #   value: "https://otlp.example.com"
+      # - key: OTEL_SERVICE_NAME
+      #   value: "one-worker"
+      - key: DATABASE_URL
+        type: SECRET
+      - key: AUTH_JWT_SIGNING_KEY
+        type: SECRET
+      - key: API_KEYS
+        type: SECRET
+      - key: WEBHOOK_ENCRYPTION_KEY
+        type: SECRET

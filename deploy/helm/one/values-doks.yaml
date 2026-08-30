@@ -1,0 +1,55 @@
+# DigitalOcean DOKS-oriented values overlay
+#
+# Default: one Prod install in one namespace (e.g. one-prod). Optional peer
+# envs are separate Helm releases — docs/architecture/install-ide-connect-build-plan.md.
+#
+# Usage:
+#   helm upgrade --install one ./deploy/helm/one \
+#     -n one-prod --create-namespace \
+#     -f deploy/helm/one/values.yaml \
+#     -f deploy/helm/one/values-doks.yaml \
+#     --set image.digest=sha256:… \
+#     --set worker.image.digest=sha256:… \
+#     --set install.productVersion=X.Y.Z \
+#     --set install.platformPublicUrl=https://one.example.com
+#
+# See docs/self-host.md for secrets, Managed Postgres, and optional multi-env.
+
+replicaCount: 2
+
+worker:
+  replicaCount: 1
+
+# Prefer DO Load Balancer for a single service without Ingress.
+# Switch to Ingress + cert-manager when you terminate TLS at the controller.
+service:
+  type: LoadBalancer
+  port: 8080
+
+ingress:
+  enabled: false
+
+install:
+  installRole: "prod"
+  # Override per install (unique installId; share customerId only when adding optional peers):
+  # customerId: shared across peers when multi-env is opted in
+  # installId: unique per env
+  # platformPublicUrl: HTTPS origin for Control IDE Connect
+
+env:
+  DEPLOY_PEER_MODE: "allowlist"
+  AUTO_SEED: "1"
+  IDENTITY_SYNC: "off"
+  AUTH_LOGIN_PROVIDERS: ""
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

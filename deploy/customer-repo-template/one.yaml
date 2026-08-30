@@ -1,0 +1,10 @@
+# one/v1 scaffold — see docs/customer-repo.md and ADR-012.
+
+customerId: REPLACE_CUSTOMER_ID
+packageName: customer.default
+productVersionRange: ">=0.1.0 <0.2.0"
+repoFormat: one/v1
+# Optional DX defaults (CLI / IDE):
+# defaultOrg: test
+# requiredTestSuites:
+#   - CreateAccountFromContact
