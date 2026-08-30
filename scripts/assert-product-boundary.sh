@@ -74,5 +74,8 @@ grep -qE '^\*\.md$' .dockerignore || fail ".dockerignore must exclude *.md (AGEN
 grep -qE '^tools$' .dockerignore || fail ".dockerignore must exclude tools (Control IDE / vendor helpers)"
 grep -qE '^scripts$' .dockerignore || fail ".dockerignore must exclude scripts (vendor automation)"
 grep -qE '^sdk$' .dockerignore || fail ".dockerignore must exclude sdk (community cloud SDKs)"
+if [[ -d cms ]]; then
+  grep -qE '^cms$' .dockerignore || fail ".dockerignore must exclude cms (CMS aggregator seed; not product)"
+fi
 
 echo "product-boundary: OK (product paths only; customer scratch untracked; vendor/agent plane excluded)"

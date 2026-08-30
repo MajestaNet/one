@@ -86,5 +86,5 @@ Ops rolls product images on this install (not customer promote)
 - [ ] Managed artifacts still rejected on promote
 - [ ] Trust mode behavior covered by tests
 - [ ] Dockerfile allowlist unchanged (or boundary script updated intentionally)
-- [ ] Path A/B or env-var changes **may** update `/install` (`docs/self-host.md`) in the same PR; otherwise the merge-event docs agent covers it ([agent-public-docs.md](./agent-public-docs.md))
+- [ ] Path A/B or env-var changes **may** update `docs/self-host.md` in the same PR ([agent-public-docs.md](./agent-public-docs.md)); the public host is a separate CMS — do not add a publisher here
 - [ ] BP-002 / BP-011 / BP-028 / BP-029 / BP-030 updated if fleet/Marketplace / App Platform / Deploy DO cloud risk changed

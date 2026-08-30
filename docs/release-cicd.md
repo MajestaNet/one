@@ -87,7 +87,7 @@ feature branch → PR → ci.yml (must green)
 
 **Release publishes artifacts. It does not roll customer installs or Marketplace listings.** Operators (or a future listing) pin digests. Historical managed-subscription / AWS Marketplace channel language below is **not GA** — prefer [self-host.md](./self-host.md) and [BP-011](../backlog/BP-011-container-marketplace-fargate.md).
 
-Customer-facing docs on `one.majesta.net` should publish from the **same `v*` tag** via **Netlify** (`netlify deploy --prod`; not product images). Design: [public-docs-site.md](./architecture/public-docs-site.md). Execute: [public-docs-site-build-plan.md](./architecture/public-docs-site-build-plan.md) ([BP-067](../backlog/BP-067-public-docs-site.md)). Writers are a merge-event docs agent, not the release build.
+Customer-facing docs on `one.majesta.net` are published by a **separate CMS aggregator**, expected to pin the same **`v*`** as GHCR. This repo’s `release.yml` does **not** build or deploy that site. Pointer: [public-docs-site.md](./architecture/public-docs-site.md) ([BP-067](../backlog/BP-067-public-docs-site.md)).
 
 ## Versioning
 

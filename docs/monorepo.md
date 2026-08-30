@@ -47,6 +47,7 @@ See also: [glossary](./glossary.md), [release CI/CD](./release-cicd.md), [self-h
 | `.github/workflows/` | No | CI/CD for product versions |
 | `docs/`, `backlog/`, `.cursor/`, `AGENTS.md` | No | **Vendor/agent plane** — architecture, backlog, subagent routing |
 | `tools/`, `scripts/` | No | Vendor automation |
+| `cms/` (temporary seed, if present) | **No** | Copy-out design for the CMS aggregator; delete after extraction — [BP-067](../backlog/BP-067-public-docs-site.md) |
 | `.customer-sandbox/` | **Never** | Ephemeral local customer experiments (`mkdir` locally; not in Git) |
 
 The vendor/agent plane stays in the monorepo for humans and coding agents. It is excluded from product image build context (`.dockerignore`) and never `COPY`ed into `deploy/Dockerfile`. Do not move agent guidance under `cmd/`, `internal/`, or `migrations/`, and do not `go:embed` those docs into binaries. Community `sdk/` is likewise excluded from product images.
@@ -131,7 +132,7 @@ Keep a **single Go module** for the product until a real second shippable binary
 
 - `cmd/<binary>` for new product processes
 - `internal/<domain>` for product packages
-- `tools/<name>` for vendor CLIs / clients that must not ship (e.g. `tools/control-ide`; public docs publisher `tools/one-docs` — [public-docs-site.md](./architecture/public-docs-site.md) · [build plan](./architecture/public-docs-site-build-plan.md))
+- `tools/<name>` for vendor CLIs / clients that must not ship (e.g. `tools/control-ide`). Do **not** add a public-docs publisher here — `one.majesta.net` is a separate CMS aggregator ([public-docs-site.md](./architecture/public-docs-site.md)). A temporary root `cms/` seed (if present) is for one-time copy-out and must not enter product images.
 - `sdk/<cloud>/` for community cloud helpers that must not ship in product images
 
 Do **not** introduce `apps/customer-*` trees. Customer implementation stays on installs + Deploy + the auto-provisioned customer Git repo ([customer-repo.md](./customer-repo.md)).
