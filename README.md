@@ -118,7 +118,7 @@ scripts/              Boundary checks + release helpers
 | Monorepo planes & boundaries | [docs/monorepo.md](docs/monorepo.md) |
 | Self-host (App Platform / Compose / Helm) | [docs/self-host.md](docs/self-host.md) |
 | Version / CI/CD publish | [docs/release-cicd.md](docs/release-cicd.md) |
-| Public docs site (`one.majesta.net`) | [docs/architecture/public-docs-site.md](docs/architecture/public-docs-site.md) · [build plan](docs/architecture/public-docs-site-build-plan.md) |
+| Public docs (`one.majesta.net`) | Separate CMS aggregator — [docs/architecture/public-docs-site.md](docs/architecture/public-docs-site.md) |
 | Customer customizations (safe workflow) | [docs/customer-customizations.md](docs/customer-customizations.md) |
 | Mac local + Control IDE | [docs/local-development-mac.md](docs/local-development-mac.md) |
 | Control IDE build / installers | [docs/control-ide-build.md](docs/control-ide-build.md) |
