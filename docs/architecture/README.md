@@ -25,7 +25,7 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [agent-runtime-build-plan.md](./agent-runtime-build-plan.md) | **Shipped (BP-064):** install as agent runtime — job-class harness, builder MCP, skills, hosted loop ([ADR-030](../adr/030-install-agent-runtime.md) mitigated). Remaining install cleanup: [BP-065](../../backlog/BP-065-ide-backend-coupling.md) |
 | [hosted-agent-tool-loop-build-plan.md](./hosted-agent-tool-loop-build-plan.md) | **Shipped:** hosted `/client/v1/agents/runs` executes MCP tools as the run actor ([BP-006](../../backlog/BP-006-agent-guardrails.md) mitigated) |
 | [agent-control-ide.md](./agent-control-ide.md) | Control IDE (Electron / React / Vitest under `tools/control-ide`) — optional client; **refactor for install cleanup** ([BP-065](../../backlog/BP-065-ide-backend-coupling.md)); no new Electron-only product chrome |
-| [agent-public-docs.md](./agent-public-docs.md) | Public docs site (`one.majesta.net`) — allowlisted markdown, merge-event docs-update agent ([BP-067](../../backlog/BP-067-public-docs-site.md)); publisher is Astro under `tools/one-docs` |
+| [agent-public-docs.md](./agent-public-docs.md) | GitHub product docs in this repo; public host is a **separate CMS aggregator** ([BP-067](../../backlog/BP-067-public-docs-site.md)) |
 
 ## Read in this order (data architecture agents)
 
@@ -94,9 +94,9 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [deploy-cloud-agnostic-build-plan.md](./deploy-cloud-agnostic-build-plan.md) | **Active:** host-free `/deploy/v1/cloud/*` + `CloudHost` port; DO aliases; community AWS skeleton |
 | [deploy-cloud-capability-contract.md](./deploy-cloud-capability-contract.md) | **Contract:** host-free Deploy cloud verbs; DO product first; AWS managed profile = community |
 | [digitalocean-distribution-build-plan.md](./digitalocean-distribution-build-plan.md) | Strategy: Path A+B + role matrix + community `sdk/`; Marketplace = BP-028 deferred; Deploy API = BP-030 |
-| [public-docs-site.md](./public-docs-site.md) | **Design:** customer-facing docs on `one.majesta.net` — allowlisted markdown, Astro Starlight under `tools/`, **Netlify** host, `v*` production deploy |
-| [public-docs-site-build-plan.md](./public-docs-site-build-plan.md) | **Active:** executable phases — content map, merge-event impact, Starlight scaffold, docs-update agent, tag publish ([BP-067](../../backlog/BP-067-public-docs-site.md)) |
-| [agent-public-docs.md](./agent-public-docs.md) | Playbook: public docs writer (allowlisted `docs/` + `tools/one-docs`; not Control IDE) |
+| [public-docs-site.md](./public-docs-site.md) | Pointer: `one.majesta.net` is a **separate CMS aggregator**; do not implement the publisher here |
+| [public-docs-site-build-plan.md](./public-docs-site-build-plan.md) | **Superseded** in this repo — no in-tree phases ([BP-067](../../backlog/BP-067-public-docs-site.md)) |
+| [agent-public-docs.md](./agent-public-docs.md) | Playbook: GitHub `docs/` only; no Astro/Netlify/CMS dependency |
 | [agent-api-families.md](./agent-api-families.md) | Playbook: HTTP API families |
 | [agent-deploy.md](./agent-deploy.md) | Playbook: Deploy / Ops / packaging |
 | [agent-worker.md](./agent-worker.md) | Playbook: worker / jobs / outbox |
