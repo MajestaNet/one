@@ -104,7 +104,7 @@ The first targeted managed path is DigitalOcean. Other providers should arrive l
 - [API families plan](./api-families.md)
 - [Monorepo structure](./monorepo.md)
 - [Release CI/CD](./release-cicd.md)
-- [Public docs site (`one.majesta.net`)](./architecture/public-docs-site.md) · [build plan](./architecture/public-docs-site-build-plan.md) ([BP-067](../backlog/BP-067-public-docs-site.md))
+- [Public docs (`one.majesta.net`)](./architecture/public-docs-site.md) — separate CMS aggregator ([BP-067](../backlog/BP-067-public-docs-site.md))
 - [Control IDE build plan](./control-ide-build.md)
 - [Customer customizations](./customer-customizations.md)
 - [CI customer tests (Phase D)](./ci-customer-tests.md)

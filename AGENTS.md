@@ -30,7 +30,7 @@ Do not invent a parallel stack. If a library choice conflicts with `docs/tech-st
 | Agent runtime (harness, MCP catalog, builder DX) | [agent-runtime-build-plan.md](docs/architecture/agent-runtime-build-plan.md) (+ api-families + worker) | `api-families` then `worker-jobs` (not `control-ide`) |
 | Hosted agent tool loop (`/agents/runs` executes tools) | [hosted-agent-tool-loop-build-plan.md](docs/architecture/hosted-agent-tool-loop-build-plan.md) (+ api-families + worker) | `api-families` then `worker-jobs` (not `control-ide`) |
 | Control IDE (Electron / React / Vitest) — optional client; **lockstep refactor OK** when it cleans the install ([BP-065](backlog/BP-065-ide-backend-coupling.md)); demo-client honesty ([BP-066](backlog/BP-066-ide-demo-client-fidelity.md)); no new Electron-only product chrome | [agent-control-ide.md](docs/architecture/agent-control-ide.md) · [ide-demo-client-uplift-build-plan.md](docs/architecture/ide-demo-client-uplift-build-plan.md) | `control-ide` |
-| Public docs site (`one.majesta.net`) — allowlisted markdown, Astro publisher, merge-event docs updates ([BP-067](backlog/BP-067-public-docs-site.md)) | [agent-public-docs.md](docs/architecture/agent-public-docs.md) · [public-docs-site-build-plan.md](docs/architecture/public-docs-site-build-plan.md) | `docs-publisher` |
+| GitHub product docs (install/connect/API markdown) — public host is a **separate CMS aggregator**, not this repo ([BP-067](backlog/BP-067-public-docs-site.md)) | [agent-public-docs.md](docs/architecture/agent-public-docs.md) | — |
 
 Architecture index: [docs/architecture/README.md](docs/architecture/README.md). ADR catalog: [docs/adr/README.md](docs/adr/README.md).
 
@@ -40,7 +40,7 @@ Architecture index: [docs/architecture/README.md](docs/architecture/README.md). 
 |---|---|---|
 | **IDE** (`control-ide`) | `tools/control-ide/**` (+ IDE docs in the playbook) | `cmd/`, `internal/`, `migrations/`, `deploy/` unless the task is explicitly cross-plane and a backend playbook is attached |
 | **Backend** (Go domain agents) | `cmd/`, `internal/`, `migrations/`, `deploy/` as mapped | `tools/control-ide/**` unless the task is install-coupling cleanup ([BP-065](backlog/BP-065-ide-backend-coupling.md)) |
-| **Docs** (`docs-publisher`) | Allowlisted public `docs/` + `tools/one-docs/**` (Phase 1–2: impact script / `docs-impact.yml` / `netlify.toml` per the playbook) | `cmd/`, `internal/` product logic, `tools/control-ide/**` |
+| **Docs** (GitHub markdown) | Operator-facing `docs/` in this repo | `tools/one-docs/**`, `netlify.toml`, CMS/Netlify secrets, `cmd/` / `internal/` product logic, `tools/control-ide/**` |
 
 Cross-plane work must cite both playbooks: API logic stays in Go; the IDE remains a JWT client. **BP-065 may edit the IDE to delete Go chrome routes** — that is preferred over keeping unused kernel APIs.
 

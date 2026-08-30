@@ -131,7 +131,7 @@ Keep a **single Go module** for the product until a real second shippable binary
 
 - `cmd/<binary>` for new product processes
 - `internal/<domain>` for product packages
-- `tools/<name>` for vendor CLIs / clients that must not ship (e.g. `tools/control-ide`; public docs publisher `tools/one-docs` — [public-docs-site.md](./architecture/public-docs-site.md) · [build plan](./architecture/public-docs-site-build-plan.md))
+- `tools/<name>` for vendor CLIs / clients that must not ship (e.g. `tools/control-ide`). Do **not** add a public-docs publisher here — `one.majesta.net` is a separate CMS aggregator ([public-docs-site.md](./architecture/public-docs-site.md)).
 - `sdk/<cloud>/` for community cloud helpers that must not ship in product images
 
 Do **not** introduce `apps/customer-*` trees. Customer implementation stays on installs + Deploy + the auto-provisioned customer Git repo ([customer-repo.md](./customer-repo.md)).

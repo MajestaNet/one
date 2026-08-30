@@ -57,7 +57,7 @@ Each BP header includes an **`Area:`** field — preferred code scope. Resolve A
 | [BP-064](./BP-064-install-agent-runtime.md) | High | Mitigated | Install as agent runtime |
 | [BP-065](./BP-065-ide-backend-coupling.md) | Medium | Partially mitigated | Neutralize Control IDE coupling on the Go install (Phase 1 AuthN landed; Phases 2–4 remain) |
 | [BP-066](./BP-066-ide-demo-client-fidelity.md) | Medium | Open | Control IDE as an honest JWT demo of shipped APIs |
-| [BP-067](./BP-067-public-docs-site.md) | Medium | Open | Public docs site (`one.majesta.net`) + merge-event docs-update agent |
+| [BP-067](./BP-067-public-docs-site.md) | Medium | Open (CMS extracted) | Public docs site (`one.majesta.net`) — separate CMS aggregator; this repo does not implement |
 
 Severity guide: **High** = likely to block real customer load, security, or the install agent-runtime / Ship path; **Medium** = will hurt before GA if ignored. Control IDE commercial delivery is **not** a High driver while chrome is frozen ([ADR-030](../docs/adr/030-install-agent-runtime.md)).
 
@@ -79,7 +79,7 @@ BP-066 may change existing panels so they call shipped family routes honestly. T
 
 **Finish — headless Client:** BP-042, BP-045, BP-046, BP-061. [BP-041](./BP-041-record-external-id-upsert-bulk.md) upsert/Bulk is Mitigated (Keep).
 
-**Finish — public docs:** [BP-067](./BP-067-public-docs-site.md)
+**Finish — public docs:** [BP-067](./BP-067-public-docs-site.md) (external CMS aggregator; not this repo’s `make ci`)
 
 **Open product risk (non-IDE):** BP-008, BP-026, BP-028, BP-031, BP-035, BP-038, BP-047, BP-049
 
