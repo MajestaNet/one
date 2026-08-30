@@ -5,7 +5,7 @@
 
 Dedicated-install, metadata-driven enterprise platform. Each customer runs their own instance: one API, one Postgres database, one JWT issuer. **The API is the product.** The platform runtime is **Go**. The **entire repository is Apache-2.0**, including Control IDE.
 
-Majesta One is **not a CRM**. It is a metadata platform with optional Sales, Service, and Billing modules you enable on an install.
+Majesta One is a metadata platform with optional Sales, Service, and Billing modules you enable on an install.
 
 ## Status
 
