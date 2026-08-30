@@ -28,7 +28,7 @@ Do not load every playbook. Prefer a thin, correct slice.
 | Agent runtime (job-class harness, builder MCP, builder DX) | [agent-runtime-build-plan.md](./agent-runtime-build-plan.md) + [agent-api-families.md](./agent-api-families.md) | `api-families` then `worker-jobs` | `internal/agentharness`, `internal/mcp`, `internal/httpapi`, `internal/worker`; **not** `tools/control-ide` |
 | Hosted agent tool loop (`/agents/runs` executes MCP tools) | [hosted-agent-tool-loop-build-plan.md](./hosted-agent-tool-loop-build-plan.md) + api-families + worker | `api-families` then `worker-jobs` | `internal/agentloop`, `internal/inference`, `internal/mcp`, `internal/httpapi`, `internal/worker`, `internal/agentharness`; **not** `tools/control-ide` |
 | Control IDE UI, Electron, Vite, Vitest, panels (optional client; lockstep OK for [BP-065](../../backlog/BP-065-ide-backend-coupling.md); demo honesty [BP-066](../../backlog/BP-066-ide-demo-client-fidelity.md)) | [agent-control-ide.md](./agent-control-ide.md) · [ide-demo-client-uplift-build-plan.md](./ide-demo-client-uplift-build-plan.md) | `control-ide` | `tools/control-ide/**` only (plus mapped Go when the task is install-coupling cleanup or a BP-066 API-gap handoff) |
-| Public docs site (`one.majesta.net`) — allowlisted markdown, Astro Starlight publisher, merge-event docs updates | [agent-public-docs.md](./agent-public-docs.md) · [public-docs-site-build-plan.md](./public-docs-site-build-plan.md) | `docs-publisher` | Allowlisted public `docs/` + `tools/one-docs/**` (Phase 1–2: `scripts/docs-impact.sh`, `docs-impact.yml`, `netlify.toml`); **not** `tools/control-ide` or Go handlers |
+| GitHub product docs (install/connect/API) — public site is an **external CMS aggregator** | [agent-public-docs.md](./agent-public-docs.md) | — | Operator-facing `docs/` only; **not** `tools/one-docs`, Netlify, CMS secrets, Control IDE, or Go handlers |
 | Latency, N+1, pool, JSONB indexes (cross-cutting) | data playbook + module map | `db-backend-perf` | packages named in the agent description |
 
 ## Plane fence
@@ -37,7 +37,7 @@ Do not load every playbook. Prefer a thin, correct slice.
 |---|---|---|
 | **IDE** (`control-ide`) | `tools/control-ide/**` (+ IDE docs in the playbook) | `cmd/`, `internal/`, `migrations/`, `deploy/` |
 | **Backend** (Go domain agents) | Mapped Go / deploy paths | `tools/control-ide/**` |
-| **Docs** (`docs-publisher`) | Allowlisted public `docs/` + `tools/one-docs/**` (+ impact workflow when scaffolding) | Go product handlers; `tools/control-ide/**` |
+| **Docs** (GitHub markdown) | Operator-facing `docs/` | Publisher/CMS/Netlify; Go product handlers; `tools/control-ide/**` |
 
 Cross-plane work must cite **both** playbooks: API ownership stays with the Go agent; the IDE agent consumes JWT Bearer family routes **or** moves state local so the Go route can be deleted ([BP-065](../../backlog/BP-065-ide-backend-coupling.md)). Do not add Electron-only consumers for new agent-runtime APIs ([ADR-030](../adr/030-install-agent-runtime.md)).
 
@@ -49,7 +49,7 @@ Cross-plane work must cite **both** playbooks: API ownership stays with the Go a
 4. **Point at open BPs** from [`backlog/README.md`](../../backlog/README.md) that touch the area.
 5. Prefer the domain specialist in `.cursor/agents/` whose description matches the paths — do not invent a parallel stack or a second product tree.
 6. For IDE work, verify with `npm test` / `make test-ide`; for Go work, verify with `go test` / `make test`. Do not tell an IDE agent to run product `make ci` as its primary check.
-7. For public-docs work, verify with `make docs-check` when that target exists. Do not tell a docs-publisher agent to run product `make ci` as its primary check.
+7. For GitHub `docs/` edits, do not add Astro/`make docs-check` to this repo. Do not run product `make ci` as a docs-only check.
 
 ## Focus rules
 
@@ -58,7 +58,7 @@ Cross-plane work must cite **both** playbooks: API ownership stays with the Go a
 - When closing or de-risking a backlog item, update the BP file and the table in `backlog/README.md`.
 - Vendor/agent docs live under `docs/`, `backlog/`, `.cursor/` — they must never enter product images (see [monorepo.md](../monorepo.md)).
 - Control IDE under `tools/control-ide` is vendor plane (ADR-012) — never widen the product image COPY allowlist to include it. Spawn `control-ide` for install-coupling lockstep ([BP-065](../../backlog/BP-065-ide-backend-coupling.md)); do not spawn it to add Electron-only product chrome ([ADR-030](../adr/030-install-agent-runtime.md)).
-- Spawn `docs-publisher` for allowlisted public docs / `tools/one-docs` ([agent-public-docs.md](./agent-public-docs.md)). Do not spawn it to change Go routes or Control IDE.
+- Do not scaffold a public-docs publisher or CMS in this repo ([agent-public-docs.md](./agent-public-docs.md), [BP-067](../../backlog/BP-067-public-docs-site.md)). Do not spawn a docs agent to change Go routes or Control IDE.
 
 ## Architecture index
 

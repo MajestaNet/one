@@ -118,14 +118,13 @@ Not product runtime. Lives under `tools/one-mcp` ([customer-connect.md](./custom
 
 ## Vendor plane — public docs site
 
-Not product runtime. Design: [public-docs-site.md](./architecture/public-docs-site.md). Execute: [public-docs-site-build-plan.md](./architecture/public-docs-site-build-plan.md) ([BP-067](../backlog/BP-067-public-docs-site.md)). Not Path A. CI never writes markdown.
+Not product runtime and **not this repository**. Customer pages on `one.majesta.net` are published by a separate Majesta CMS aggregator (Netlify, per-product sites). Pointer: [public-docs-site.md](./architecture/public-docs-site.md) ([BP-067](../backlog/BP-067-public-docs-site.md)). Do not add Astro, `tools/one-docs`, or `netlify.toml` here. Not Path A.
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Host | **Netlify** static | Custom domain `one.majesta.net`; Deploy Previews on PRs; production publish on `v*` tags |
-| Generator | Astro Starlight (when scaffolded) | `tools/one-docs`; allowlisted markdown from `docs/`. Pin versions in this table at scaffold time |
-| Writer | Merge-event docs agent | [agent-public-docs.md](./architecture/agent-public-docs.md); draft `docs-update` PR. Same-PR edits optional |
-| Node | 22 | Same floor as Control IDE |
+| Host | External CMS aggregator (Netlify) | `one.majesta.net`; this repo has no deploy dependency |
+| Source markdown | GitHub `docs/` in this repo | Operators who clone the product still read install/API docs in-tree |
+| Writer (public site) | CMS-repo agent | Not a product CI job; no `NETLIFY_*` in this repo |
 
 ## Vendor plane — IDE entitlement issuer
 
@@ -150,7 +149,7 @@ Not product runtime. Lives outside `cmd/api`. IDE entitlement chrome is frozen (
 - Shipping Deno/Node as **platform** runtime (guest Deno is install-side executor for customer automation only; product binaries stay Go)
 - Using Deployment API to ship kernel/DDL or managed package internals
 - AMI / EC2 / Droplet Marketplace fulfillment (containers + Helm; preferred DO Kubernetes 1-Click)
-- Shipping Node/TypeScript or a Python sidecar as **platform runtime** (vendor TypeScript under `tools/control-ide`, `tools/one-mcp`, and `tools/one-docs` is allowed; MCP product gateway remains Go)
+- Shipping Node/TypeScript or a Python sidecar as **platform runtime** (vendor TypeScript under `tools/control-ide` and `tools/one-mcp` is allowed; MCP product gateway remains Go; public docs Starlight is not in this repo)
 
 ## Related docs
 
@@ -165,7 +164,7 @@ Not product runtime. Lives outside `cmd/api`. IDE entitlement chrome is frozen (
 - [Multi-env deploy](./multi-env-deploy.md)
 - [Monorepo structure](./monorepo.md)
 - [Release CI/CD](./release-cicd.md)
-- [Public docs site (`one.majesta.net`)](./architecture/public-docs-site.md) · [build plan](./architecture/public-docs-site-build-plan.md)
+- [Public docs pointer (`one.majesta.net`)](./architecture/public-docs-site.md)
 - [Control IDE build plan](./control-ide-build.md)
 - [Control IDE design (tokens + updates)](./control-ide-design.md)
 - [Mac local development](./local-development-mac.md)
