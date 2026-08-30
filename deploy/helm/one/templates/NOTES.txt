@@ -1,0 +1,72 @@
+Majesta One dedicated install ({{ .Values.install.installRole }} / {{ .Values.install.installId }})
+
+Default topology is **one Prod** install — one public API URL for Control IDE.
+Multi-env (test/dev/…) is optional; see docs/multi-env-deploy.md and
+docs/architecture/install-ide-connect-build-plan.md.
+
+## Secrets (required before traffic)
+
+1. Secret `{{ .Values.postgres.external.urlSecretName }}` must contain key `{{ .Values.postgres.external.urlSecretKey }}` (Postgres 16+ URL).
+2. Secret `{{ .Values.secrets.apiKeysSecretName }}` should contain:
+   - `{{ .Values.secrets.apiKeysSecretKey }}` — bootstrap API keys (break-glass)
+   - `{{ .Values.secrets.authJwtSecretKey }}` — Majesta One JWT signing material (ADR-006)
+   - `INSTALL_CLAIM_TOKEN` — one-time day-0 claim (first SystemAdmin; BP-037)
+   - `{{ .Values.secrets.deployShareSecretKey }}` — required when DEPLOY_PEER_MODE=allowlist (prod)
+
+Example:
+
+  kubectl -n {{ .Release.Namespace }} create secret generic {{ .Values.secrets.apiKeysSecretName }} \
+    --from-literal=API_KEYS="$(openssl rand -hex 32)+admin" \
+    --from-literal=AUTH_JWT_SIGNING_KEY="$(openssl rand -hex 32)" \
+    --from-literal=INSTALL_CLAIM_TOKEN="$(openssl rand -hex 24)" \
+    --from-literal=DEPLOY_SHARE_SECRET="$(openssl rand -hex 32)"
+
+## Access
+
+{{- if eq .Values.service.type "LoadBalancer" }}
+
+LoadBalancer Service `one-api` — wait for EXTERNAL-IP, then:
+
+  curl -fsS -H "Authorization: Bearer $API_KEY" "http://$EXTERNAL_IP:{{ .Values.service.port }}/healthz"
+
+Terminate TLS at the DO Load Balancer or put a CDN/proxy in front. Set install.platformPublicUrl to the public HTTPS origin.
+
+{{- else if .Values.ingress.enabled }}
+
+Ingress is enabled for host(s):
+{{- range .Values.ingress.hosts }}
+  - https://{{ .host }}
+{{- end }}
+
+{{- else }}
+
+ClusterIP only. Port-forward for smoke:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/one-api 8080:{{ .Values.service.port }}
+  curl -H "Authorization: Bearer $API_KEY" http://localhost:8080/client/v1/describe
+
+{{- end }}
+
+## Control IDE + first admin
+
+1. Set install.platformPublicUrl to the public HTTPS origin (LoadBalancer / Ingress).
+2. Claim the install (no IDE required) — see docs/architecture/install-claim-sso-build-plan.md:
+
+  curl -sS -X POST "{{ .Values.install.platformPublicUrl }}/auth/v1/install/claim" \
+    -H 'Content-Type: application/json' \
+    -d '{"token":"<INSTALL_CLAIM_TOKEN>","email":"admin@example.com","password":"<long-password>"}'
+
+3. Optional: Control IDE Govern → Environments → Connect (paste that one URL) or Sign in with password / SSO.
+4. Configure customer SSO: PUT /metadata/v1/install/auth or Govern → Install auth.
+5. Break-glass: bootstrap API_KEYS remain available (mint JWT via client_credentials).
+
+## Images
+
+Pin digests from the GitHub Release `image-digests-*.txt` — do not float on :latest.
+PRODUCT_VERSION={{ .Values.install.productVersion }}
+CUSTOMER_ID={{ .Values.install.customerId }}
+PLATFORM_PUBLIC_URL={{ .Values.install.platformPublicUrl }}
+
+See docs/self-host.md, docs/architecture/install-claim-sso-build-plan.md,
+docs/architecture/install-ide-connect-build-plan.md, and
+docs/architecture/digitalocean-distribution-build-plan.md

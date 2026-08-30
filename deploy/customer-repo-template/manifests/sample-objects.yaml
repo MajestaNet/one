@@ -1,0 +1,5 @@
+# Selective pack path list (one/v1). Used by:
+#   one org validate --manifest sample-objects
+paths:
+  - metadata/objects/Referral__c.yaml
+  - metadata/fields/Referral__c/

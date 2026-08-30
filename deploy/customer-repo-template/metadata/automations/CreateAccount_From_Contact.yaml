@@ -1,0 +1,11 @@
+apiName: CreateAccount_From_Contact
+label: Create Account from Contact
+objectApiName: Contact
+triggerEvent: create
+active: true
+runtime: code
+execution: async
+entryFile: src/automations/create_account_from_contact.ts
+ownership: custom
+packageName: customer.default
+actions: []

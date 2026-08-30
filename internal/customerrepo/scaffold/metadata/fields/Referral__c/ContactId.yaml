@@ -1,0 +1,8 @@
+objectApiName: Referral__c
+apiName: ContactId
+label: Contact
+fieldType: lookup
+referenceTo: Contact
+required: true
+ownership: custom
+packageName: customer.default

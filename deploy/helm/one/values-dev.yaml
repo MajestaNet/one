@@ -1,0 +1,30 @@
+# Dev / test overlay — smaller footprint, still external Postgres
+#
+# helm upgrade --install one-dev ./deploy/helm/one \
+#   -n one-dev --create-namespace \
+#   -f deploy/helm/one/values.yaml \
+#   -f deploy/helm/one/values-dev.yaml \
+#   --set install.installId=acme-dev --set install.installRole=dev
+
+replicaCount: 1
+
+worker:
+  replicaCount: 1
+
+service:
+  type: ClusterIP
+
+env:
+  DEPLOY_PEER_MODE: "custom"
+  AUTO_SEED: "1"
+
+podDisruptionBudget:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "500m"
+    memory: 512Mi

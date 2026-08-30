@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      Injected by vite.config.ts from src/main/security.ts buildCsp(). The packaged renderer
+      loads over file://, where response headers do not exist, so this tag is the enforcing
+      policy in production (CIDE-03).
+    -->
+    <meta http-equiv="Content-Security-Policy" content="%ONE_CSP%" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Majesta One Control</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/renderer/main.tsx"></script>
+  </body>
+</html>

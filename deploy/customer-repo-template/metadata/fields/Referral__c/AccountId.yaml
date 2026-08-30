@@ -1,0 +1,8 @@
+objectApiName: Referral__c
+apiName: AccountId
+label: Account
+fieldType: lookup
+referenceTo: Account
+required: true
+ownership: custom
+packageName: customer.default

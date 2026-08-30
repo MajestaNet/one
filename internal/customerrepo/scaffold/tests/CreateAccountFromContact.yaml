@@ -1,0 +1,28 @@
+apiName: CreateAccountFromContact
+label: Create Account from Contact gate
+description: Unit + contract coverage for CreateAccount_From_Contact and Referral__c lookups (ADR-014)
+active: true
+ownership: custom
+packageName: customer.default
+steps:
+  - type: objectExists
+    objectApiName: Contact
+  - type: objectExists
+    objectApiName: Account
+  - type: objectExists
+    objectApiName: Referral__c
+  - type: automationUnitPass
+    automationApiName: CreateAccount_From_Contact
+    testFile: tests/automations/create_account_from_contact_test.ts
+  - type: automationContract
+    automationApiName: CreateAccount_From_Contact
+    objectApiName: Contact
+    data:
+      FirstName: Contract
+      LastName: Contact
+    expectObjectApiName: Referral__c
+    expectMinRows: 1
+    filters:
+      - field: ContactId
+        op: eq
+        value: "$trigger.Id"

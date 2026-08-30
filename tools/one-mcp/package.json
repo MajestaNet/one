@@ -1,0 +1,29 @@
+{
+  "name": "@one/mcp-scaffold",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Vendor-plane TypeScript MCP scaffold for Majesta One installs (stdio + Client API). Not part of the product image.",
+  "type": "module",
+  "bin": {
+    "one-mcp": "./dist/stdio.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/stdio.js",
+    "dev": "tsx src/stdio.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
