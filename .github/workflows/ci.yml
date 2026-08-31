@@ -29,7 +29,7 @@ jobs:
     name: Gitleaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # Org repos require a paid license for gitleaks-action; run the OSS CLI instead.
@@ -59,7 +59,7 @@ jobs:
       mcp: ${{ steps.filter.outputs.mcp }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
       - uses: dorny/paths-filter@v3
@@ -102,7 +102,7 @@ jobs:
     if: needs.changes.outputs.go == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-go-mod
       - name: Product boundary
         run: make boundary
@@ -138,7 +138,7 @@ jobs:
     env:
       DATABASE_URL: postgres://one:one@localhost:5432/one?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-go-mod
       - name: Test
         run: |
@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-go-mod
       - name: Compile one for release GOOS/GOARCH
         run: |
@@ -206,7 +206,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Product boundary
         run: make boundary
       - uses: azure/setup-helm@v4
@@ -288,7 +288,7 @@ jobs:
       run:
         working-directory: tools/control-ide
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22.22.2"
@@ -363,7 +363,7 @@ jobs:
       matrix:
         kit: [auth, client]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -377,7 +377,7 @@ jobs:
     if: needs.changes.outputs.mcp == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
