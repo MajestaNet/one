@@ -14,3 +14,5 @@ Do not commit secrets, customer data, exploit PoCs, or live advisory detail. The
 
 - Go: `make test`
 - Control IDE: `make test-ide`
+
+Pull requests run path-filtered GitHub Actions (`.github/workflows/ci.yml`): Go lint/tests when `cmd/`, `internal/`, `migrations/`, `deploy/`, or `scripts/` change; Control IDE Vitest/build when `tools/control-ide/` changes; Gitleaks on every run. IDE-only PRs skip `go test`. See [docs/release-cicd.md](docs/release-cicd.md).
