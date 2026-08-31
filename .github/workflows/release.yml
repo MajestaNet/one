@@ -46,7 +46,7 @@ jobs:
           echo "api_image=ghcr.io/${owner}/one-api:${version}" >> "$GITHUB_OUTPUT"
           echo "worker_image=ghcr.io/${owner}/one-worker:${version}" >> "$GITHUB_OUTPUT"
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
