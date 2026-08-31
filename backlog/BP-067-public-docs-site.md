@@ -12,7 +12,7 @@ Majesta One is API-first with **no embedded UI**. Customer-facing docs live in t
 
 ## Direction (locked)
 
-A **separate Majesta CMS aggregator** (its own public Git repo) publishes `one.majesta.net` and later other Majesta subdomains. This monorepo stays source markdown on GitHub. **No CI, submodule, or secret dependency** on the CMS.
+A **separate Majesta CMS aggregator** (its own public Git repo) publishes `one.majesta.net` and later other Majesta subdomains. This monorepo stays source markdown on GitHub. **No CI, submodule, secret, or path dependency** on the CMS.
 
 | This repo | CMS repo |
 |---|---|
@@ -20,7 +20,7 @@ A **separate Majesta CMS aggregator** (its own public Git repo) publishes `one.m
 | No `tools/one-docs`, no `netlify.toml`, no `docs-impact` workflow | CMS agent + Deploy Previews + production after human merge |
 | Product `v*` publishes GHCR, not the docs site | One production pin is `v*` (not `ide` `main`) |
 
-A portable design seed may exist at repo-root `cms/` **only** so it can be copied into the new CMS repository. After that copy, **delete `cms/` from this tree**. Do not implement or import it from product CI.
+Do not implement or import the CMS from product CI.
 
 ## Explicit non-goals (this repo)
 
@@ -33,4 +33,4 @@ A portable design seed may exist at repo-root `cms/` **only** so it can be copie
 
 ## Implementation
 
-Do **not** paste an in-tree publisher prompt. Scaffold the aggregator in the CMS repo after extracting `cms/`.
+Do **not** paste an in-tree publisher prompt. Scaffold and host the aggregator in the CMS repo.

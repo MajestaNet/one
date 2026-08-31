@@ -1,4 +1,0 @@
-# Production pin for one.majesta.net. Use a v* tag that matches GHCR.
-# Unset / comment means "not published yet" — do not default to ide main.
-# example: v0.1.0
-unset
