@@ -16,7 +16,7 @@ jobs:
     name: Expire unused caches
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Self-test expiry script
         run: ./scripts/gh-actions-cache-expire.sh --self-test
       - name: Delete caches unused for 14 days
