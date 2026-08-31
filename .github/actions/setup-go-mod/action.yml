@@ -1,0 +1,17 @@
+name: Setup Go (restore cache)
+description: Install Go from go.mod and restore the go.sum-keyed module/build cache. PRs do not save (see docs/release-cicd.md).
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+        cache: false
+    - uses: actions/cache/restore@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: go-${{ runner.os }}-${{ hashFiles('go.sum') }}
+        restore-keys: |
+          go-${{ runner.os }}-

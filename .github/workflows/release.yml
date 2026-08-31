@@ -1,0 +1,128 @@
+# Product tag publish: GHCR images + static binaries + GitHub Release.
+# A tag never rolls customer installs. See docs/release-cicd.md.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish v* artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gitleaks
+        env:
+          GITLEAKS_VERSION: "8.30.0"
+        run: |
+          curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          gitleaks detect --verbose --redact --exit-code 1
+      - name: Product boundary
+        run: make boundary
+      - uses: ./.github/actions/setup-go-mod
+      - name: Version
+        id: version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "owner=${owner}" >> "$GITHUB_OUTPUT"
+          echo "api_image=ghcr.io/${owner}/one-api:${version}" >> "$GITHUB_OUTPUT"
+          echo "worker_image=ghcr.io/${owner}/one-worker:${version}" >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push images
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          API_IMAGE: ${{ steps.version.outputs.api_image }}
+          WORKER_IMAGE: ${{ steps.version.outputs.worker_image }}
+        run: |
+          set -euo pipefail
+          docker build -f deploy/Dockerfile --build-arg CMD=api --build-arg VERSION="$VERSION" -t "$API_IMAGE" .
+          docker build -f deploy/Dockerfile --build-arg CMD=worker --build-arg VERSION="$VERSION" -t "$WORKER_IMAGE" .
+          bash ./scripts/assert-image-contents.sh "$API_IMAGE"
+          bash ./scripts/assert-image-contents.sh "$WORKER_IMAGE"
+          docker push "$API_IMAGE"
+          docker push "$WORKER_IMAGE"
+      - name: Image digests
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          API_IMAGE: ${{ steps.version.outputs.api_image }}
+          WORKER_IMAGE: ${{ steps.version.outputs.worker_image }}
+        run: |
+          set -euo pipefail
+          api_digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$API_IMAGE" | awk -F@ '{print $2}')"
+          worker_digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$WORKER_IMAGE" | awk -F@ '{print $2}')"
+          mkdir -p dist
+          cat > "dist/image-digests-${VERSION}.txt" <<EOF
+          api_image=${API_IMAGE}
+          api_digest=${api_digest}
+          worker_image=${WORKER_IMAGE}
+          worker_digest=${worker_digest}
+          EOF
+          cat "dist/image-digests-${VERSION}.txt"
+      - name: Static linux host binaries
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          ldflags="-s -w -X github.com/MajestaNet/ide/internal/version.Version=${VERSION}"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$ldflags" -o dist/one-api ./cmd/api
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$ldflags" -o dist/one-worker ./cmd/worker
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="$ldflags" -o dist/one-migrate ./cmd/migrate
+      - name: Cross-compile one CLI
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          ldflags="-s -w -X github.com/MajestaNet/ide/internal/version.Version=${VERSION}"
+          while read -r goos goarch suffix; do
+            out="dist/one-${suffix}"
+            CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build -trimpath -ldflags="$ldflags" -o "$out" ./cmd/one
+          done <<'EOF'
+          linux amd64 linux-amd64
+          linux arm64 linux-arm64
+          darwin amd64 darwin-amd64
+          darwin arm64 darwin-arm64
+          windows amd64 windows-amd64.exe
+          EOF
+          # Unadorned `one` is linux/amd64 (compat for customer CI samples).
+          cp dist/one-linux-amd64 dist/one
+          chmod +x dist/one dist/one-linux-* dist/one-darwin-* dist/one-api dist/one-worker dist/one-migrate
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/one
+            dist/one-linux-amd64
+            dist/one-linux-arm64
+            dist/one-darwin-amd64
+            dist/one-darwin-arm64
+            dist/one-windows-amd64.exe
+            dist/one-api
+            dist/one-worker
+            dist/one-migrate
+            dist/image-digests-*.txt

@@ -31,7 +31,7 @@ GitHub’s free **Actions and Packages storage** quota (2 GB/month) counts **wor
 ### One-shot cleanup (run locally)
 
 ```bash
-export GH_REPO=MajestaNet/ide
+export GH_REPO=MajestaNet/one
 DRY_RUN=1 ./scripts/gh-actions-cache-expire.sh           # drop caches unused >14d
 ./scripts/gh-actions-quota-cleanup.sh --dry-run
 ./scripts/gh-actions-quota-cleanup.sh                    # artifacts + caches + 3-day default

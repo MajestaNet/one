@@ -1,0 +1,427 @@
+# Path-filtered validate pipeline. See docs/release-cicd.md and docs/control-ide-build.md.
+#
+# Required-check friendly aggregators:
+#   - "Go platform"  — success when Go jobs were skipped (IDE/docs-only) or all passed
+#   - "Control IDE"  — success when IDE jobs were skipped (Go/docs-only) or the IDE job passed
+# Gitleaks runs on every workflow. IDE-only PRs skip go test; Go-only PRs skip Vitest.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  GO_COVERAGE_MIN: "35"
+
+jobs:
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Org repos require a paid license for gitleaks-action; run the OSS CLI instead.
+      # Keep GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false — no SARIF/artifact uploads (quota).
+      - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: "8.30.0"
+        run: |
+          curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+      - name: Detect secrets
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+        run: gitleaks detect --verbose --redact --exit-code 1
+
+  changes:
+    name: Path filter
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.filter.outputs.go }}
+      ide: ${{ steps.filter.outputs.ide }}
+      docker: ${{ steps.filter.outputs.docker }}
+      do_app: ${{ steps.filter.outputs.do_app }}
+      sdk_client: ${{ steps.filter.outputs.sdk_client }}
+      mcp: ${{ steps.filter.outputs.mcp }}
+      ci: ${{ steps.filter.outputs.ci }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            go:
+              - 'cmd/**'
+              - 'internal/**'
+              - 'migrations/**'
+              - 'go.mod'
+              - 'go.sum'
+              - 'Makefile'
+              - '.golangci.yml'
+              - '.dockerignore'
+              - 'deploy/**'
+              - 'scripts/**'
+            ide:
+              - 'tools/control-ide/**'
+            docker:
+              - 'deploy/Dockerfile'
+              - '.dockerignore'
+              - 'migrations/**'
+              - 'scripts/assert-image-contents.sh'
+              - 'scripts/assert-product-boundary.sh'
+            do_app:
+              - 'deploy/digitalocean/**'
+              - 'scripts/validate-do-app-spec.go'
+              - 'scripts/validate-do-app-spec_test.go'
+            sdk_client:
+              - 'sdk/client/**'
+            mcp:
+              - 'tools/one-mcp/**'
+            ci:
+              - '.github/**'
+
+  go-lint:
+    name: Go lint + boundary
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-go-mod
+      - name: Product boundary
+        run: make boundary
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.4.0
+          args: --timeout=5m
+          skip-save-cache: ${{ github.event_name == 'pull_request' }}
+      - name: Validate DigitalOcean App Spec
+        run: go run ./scripts/validate-do-app-spec.go
+
+  go-test:
+    name: Go tests + coverage
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: one
+          POSTGRES_PASSWORD: one
+          POSTGRES_DB: one
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U one -d one"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://one:one@localhost:5432/one?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-go-mod
+      - name: Test
+        run: |
+          set -euo pipefail
+          # Serial packages share DATABASE_URL (see Makefile -p 1).
+          # -race is kept on main; PRs omit it (docs/release-cicd.md).
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            make test-race
+          else
+            go test -p 1 -coverprofile=coverage.out $(go list ./... | grep -v /node_modules/)
+          fi
+          go tool cover -func=coverage.out | tail -20
+          go run ./scripts/check-go-coverage coverage.out "${GO_COVERAGE_MIN}"
+      - name: Save Go module cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ hashFiles('go.sum') }}
+
+  one-cli-cross:
+    name: one CLI cross-compile
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-go-mod
+      - name: Compile one for release GOOS/GOARCH
+        run: |
+          set -euo pipefail
+          failed=0
+          while read -r goos goarch; do
+            out="one-${goos}-${goarch}"
+            if [[ "$goos" == windows ]]; then
+              out="${out}.exe"
+            fi
+            echo "::group::CGO_ENABLED=0 GOOS=${goos} GOARCH=${goarch}"
+            if ! CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build -o "/tmp/${out}" ./cmd/one; then
+              failed=1
+              echo "::endgroup::"
+              continue
+            fi
+            go version -m "/tmp/${out}" | head -20
+            echo "::endgroup::"
+          done <<'EOF'
+          linux amd64
+          linux arm64
+          darwin amd64
+          darwin arm64
+          windows amd64
+          EOF
+          exit "$failed"
+
+  docker-smoke:
+    name: Docker image smoke
+    needs: changes
+    if: >
+      needs.changes.outputs.docker == 'true' ||
+      needs.changes.outputs.ci == 'true' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Product boundary
+        run: make boundary
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.17.3
+      - name: Helm lint
+        run: helm lint deploy/helm/one
+      - name: Build one-api
+        run: docker build -f deploy/Dockerfile --build-arg CMD=api --build-arg VERSION=ci -t one-api:ci .
+      - name: Assert one-api contents
+        run: bash ./scripts/assert-image-contents.sh one-api:ci
+      - name: Build one-worker
+        run: docker build -f deploy/Dockerfile --build-arg CMD=worker --build-arg VERSION=ci -t one-worker:ci .
+      - name: Assert one-worker contents
+        run: bash ./scripts/assert-image-contents.sh one-worker:ci
+
+  go-platform:
+    name: Go platform
+    if: always()
+    needs: [changes, go-lint, go-test, one-cli-cross, docker-smoke]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Go jobs
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          GO: ${{ needs.changes.outputs.go }}
+          CI_PATHS: ${{ needs.changes.outputs.ci }}
+          DOCKER: ${{ needs.changes.outputs.docker }}
+          LINT: ${{ needs.go-lint.result }}
+          TEST: ${{ needs.go-test.result }}
+          CLI: ${{ needs.one-cli-cross.result }}
+          SMOKE: ${{ needs.docker-smoke.result }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if [[ "$CHANGES" != "success" ]]; then
+            echo "path filter failed ($CHANGES)"
+            exit 1
+          fi
+          fail=0
+          want_go=false
+          if [[ "$GO" == "true" || "$CI_PATHS" == "true" ]]; then
+            want_go=true
+          fi
+          check() {
+            local name="$1" want="$2" result="$3"
+            if [[ "$want" == "true" ]]; then
+              if [[ "$result" != "success" ]]; then
+                echo "$name required but result=$result"
+                fail=1
+              else
+                echo "$name ok"
+              fi
+            else
+              echo "$name not required (result=$result)"
+            fi
+          }
+          check go-lint "$want_go" "$LINT"
+          check go-test "$want_go" "$TEST"
+          check one-cli-cross "$want_go" "$CLI"
+          want_docker=false
+          if [[ "$DOCKER" == "true" || "$CI_PATHS" == "true" ]]; then
+            want_docker=true
+          fi
+          if [[ "$EVENT" == "push" && "$REF" == "refs/heads/main" ]]; then
+            want_docker=true
+          fi
+          check docker-smoke "$want_docker" "$SMOKE"
+          exit "$fail"
+
+  control-ide:
+    name: Control IDE tests
+    needs: changes
+    if: needs.changes.outputs.ide == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: tools/control-ide
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.2"
+      - name: Restore npm cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.npm
+          key: npm-ide-${{ hashFiles('tools/control-ide/package-lock.json') }}
+          restore-keys: npm-ide-
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: npm audit (high+)
+        run: npm run audit:high
+      - name: Vitest + coverage
+        run: npm run test:coverage
+      - name: Build
+        run: npm run build
+      - name: Electron trust-boundary smoke
+        run: npm run smoke:electron
+      - name: Linux AppImage smoke
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm libarchive-tools
+          npm run dist:linux
+      - name: Assert IDE artifacts
+        working-directory: .
+        run: bash ./scripts/assert-ide-artifacts.sh
+      - name: Save npm cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.npm
+          key: npm-ide-${{ hashFiles('tools/control-ide/package-lock.json') }}
+
+  control-ide-gate:
+    name: Control IDE
+    if: always()
+    needs: [changes, control-ide]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Control IDE job
+        env:
+          CHANGES: ${{ needs.changes.result }}
+          IDE: ${{ needs.changes.outputs.ide }}
+          CI_PATHS: ${{ needs.changes.outputs.ci }}
+          RESULT: ${{ needs.control-ide.result }}
+        run: |
+          set -euo pipefail
+          if [[ "$CHANGES" != "success" ]]; then
+            echo "path filter failed ($CHANGES)"
+            exit 1
+          fi
+          want=false
+          if [[ "$IDE" == "true" || "$CI_PATHS" == "true" ]]; then
+            want=true
+          fi
+          if [[ "$want" == "true" && "$RESULT" != "success" ]]; then
+            echo "control-ide required but result=$RESULT"
+            exit 1
+          fi
+          echo "Control IDE gate ok (want=$want result=$RESULT)"
+
+  sdk-client:
+    name: sdk/client kits
+    needs: changes
+    if: needs.changes.outputs.sdk_client == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kit: [auth, client]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test @one/${{ matrix.kit }}
+        working-directory: sdk/client/${{ matrix.kit }}
+        run: npm install && npm test
+
+  one-mcp:
+    name: one-mcp typecheck
+    needs: changes
+    if: needs.changes.outputs.mcp == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tools/one-mcp/package-lock.json
+      - name: Typecheck
+        working-directory: tools/one-mcp
+        run: npm ci && npm run typecheck
+
+  # Single required check when branch protection cannot express skipped-but-ok jobs.
+  ci:
+    name: CI
+    if: always()
+    needs: [gitleaks, go-platform, control-ide-gate, sdk-client, one-mcp]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required jobs
+        env:
+          GITLEAKS: ${{ needs.gitleaks.result }}
+          GO: ${{ needs.go-platform.result }}
+          IDE: ${{ needs.control-ide-gate.result }}
+          SDK: ${{ needs.sdk-client.result }}
+          MCP: ${{ needs.one-mcp.result }}
+        run: |
+          set -euo pipefail
+          fail=0
+          for name_result in "gitleaks:$GITLEAKS" "Go platform:$GO" "Control IDE:$IDE"; do
+            name="${name_result%%:*}"
+            result="${name_result#*:}"
+            if [[ "$result" != "success" ]]; then
+              echo "$name failed ($result)"
+              fail=1
+            else
+              echo "$name ok"
+            fi
+          done
+          for name_result in "sdk/client:$SDK" "one-mcp:$MCP"; do
+            name="${name_result%%:*}"
+            result="${name_result#*:}"
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+              echo "$name failed ($result)"
+              fail=1
+            else
+              echo "$name ok (result=$result)"
+            fi
+          done
+          exit "$fail"

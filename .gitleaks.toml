@@ -1,0 +1,25 @@
+title = "Majesta One"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Local-dev placeholders and test fixtures"
+paths = [
+  '''(^|/)docs/''',
+  '''(^|/)backlog/''',
+  '''(^|/)scripts/testdata/''',
+  '''_test\.go$''',
+  '''\.test\.(ts|tsx|js)$''',
+  '''\.example$''',
+  '''DigitalOceanCloudSection\.tsx$''',
+]
+regexes = [
+  '''change-me''',
+  '''dev-admin-key''',
+  '''dev-agent-key''',
+  '''dev-one-jwt-hmac-secret''',
+  '''local-dev-claim-token''',
+  '''apps-s-\dvcpu''',
+  '''db-s-\dvcpu''',
+]
