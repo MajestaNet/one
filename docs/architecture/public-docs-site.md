@@ -6,7 +6,7 @@ Customer-facing Majesta One docs (install, connect, CLI, family APIs) are publis
 **This repo:** GitHub `docs/` remain operator/contributor markdown. No runtime or CI dependency on the CMS.  
 **Backlog:** [BP-067](../../backlog/BP-067-public-docs-site.md)
 
-This file is a pointer only. Host, pin + overlay, CMS agent, and Netlify multi-site rules live in the CMS repository (seed was designed for one-time copy out of this tree).
+This file is a pointer only. Host, pin + overlay, CMS agent, and Netlify multi-site rules live in the CMS repository.
 
 ## What stays here
 
