@@ -1,0 +1,27 @@
+# Weekly Actions cache expiry so free storage quota is not exhausted by stale PR caches.
+# See docs/release-cicd.md. Emergency full wipe remains scripts/gh-actions-quota-cleanup.sh.
+name: Actions storage hygiene
+
+on:
+  schedule:
+    - cron: "17 6 * * 0"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  expire-caches:
+    name: Expire unused caches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Self-test expiry script
+        run: ./scripts/gh-actions-cache-expire.sh --self-test
+      - name: Delete caches unused for 14 days
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          MAX_AGE_DAYS: "14"
+        run: ./scripts/gh-actions-cache-expire.sh
