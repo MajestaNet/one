@@ -106,7 +106,7 @@ Default API base URL in UI: `http://localhost:8080`. Every Majesta One call send
 cd tools/control-ide
 npm ci
 npm run lint             # eslint (incl. eslint-plugin-security)
-npm run audit:high       # npm audit --audit-level=high
+npm run audit:high       # high+ GHSA gate (npm audit, OSV fallback if the audit API is down)
 npm test                 # unit + component
 npm run test:coverage    # CI thresholds
 npm run build            # tsc + vite + main/preload

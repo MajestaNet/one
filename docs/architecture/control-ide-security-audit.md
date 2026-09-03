@@ -100,7 +100,7 @@ An arbitrary path went to the OS default handler, which launches executables and
 Beyond the injection above, no scheme allowlist meant `customerRepoUrl` could name a local path or hostile remote. Control: scheme allowlist plus `protocol.ext.allow=never`, `core.hooksPath=/dev/null`, and `--no-recurse-submodules` on clone.
 
 **CIDE-14 — Vulnerable and deprecated transitive packages, with no gate.** *Fixed (Phase 0 gate, Phase 3 bumps).*
-`brace-expansion` DoS at three versions, a critical `tar@6.2.1` advisory cluster, and 14 packages carrying npm deprecation notices, nearly all under electron-builder 25. No `npm audit`, SCA, or Dependabot existed anywhere in `.github/`. Control: `npm audit --audit-level=high` required in CI, Dependabot for npm and gomod, electron-builder 26.15+, and `overrides` pins of `brace-expansion@5.0.8` plus `minimatch@10.2.5` so nested builder/coverage copies clear `GHSA-mh99-v99m-4gvg` without breaking Vitest coverage's CJS import of `brace-expansion`.
+`brace-expansion` DoS at three versions, a critical `tar@6.2.1` advisory cluster, and 14 packages carrying npm deprecation notices, nearly all under electron-builder 25. No `npm audit`, SCA, or Dependabot existed anywhere in `.github/`. Control: high+ advisory gate required in CI (`npm run audit:high` — `npm audit --json` with an OSV lockfile fallback when the retired `/security/audits/quick` endpoint 400s/503s), Dependabot for npm and gomod, electron-builder 26.15+, and `overrides` pins of `brace-expansion@5.0.9`, `minimatch@10.2.5`, and `fast-uri@4.1.4` so nested builder/coverage/ajv copies stay off the known high GHSA ranges without breaking Vitest coverage's CJS import of `brace-expansion`.
 
 **CIDE-15 — No linter, and the trust boundary excluded from coverage.** *Fixed (Phase 0 and Phase 4).*
 There was no ESLint config, no `lint` script, and no lint job, though five files carried `eslint-disable` comments. `vitest.config.ts` excluded `src/main/main.ts` and `src/preload/**` from coverage, leaving the entire IPC boundary outside the CI gate. Control: ESLint flat config with `eslint-plugin-security`; CI lint + coverage of `src/main/*` policy modules (`security`, `paths`, `sessionStore`, `updates`, `ipcTrust`, `protocol`, `webContentsPolicy`) and `src/preload/oneApi.ts`; Electron lifecycle wiring in `main.ts` / `preload.ts` exercised by `npm run smoke:electron` in CI.
@@ -120,13 +120,13 @@ Recorded so remediation does not regress them: `contextIsolation: true`, `nodeIn
 
 ## Remediation phases
 
-**Phase 0 — audit record and CI gates.** This document, an ESLint flat config with `eslint-plugin-security`, Dependabot for npm and gomod, and lint plus `npm audit --audit-level=high` steps in the `control-ide` CI job.
+**Phase 0 — audit record and CI gates.** This document, an ESLint flat config with `eslint-plugin-security`, Dependabot for npm and gomod, and lint plus `npm run audit:high` steps in the `control-ide` CI job.
 
 **Phase 1 — Electron trust boundary.** Window-open denial with `shell.openExternal`, navigation and webview guards, CSP, deny-all permission handler, IPC sender validation, a main-owned repo root for every filesystem and git handler, git argument and URL allowlists, `shell.openPath` confinement, loopback dev binding.
 
 **Phase 2 — auth, session, and update input.** Base URL validation with peer-host confirmation, strict OAuth state and pending-flow checks, fail-closed session encryption at mode `0600`, masked token display, sanitized error surfacing, explicit `approved: false`, and an `https` host allowlist for `UPDATE_FEED_URL` with `autoDownload` disabled.
 
-**Phase 3 — dependencies.** Electron 43 with `@electron/fuses` / `electronFuses`, electron-builder 26.15+, `brace-expansion` + `minimatch` overrides, `docs/tech-stack.md` updated, `@assistant-ui` fallback hardened, OSV/`npm audit --audit-level=high` clean and required in CI.
+**Phase 3 — dependencies.** Electron 43 with `@electron/fuses` / `electronFuses`, electron-builder 26.15+, `brace-expansion` + `minimatch` overrides, `docs/tech-stack.md` updated, `@assistant-ui` fallback hardened, OSV/`npm run audit:high` clean and required in CI.
 
 **Phase 4 — verification.** *Done.* Guard modules extracted and covered by Vitest; coverage gate includes `src/main/**` policy + `src/preload/oneApi.ts`; `smoke:electron` runs under xvfb in the Control IDE CI job; lint / audit / coverage / build / AppImage / artifact assert remain green.
 
@@ -149,7 +149,7 @@ Because it drives the shipped binary from outside, it needs no test hooks in pro
 
 - No renderer-initiated window can obtain the preload bridge, and login opens in the system browser.
 - Every `ipcMain` handler validates its sender and derives paths from a main-owned root.
-- `npm audit --audit-level=high` is clean and enforced in CI.
+- `npm run audit:high` is clean and enforced in CI (npm audit when the registry answers; OSV GHSA high+ otherwise).
 - Electron sits on a supported major with fuses applied.
 - The JWT is never transmitted to an unvalidated host and never persisted unencrypted.
 
@@ -159,7 +159,7 @@ Because it drives the shipped binary from outside, it needs no test hooks in pro
 - Per-peer promote credentials are still pasted at promote time ([BP-023](../../backlog/BP-048-one-cli.md)).
 - A hostile install API can still influence UI content within the bounds of its own data; the IDE trusts the install it is connected to by design (ADR-012), and server-side hardening belongs to the Go plane.
 - The renderer holds the JWT in memory for the lifetime of the session; eliminating that requires the main process to proxy API calls, which is a larger change than this audit.
-- `brace-expansion@5.0.8` and `minimatch@10.2.5` are forced via npm `overrides` across nested builder/coverage trees. brace-expansion 5 dropped the default-export function shape that older minimatch majors expected, so both pins are required together for `vitest --coverage` (and the CI audit) to stay green. Upstream packages still declare older ranges — Dependabot and the required CI audit step are the ongoing gate if a future override conflict appears.
+- `brace-expansion@5.0.9`, `minimatch@10.2.5`, and `fast-uri@4.1.4` are forced via npm `overrides` across nested builder/coverage/ajv trees. brace-expansion 5 dropped the default-export function shape that older minimatch majors expected, so the brace/minimatch pins are required together for `vitest --coverage`. `fast-uri@4.1.2` (the previous pin) still matched the 2026 host-confusion/SSRF GHSA cluster; 4.1.4 is the patched line. Upstream packages still declare older ranges — Dependabot and the required CI audit step are the ongoing gate if a future override conflict appears.
 
 ## Phase 4 verification record
 
@@ -177,7 +177,7 @@ Because it drives the shipped binary from outside, it needs no test hooks in pro
 | [BP-015](../adr/030-install-agent-runtime.md) | Open → Partially mitigated | Feed allowlist + `autoDownload` off + fuses; CDN/signing/portal E2E remain |
 | [BP-022](../../backlog/BP-022-client-access-ide-device.md) | Partially mitigated | OS-browser login, install URL trust, PKCE/deep-link guards; ALB mTLS / TPM remain |
 | [BP-023](../../backlog/BP-048-one-cli.md) | Partially mitigated | Main-owned repo/git IPC + encrypted Majesta One session; per-peer promote secrets remain |
-| [BP-026](../../backlog/BP-026-oss-security-public-backlog.md) | Partially mitigated | Dependabot + required IDE `npm audit` + this register; advisory-policy / security.txt remain |
+| [BP-026](../../backlog/BP-026-oss-security-public-backlog.md) | Partially mitigated | Dependabot + required IDE `npm run audit:high` + this register; advisory-policy / security.txt remain |
 
 ## Related
 
