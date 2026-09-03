@@ -1,7 +1,7 @@
 # BP-068: Control IDE Majesta brand visual restyle
 
 - **Severity:** Medium
-- **Status:** Open (plan landed; implementation in progress)
+- **Status:** Open (implementation PR; tests passing)
 - **Track:** Finish — **optional IDE demo client paint**, not frozen Electron product chrome
 - **Area:** `tools/control-ide/**` (tokens, chrome marks, vendored brand assets, electron-builder icon)
 - **Design:** [ide-brand-visual-build-plan.md](../docs/architecture/ide-brand-visual-build-plan.md)
@@ -46,4 +46,4 @@ Follow [ide-brand-visual-build-plan.md](../docs/architecture/ide-brand-visual-bu
 ## Status notes
 
 - **2026-09-03:** Plan and review landed.
-- **2026-09-03:** Implementation in progress (vendored artwork, navy/gold tokens, BrandMark chrome, app icon).
+- **2026-09-03:** Implementation PR — vendored artwork, navy/gold tokens, BrandMark chrome, app icon. `npm test` (661), `npm run lint` (no new errors), `npm run build`, `npm run smoke:electron` (10/10).

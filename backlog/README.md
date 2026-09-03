@@ -58,7 +58,7 @@ Each BP header includes an **`Area:`** field — preferred code scope. Resolve A
 | [BP-065](./BP-065-ide-backend-coupling.md) | Medium | Partially mitigated | Neutralize Control IDE coupling on the Go install (Phase 1 AuthN landed; Phases 2–4 remain) |
 | [BP-066](./BP-066-ide-demo-client-fidelity.md) | Medium | Open | Control IDE as an honest JWT demo of shipped APIs |
 | [BP-067](./BP-067-public-docs-site.md) | Medium | Open (CMS extracted) | Public docs site (`one.majesta.net`) — separate CMS aggregator; this repo does not implement |
-| [BP-068](./BP-068-ide-brand-visual.md) | Medium | Open | Control IDE brand restyle (navy/gold tokens + logo; not chrome expansion) |
+| [BP-068](./BP-068-ide-brand-visual.md) | Medium | Open (implementation PR) | Control IDE brand restyle (navy/gold tokens + logo; not chrome expansion) |
 
 Severity guide: **High** = likely to block real customer load, security, or the install agent-runtime / Ship path; **Medium** = will hurt before GA if ignored. Control IDE commercial delivery is **not** a High driver while chrome is frozen ([ADR-030](../docs/adr/030-install-agent-runtime.md)).
 
