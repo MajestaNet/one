@@ -21,6 +21,7 @@ import {
 } from "./agents/runs";
 import { modesFromPrimarySection } from "./agents/sections";
 import { ThemeContext } from "./ThemeContext";
+import { BrandMark } from "./ui/BrandMark";
 import { AccountSettingsPanel } from "./panels/AccountSettingsPanel";
 import { HostingPanel } from "./panels/HostingPanel";
 import { InferencePanel } from "./panels/InferencePanel";
@@ -1696,9 +1697,7 @@ export function App() {
           Skip to workspace
         </a>
         <header className="top-bar">
-          <p className="brand">
-            Majesta One <span>Control</span>
-          </p>
+          <BrandMark variant="symbol" />
           <div className="top-bar-center">
             {!connected ? (
               <p className="top-mode muted" data-testid="active-mode">

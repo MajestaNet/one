@@ -63,7 +63,7 @@ Hover + click the centered **Mode title** to reopen the launcher tiles (animated
 
 ### Top bar
 
-- Brand: **Majesta One Control** (product name in prose / window title). **Today** the top-left is typed text. **Target ([BP-068](../backlog/BP-068-ide-brand-visual.md)):** globe symbol top-left plus optional “Control”; full `MAJESTA.NET` SVG lockup only on Sign in and the mode launcher (lockup stays ≥ 180px). Do not type the wordmark.
+- Brand: **Majesta One Control** in prose / window title. Top-left chrome is the sourced globe plus typed “Control”. Full `MAJESTA.NET` SVG lockup only on Sign in and the mode launcher (lockup stays ≥ 180px). Do not type the wordmark ([BP-068](../backlog/BP-068-ide-brand-visual.md)).
 - **Centered mode title** — hover animates; click brings launcher tiles back. Geometry is **identical in every mode** (no Operate-only search field in this bar)
 - Env switcher, theme toggle (dark / light, `Ctrl/Cmd+Shift+L`), account chip (initials + username) → Environments
 - Change / update status lives in the footer status bar (not the top-right)

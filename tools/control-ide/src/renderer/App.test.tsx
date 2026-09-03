@@ -154,6 +154,9 @@ describe("App", () => {
     expect(screen.queryByTestId("agent-stream")).toBeNull();
     expect(screen.getByTestId("session-chip").textContent).toMatch(/Not connected/);
     expect(screen.queryByTestId("operate-global-search")).toBeNull();
+    expect(screen.getByTestId("brand")).toBeTruthy();
+    expect(screen.getByTestId("brand-lockup")).toBeTruthy();
+    expect(screen.getAllByRole("img", { name: /Majesta\.Net/i }).length).toBeGreaterThanOrEqual(2);
   });
 
   it("shows four mode tiles after connect, including Settings (no footer Settings)", async () => {
