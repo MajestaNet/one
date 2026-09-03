@@ -15,7 +15,7 @@
     "build": "tsc -p tsconfig.json --noEmit && vite build && tsc -p tsconfig.node.json",
     "preview": "vite preview",
     "lint": "eslint .",
-    "audit:high": "npm audit --audit-level=high",
+    "audit:high": "node ./scripts/npm-audit-high.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -75,7 +75,7 @@
   },
   "overrides": {
     "brace-expansion": "5.0.9",
-    "fast-uri": "4.1.2",
+    "fast-uri": "4.1.4",
     "minimatch": "10.2.5"
   }
 }
