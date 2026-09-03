@@ -8,6 +8,7 @@ Client-only Electron + React + Monaco shell for the Majesta One **Customer IDE**
 
 Desktop build & distribution plan: [docs/control-ide-build.md](../../docs/control-ide-build.md).
 Visual tokens + dual theme + updates: [docs/control-ide-design.md](../../docs/control-ide-design.md).
+Brand restyle (navy/gold + sourced logo): [ide-brand-visual-build-plan.md](../../docs/architecture/ide-brand-visual-build-plan.md) / [BP-068](../../backlog/BP-068-ide-brand-visual.md).
 UX (modes, tiles, agent stream): [docs/customer-ide-ux.md](../../docs/customer-ide-ux.md).
 Private update CDN / signing E2E is frozen ([ADR-030](../../docs/adr/030-install-agent-runtime.md)).
 
