@@ -8,7 +8,7 @@ Control IDE uses **owned CSS design tokens** in `tools/control-ide/src/renderer/
 
 | Principle | Choice |
 |---|---|
-| Look | Enterprise console + futuristic IDE (graphite / paper surfaces, cool ink, one electric accent) |
+| Look | Enterprise console (today: graphite / paper + teal). **Target:** Majesta navy / gold / white — [ide-brand-visual-build-plan.md](./architecture/ide-brand-visual-build-plan.md) |
 | Density | Console-grade for Build/Ship; slightly airier Operate boards |
 | Typography | IBM Plex Sans / IBM Plex Serif / IBM Plex Mono (**self-hosted** under `tools/control-ide/assets/fonts/`) |
 | Framework | Plain CSS variables + React classNames |
@@ -32,9 +32,9 @@ Do not introduce a parallel UI kit without updating [tech-stack.md](./tech-stack
 | Attribute | Behavior |
 |---|---|
 | Selector | `html[data-theme="dark"]` / `html[data-theme="light"]` (also sets `color-scheme`) |
-| Accent | Teal family retained in both themes for brand continuity |
-| Dark | Graphite console (`#0b0f14` bg, cool ink) — default for technical audiences |
-| Light | Cool paper surfaces + graphite ink — business-friendly, not consumer pastel |
+| Accent | **Today:** teal family in both themes. **Target ([BP-068](../backlog/BP-068-ide-brand-visual.md)):** gold fills; `--accent-text` is gold on dark and navy on light. Do not use gold as body text on white. |
+| Dark | **Today:** graphite console (`#0b0f14`). **Target:** reference navy (`#1B2E46`) family, white ink — not ivory |
+| Light | **Today:** cool paper + graphite ink. **Target:** white panels on a cool near-white board (**not** ivory `#F5F1E8`) |
 | Persistence | `localStorage` key `one.control.theme` (`dark` \| `light`) |
 | First launch | `window.matchMedia("(prefers-color-scheme: light)")` when no stored preference |
 | Toggle | Top-bar icon control + `Ctrl/Cmd+Shift+L` |
@@ -91,3 +91,4 @@ Unchanged from ADR-012: Control IDE is vendor-plane only; AuthZ and Deploy logic
 - [ADR-030](./adr/030-install-agent-runtime.md) — freeze vs finish (update CDN / chrome frozen)
 - [BP-060](../backlog/BP-060-operate-graph-surface.md) — Operate graph surface (command bar, glance, drop Tools)
 - [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) — honest JWT demo client
+- [BP-068](../backlog/BP-068-ide-brand-visual.md) — navy/gold restyle + sourced logo ([ide-brand-visual-build-plan.md](./architecture/ide-brand-visual-build-plan.md))
