@@ -34,15 +34,20 @@ describe("BrandMark", () => {
         <BrandMark variant="symbol" />
       </ThemeContext.Provider>,
     );
-    const darkSrc = (screen.getByRole("img", { name: /Majesta\.Net/i }) as HTMLImageElement).src;
-    expect(darkSrc).toMatch(/symbol-gold/i);
+    const darkSrc = decodeURIComponent(
+      (screen.getByRole("img", { name: /Majesta\.Net/i }) as HTMLImageElement).src,
+    );
+    expect(darkSrc).toMatch(/#F6CF55/i);
 
     rerender(
       <ThemeContext.Provider value="light">
         <BrandMark variant="symbol" />
       </ThemeContext.Provider>,
     );
-    const lightSrc = (screen.getByRole("img", { name: /Majesta\.Net/i }) as HTMLImageElement).src;
-    expect(lightSrc).toMatch(/symbol-navy/i);
+    const lightSrc = decodeURIComponent(
+      (screen.getByRole("img", { name: /Majesta\.Net/i }) as HTMLImageElement).src,
+    );
+    expect(lightSrc).toMatch(/#1B2E46/i);
+    expect(lightSrc).not.toMatch(/#F6CF55/i);
   });
 });
