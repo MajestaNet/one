@@ -29,14 +29,17 @@ publish:
   url: https://updates.example.invalid/control-ide/
 mac:
   category: public.app-category.developer-tools
+  icon: assets/brand/app-icon.png
   target:
     - dmg
     - zip
 win:
+  icon: assets/brand/app-icon.png
   target:
     - nsis
 linux:
   category: Development
+  icon: assets/brand/app-icon.png
   target:
     - AppImage
   artifactName: One-Control-${version}.${ext}
