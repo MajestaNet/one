@@ -1,5 +1,6 @@
 import type { AppBridge } from "./App";
 import { ConnectSection } from "./govern/ConnectSection";
+import { BrandMark } from "./ui/BrandMark";
 
 /**
  * Full-shell sign-in when no Majesta One JWT is present.
@@ -18,9 +19,7 @@ export function AuthScreen({
     <section className="auth-screen" data-testid="auth-screen" aria-label="Sign in to Majesta One">
       <div className="auth-screen-inner">
         <div className="auth-screen-intro">
-          <p className="mode-launcher-brand">
-            Majesta One <span>Control</span>
-          </p>
+          <BrandMark variant="lockup" />
           <h1>Sign in</h1>
           <p className="muted">
             Connect to an install to unlock Operate, Build, Govern, and Settings. AuthZ stays

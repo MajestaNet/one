@@ -19,7 +19,7 @@ Community review can make Majesta One **more** secure when practiced (more eyes 
 - Public backlog rules documented in [README alignment](./README.md#security--transparency)
 - Entire repository Apache-2.0 (including Control IDE) ([NOTICE](../NOTICE))
 - Dependabot for `tools/control-ide` npm, Go modules, and GitHub Actions (`.github/dependabot.yml`)
-- Control IDE CI gate: lint + `npm audit --audit-level=high` (required) + trust-boundary smoke
+- Control IDE CI gate: lint + `npm run audit:high` (required; npm audit with OSV fallback when the registry audit API is down) + trust-boundary smoke
 - Go backend dependencies refreshed to supported releases and checked once against the
   official Go vulnerability database (August 2026 production-hardening baseline). **There is no CI `govulncheck` gate.**
 - Root [`CONTRIBUTING.md`](../CONTRIBUTING.md) Security section points at [`SECURITY.md`](../SECURITY.md) (one line; no secrets/PoC blurb yet)

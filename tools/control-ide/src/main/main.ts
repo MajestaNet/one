@@ -193,7 +193,7 @@ function createWindow() {
   const next = new BrowserWindow({
     width: 1280,
     height: 840,
-    backgroundColor: "#0b0f14",
+    backgroundColor: "#1B2E46",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

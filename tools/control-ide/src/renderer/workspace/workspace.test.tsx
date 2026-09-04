@@ -375,6 +375,8 @@ describe("ModeLauncher", () => {
     expect(screen.getAllByTestId(/mode-launch-/).map((el) => el.getAttribute("data-testid"))).toEqual(
       order,
     );
+    expect(screen.getByTestId("brand-lockup")).toBeTruthy();
+    expect(screen.getByRole("img", { name: /Majesta\.Net/i })).toBeTruthy();
     await user.click(screen.getByTestId("mode-launch-settings"));
     expect(onSelect).toHaveBeenCalledWith("settings");
   });

@@ -1,5 +1,6 @@
 import { ACCOUNT_LAUNCHER, MODES, type LauncherTileId, type WorkspaceMode } from "./types";
 import { modeIcon } from "../icons/Icons";
+import { BrandMark } from "../ui/BrandMark";
 
 export function ModeLauncher({
   onSelect,
@@ -29,9 +30,7 @@ export function ModeLauncher({
       aria-label="Choose a workspace mode"
     >
       <div className="mode-launcher-intro">
-        <p className="mode-launcher-brand">
-          Majesta One <span>Control</span>
-        </p>
+        <BrandMark variant="lockup" />
         <h1>{overlay ? "Switch mode" : "Customer IDE"}</h1>
         <p className="muted">
           {overlay
