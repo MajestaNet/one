@@ -8,7 +8,7 @@ Control IDE uses **owned CSS design tokens** in `tools/control-ide/src/renderer/
 
 | Principle | Choice |
 |---|---|
-| Look | Enterprise console (today: graphite / paper + teal). **Target:** Majesta navy / gold / white — [ide-brand-visual-build-plan.md](./architecture/ide-brand-visual-build-plan.md) |
+| Look | Majesta navy / gold / white console — sourced globe + lockup ([ide-brand-visual-build-plan.md](./architecture/ide-brand-visual-build-plan.md)) |
 | Density | Console-grade for Build/Ship; slightly airier Operate boards |
 | Typography | IBM Plex Sans / IBM Plex Serif / IBM Plex Mono (**self-hosted** under `tools/control-ide/assets/fonts/`) |
 | Framework | Plain CSS variables + React classNames |
@@ -17,7 +17,7 @@ Control IDE uses **owned CSS design tokens** in `tools/control-ide/src/renderer/
 
 ### Token roles
 
-**Surfaces / ink:** `--bg`, `--bg-glow`, `--bg-deep`, `--panel`, `--ink`, `--muted`, `--line`, `--accent`, `--accent-dim`, `--accent-ink`, `--warn`, `--danger`, `--success`, `--info`, `--nav`, `--surface-elevated`, `--stream-bg`, `--check-pass`, `--check-run`.
+**Surfaces / ink:** `--bg`, `--bg-glow`, `--bg-deep`, `--panel`, `--ink`, `--muted`, `--line`, `--accent`, `--accent-dim`, `--accent-ink`, `--accent-text`, `--brand-navy`, `--brand-gold`, `--brand-white`, `--brand-slate`, `--warn`, `--danger`, `--success`, `--info`, `--nav`, `--surface-elevated`, `--stream-bg`, `--check-pass`, `--check-run`.
 
 **Scale:** `--space-1`…`--space-6`, `--text-xs`…`--text-display`, `--radius-sm` / `--radius` / `--radius-lg`, `--elev-1` / `--elev-2`.
 
@@ -25,16 +25,16 @@ Do not introduce a parallel UI kit without updating [tech-stack.md](./tech-stack
 
 ### Primitives (`src/renderer/ui/`)
 
-`Button` (primary / secondary / ghost / danger + busy), `Spinner`, `Skeleton` / `BootSkeleton`, `EmptyState`, `StatusBadge` / `CheckDot`, `PanelHeader`, **`ToolSurface` / `ToolToolbar` / `SearchField`** (required tool frame — [agent-control-ide.md](./architecture/agent-control-ide.md); Operate graph exempt), `DataTable`, `KeyValueList`, `FileDrop`.
+`Button` (primary / secondary / ghost / danger + busy), `Spinner`, `Skeleton` / `BootSkeleton`, `EmptyState`, `StatusBadge` / `CheckDot`, `PanelHeader`, **`BrandMark`** (sourced globe / lockup), **`ToolSurface` / `ToolToolbar` / `SearchField`** (required tool frame — [agent-control-ide.md](./architecture/agent-control-ide.md); Operate graph exempt), `DataTable`, `KeyValueList`, `FileDrop`.
 
 ### Dual theme
 
 | Attribute | Behavior |
 |---|---|
 | Selector | `html[data-theme="dark"]` / `html[data-theme="light"]` (also sets `color-scheme`) |
-| Accent | **Today:** teal family in both themes. **Target ([BP-068](../backlog/BP-068-ide-brand-visual.md)):** gold fills; `--accent-text` is gold on dark and navy on light. Do not use gold as body text on white. |
-| Dark | **Today:** graphite console (`#0b0f14`). **Target:** reference navy (`#1B2E46`) family, white ink — not ivory |
-| Light | **Today:** cool paper + graphite ink. **Target:** white panels on a cool near-white board (**not** ivory `#F5F1E8`) |
+| Accent | Gold fills (`--accent` / `--brand-gold`) in both themes; `--accent-text` is gold on dark and navy on light. Do not use gold as body text on white. |
+| Dark | Reference navy (`#1B2E46`) family, white ink |
+| Light | White panels on a cool near-white board (not ivory `#F5F1E8`) |
 | Persistence | `localStorage` key `one.control.theme` (`dark` \| `light`) |
 | First launch | `window.matchMedia("(prefers-color-scheme: light)")` when no stored preference |
 | Toggle | Top-bar icon control + `Ctrl/Cmd+Shift+L` |
@@ -44,7 +44,7 @@ Do not introduce a parallel UI kit without updating [tech-stack.md](./tech-stack
 
 | Region | Role |
 |---|---|
-| Top bar | Brand, **centered mode title** (hover/click → launcher overlay), Env switcher, theme icon, account chip (initials + name). **Do not** put Operate search here — it shifts title and actions ([ADR-028](./adr/028-operate-graph-surface.md)) |
+| Top bar | Globe + “Control”, **centered mode title** (hover/click → launcher overlay), Env switcher, theme icon, account chip (initials + name). **Do not** put Operate search here — it shifts title and actions ([ADR-028](./adr/028-operate-graph-surface.md)) |
 | Operate graph | Command bar at the top of the graph tile (`⌘K`); results drop from the bar; matching nodes pulse |
 | Workspace | Full-bleed **2-slice** board — 1 fills / 2 resize (one tool + one agent; select swaps). Empty board docks both catalogs; they retract to 44px hover strips once a tool or agent is selected. Hover open/close overlays inside those columns and must **not** change `grid-template-columns`. |
 | Tool rail | Left 44px strip; hover overlay and pin share a 240px catalog (284px docked column). Pin does not restyle the strip. Overlay closes on select. |

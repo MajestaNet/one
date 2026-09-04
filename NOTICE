@@ -21,3 +21,9 @@ and supporting tools.
 
 Third-party open-source components used by this product remain under
 their respective licenses as declared by those components' authors.
+
+The Majesta.Net name, wordmarks, globe symbol, and other brand artwork
+vendored under tools/control-ide/assets/brand/ (sourced from the
+Majesta.Net website identity) are trademarks and proprietary artwork of
+Majesta.Net. The Apache License 2.0 that covers this repository does
+not grant a trademark license or relicense that artwork.
