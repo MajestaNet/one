@@ -63,7 +63,7 @@ Refactor existing `tools/control-ide` when that lets the install drop IDE-shaped
 
 **Exception — demo honesty, not chrome:** [BP-066](../../backlog/BP-066-ide-demo-client-fidelity.md) / [ide-demo-client-uplift-build-plan.md](./ide-demo-client-uplift-build-plan.md) may change existing panels so they call shipped family routes honestly (kill stubs, consume the hosted loop, fill thin Metadata/Govern/Client tools). That is not a license to reopen the Frozen list above.
 
-**Exception — brand paint, not chrome:** [BP-068](../../backlog/BP-068-ide-brand-visual.md) / [ide-brand-visual-build-plan.md](./ide-brand-visual-build-plan.md) may retoken the existing dual theme and replace typed brand text with sourced SVG marks (globe in the top bar; full lockup on Sign in / launcher). That is not a license to reopen the Frozen list above.
+**Exception — brand paint, not chrome:** [BP-068](../../backlog/BP-068-ide-brand-visual.md) / [ide-brand-visual-build-plan.md](./ide-brand-visual-build-plan.md) retokened the existing dual theme and replaced typed brand text with sourced SVG marks (globe in the top bar; full lockup on Sign in / launcher). That is not a license to reopen the Frozen list above.
 
 ---
 

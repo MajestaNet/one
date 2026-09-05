@@ -1,13 +1,13 @@
 # Control IDE — Majesta brand visual restyle
 
-**Status:** Active plan (visual restyle of existing chrome; not a chrome expansion).  
-**Backlog:** [BP-068](../../backlog/BP-068-ide-brand-visual.md)  
+**Status:** Shipped (visual restyle of existing chrome; not a chrome expansion). Merged in [#25](https://github.com/MajestaNet/one/pull/25).  
+**Backlog:** [BP-068](../../backlog/BP-068-ide-brand-visual.md) (mitigated)  
 **Playbook:** [agent-control-ide.md](./agent-control-ide.md)  
 **Domain agent:** `control-ide` (IDE-only). Do not edit `cmd/`, `internal/`, `migrations/`, or `deploy/`.  
 **Source of artwork:** [MajestaNet/webpage](https://github.com/MajestaNet/webpage) (`public/brand/`, `src/lib/brand.ts`) — August 2026 identity.  
 **Does not reopen:** frozen Control IDE chrome (license, update CDN, Operate-as-CRM, BoardHandoff, Hosting admin UI, four-tile IA, collection-node remainders). See [ADR-030 freeze table](./agent-runtime-build-plan.md#freeze-vs-finish).
 
-Audit date: 2026-09-03 against `tools/control-ide` plus the public webpage brand tree.
+Audit date: 2026-09-03 against `tools/control-ide` plus the public webpage brand tree. The review tables below are the **pre-implementation** snapshot; the restyle merged in [#25](https://github.com/MajestaNet/one/pull/25).
 
 ---
 
@@ -268,7 +268,7 @@ After WS3 (icons / `main.ts`): `npm run smoke:electron`.
 
 ## Related
 
-- [control-ide-design.md](../control-ide-design.md) — current token system (graphite/teal until this lands)
+- [control-ide-design.md](../control-ide-design.md) — token system (navy/gold after this plan)
 - [customer-ide-ux.md](../customer-ide-ux.md) — top bar IA (geometry stays)
 - [agent-control-ide.md](./agent-control-ide.md) — plane fence
 - [ADR-030](../adr/030-install-agent-runtime.md) — optional client; restyle ≠ new capability
