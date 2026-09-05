@@ -94,4 +94,4 @@ Open source is **neither automatically more nor less secure**. This `backlog/` t
 
 **Tree audit (2026-08-25):** Item headers were checked against routes, migrations, and tests. Statuses that still said Open/Pending after the work landed (BP-009 Phase 7, BP-033/065 Phase 1) were aligned to the tree. Frozen chrome files stay omitted from the table; IDs remain in the retired-trackers list above.
 
-Confirmed SI-campaign **defects** are GitHub issues (`[campaign G-…]`), not new BP files. Registry: [customer-rollout-gap-log.md](../docs/customer-rollout-gap-log.md). Fix PRs cite `Fixes #<issue>`.
+Confirmed SI-campaign **defects** are GitHub issues (`[campaign G-…]` / `[campaign S-…]`), not new BP files. Registry: [customer-rollout-gap-log.md](../docs/customer-rollout-gap-log.md). Fix PRs cite `Fixes #<issue>`. Campaign 2 runbook: [customer-install-simulation-test-run.md](../docs/customer-install-simulation-test-run.md).

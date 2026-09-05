@@ -70,6 +70,7 @@ one-<CUSTOMER_ID>/
 │   └── automations/
 │       └── create_opp_on_account_test.ts
 ├── environments/
+│   ├── dev.yaml
 │   ├── test.yaml
 │   ├── staging.yaml
 │   └── prod.yaml
@@ -128,7 +129,7 @@ YAML maps to Deploy snapshot JSON fields (`internal/deploy` types). Every custom
 
 ## Environments
 
-`environments/<role>.yaml` holds non-secret install pointers. `one` org hints read these files (secrets stay in `auth login` — OS keychain, else `credentials.json` mode `0600`). Control IDE Ship is an optional frozen twin.
+`environments/<role>.yaml` holds non-secret install pointers. `one` org hints read these files (secrets stay in `auth login` — OS keychain, else `credentials.json` mode `0600`). Control IDE Ship is an optional frozen twin. Roles are free-form (`dev`, `test`, `staging`, `prod`, …).
 
 ```yaml
 installId: acme-test

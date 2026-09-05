@@ -1,6 +1,6 @@
 # Customer rollout gap log
 
-Companion to [customer-rollout-test-run.md](./customer-rollout-test-run.md).
+Companion to [customer-rollout-test-run.md](./customer-rollout-test-run.md) (campaign 1, beats `G-…`) and [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md) (campaign 2, beats `S-…`). Executor playbook: [customer-install-simulation-playbook.md](./architecture/customer-install-simulation-playbook.md).
 
 This file is the **run record** and the **issue registry**. Every campaign uses the same tables. Do not paste secrets, customer data, or exploit detail.
 
@@ -8,7 +8,7 @@ This file is the **run record** and the **issue registry**. Every campaign uses 
 
 | Kind | Where | When to open |
 |---|---|---|
-| **Confirmed defect** | A **GitHub issue** titled `[campaign G-…]` | Outcome is `fail`, or `pass-with-workaround` that is **not** `by-design` / `known-remainder` |
+| **Confirmed defect** | A **GitHub issue** titled `[campaign G-…]` or `[campaign S-…]` | Outcome is `fail`, or `pass-with-workaround` that is **not** `by-design` / `known-remainder` |
 | **Architecture remainder** | [`backlog/BP-*.md`](../backlog/README.md) | Already a foreseeable product-design risk. **Do not** open a new BP from a campaign beat |
 | **Vulnerability** | [SECURITY.md](../SECURITY.md) only | Never a public issue or a BP body |
 
@@ -18,12 +18,12 @@ Template: [.github/ISSUE_TEMPLATE/campaign-finding.md](../.github/ISSUE_TEMPLATE
 
 ## Record a beat (same fields every time)
 
-After **each** scenario card A–F (and each suffix beat), add **one** row to **Run results** and, if it needs a fix, **one** row to **Issue registry**.
+After **each** scenario card (campaign 1 `A`–`F`, campaign 2 `S-A`–`S-E`) and each suffix beat, add **one** row to the matching **Run results** table and, if it needs a fix, **one** row to **Issue registry**.
 
 | Field | Values |
 |---|---|
-| Beat | `G-…` id (stable). Suffix ok (`G-EXEC-A-CLAIM`) |
-| Card | `A` … `F` |
+| Beat | `G-…` or `S-…` id (stable). Suffix ok (`G-EXEC-A-CLAIM`, `S-A-CLAIM-DEV`) |
+| Card | `A` … `F` or `S-A` … `S-E` |
 | Outcome | `pass` · `pass-with-workaround` · `fail` · `blocked-no-display` · `not-run` |
 | DX | `1`–`5` or `—` |
 | Class | `docs-drift` · `missing-lab-packaging` · `product-bug` · `authz-confusion` · `frozen-chrome-honesty` · `known-remainder` · `by-design` |
@@ -32,7 +32,7 @@ After **each** scenario card A–F (and each suffix beat), add **one** row to **
 Row template (copy):
 
 ```text
-| YYYY-MM-DD | G-ID | X | outcome | DX | class | none or #N | one-line actual |
+| YYYY-MM-DD | G-ID or S-ID | X | outcome | DX | class | none or #N | one-line actual |
 ```
 
 ---
@@ -117,9 +117,37 @@ Open defects from this run: **#28**, **#29**.
 
 ---
 
+## Campaign 2 — customer-install simulation (dev / test / prod)
+
+Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Lab: [docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml). Fixtures: `scripts/customer-install-sim-generate.sh`.
+
+**Not started.** Executors paste prompts from [customer-install-simulation-playbook.md](./architecture/customer-install-simulation-playbook.md). Re-test #28 / #29; do not re-file.
+
+### Beat catalog (record each)
+
+| Card | Beat ids |
+|---|---|
+| S-A setup | `S-A-COMPOSE` · `S-A-CLAIM-PROD` · `S-A-CLAIM-TEST` · `S-A-CLAIM-DEV` · `S-A-HEALTH` · `S-A-MIGRATE-RACE` · `S-A-PEERS` · `S-A-CLI-ALIASES` |
+| S-B packages + object | `S-B-PKG-DEP` · `S-B-PKG-ENABLE-ALL` · `S-B-OBJ-SITEVISIT` · `S-B-FIELD-MANAGED-EXT` · `S-B-LOOKUP-FAIL-WITHOUT-PKG` · `S-B-AUTHZ-STUBS` |
+| S-C automations at scale | `S-C-NAMED` · `S-C-IMPORT-BAN` · `S-C-STUBS` · `S-C-PACK-TIME` · `S-C-WORKER-FANOUT` · `S-C-SUITE` · `S-C-CLI-TRUNC` |
+| S-D same SHA | `S-D-DEPLOY-TEST` · `S-D-DEPLOY-PROD` · `S-D-NO-ROW-COPY` · `S-D-PKG-DRIFT` |
+| S-E Control IDE | `S-E-SIGNIN` · `S-E-ENV-SWITCH` · `S-E-OPERATE` · `S-E-BUILD-OBJECTS` · `S-E-BUILD-PACKAGES` · `S-E-BUILD-AUTOMATIONS` · `S-E-BUILD-AGENTS` · `S-E-BUILD-TOOLS` · `S-E-BUILD-REPO` · `S-E-BUILD-DEPLOY` · `S-E-BUILD-INSPECT` · `S-E-GOVERN` · `S-E-SETTINGS` · `S-E-THEME` · `S-E-HONESTY` · `S-E-FROZEN` |
+
+### Run results
+
+```text
+| YYYY-MM-DD | S-ID | S-X | outcome | DX | class | none or #N | one-line actual |
+```
+
+| Date | Beat | Card | Outcome | DX | Class | Issue | Actual (one line) |
+|---|---|---|---|---|---|---|---|
+| — | — | — | not-run | — | — | none | Campaign 2 not started |
+
+---
+
 ## Next run (copy)
 
-1. Duplicate the **Run results** table header; new date; same Beat ids where the card is the same.
-2. File a GitHub issue only for new or still-open `fail` / actionable `pass-with-workaround` rows.
+1. Duplicate the matching **Run results** table header; new date; same Beat ids where the card is the same.
+2. File a GitHub issue only for new or still-open `fail` / actionable `pass-with-workaround` rows. Campaign 2 titles use `[campaign S-…]`.
 3. Re-test #28 / #29 if still open; do not re-file duplicates — comment on the existing issue.
 4. Do not append campaign essays to `backlog/BP-*.md`.

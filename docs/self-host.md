@@ -167,7 +167,11 @@ docker compose -f deploy/docker-compose.yml up --build
 
 API on `:8080`. Kernel migrate + optional core seed on boot when `AUTO_SEED=1`. This file is a **single** install (`INSTALL_ROLE=dev`) for the everyday local loop.
 
-**Two sibling installs (prod + test)** for a customer-rollout lab: [deploy/docker-compose.multi-env.yml](../deploy/docker-compose.multi-env.yml) — shared `CUSTOMER_ID`, unique DBs and ports `:8080` / `:8081`. Scenario cards: [customer-rollout-test-run.md](./customer-rollout-test-run.md). Without Docker, use the runbook’s native two-DB fallback (`SKIP_COMPOSE=1` on the headless script). Wait for each API `/readyz` before starting its worker (both binaries apply kernel SQL). Product images set `DENO_PATH`; native `go run` needs Deno 2.9.3 on `PATH` in **both** processes.
+**Two sibling installs (prod + test)** for a customer-rollout lab: [deploy/docker-compose.multi-env.yml](../deploy/docker-compose.multi-env.yml) — shared `CUSTOMER_ID`, unique DBs and ports `:8080` / `:8081`. Scenario cards: [customer-rollout-test-run.md](./customer-rollout-test-run.md).
+
+**Three sibling installs (dev / test / prod)** for the customer-install simulation: [deploy/docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml) — ports `:8080` / `:8081` / `:8082`. Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Do not run the lab overlays at the same time as this everyday Compose file (port collision).
+
+Without Docker, use the matching runbook’s native multi-DB fallback. Wait for each API `/readyz` before starting its worker (both binaries apply kernel SQL). Product images set `DENO_PATH`; native `go run` needs Deno 2.9.3 on `PATH` in **both** processes.
 
 ### Helm on Kubernetes (DO / AWS / Azure / …)
 
