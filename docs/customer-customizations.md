@@ -24,7 +24,7 @@ Majesta One allows rich per-customer customization (objects, fields, validation,
 | Platform actions (`lead.convert`, …) | Product Go catalog ([ADR-029](./adr/029-platform-actions.md)) | Image upgrade; **gated** by enabled packages; customers wrap via `ctx.invokeAction`, they do not own the verb |
 | `agents_starter` templates | Product seed templates | Always-on clone → customer AgentSpecs ([customer-agents.md](./customer-agents.md)) |
 
-Deploy **rejects** managed package internals in customer bundles. Metadata API **rejects** mutating managed definitions. See [api-families.md](./api-families.md) and [multi-env-deploy.md](./multi-env-deploy.md).
+Deploy **rejects** managed package internals in customer bundles. Metadata API **rejects** mutating managed definitions. See [api-families.md](./api-families.md), [Metadata API](./api/metadata.md), [Deploy API](./api/deploy.md), and [multi-env-deploy.md](./multi-env-deploy.md).
 
 ## Recommended workflow (customer or SI)
 

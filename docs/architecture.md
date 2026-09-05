@@ -57,7 +57,7 @@ Ship SQL migrations under `migrations/` only when the **kernel** changes (or one
 | Deployment | `/deploy/v1` | Bundles, customer test runs, promote customer-owned changes between any same-customer installs |
 | Ops | `/ops/v1` | Product image upgrades on this install (confirm / roll / test gate / rollback); not customer promote |
 
-See [API families plan](./api-families.md), [ADR-004](./adr/004-three-api-families.md), [ADR-007](./adr/007-platform-ops-upgrades.md), and [ADR-025](./adr/025-api-revision-versioning.md) (client-pinnable API revision inside family majors).
+See [API families](./api-families.md), family pages under [docs/api/](./api/), [ADR-004](./adr/004-three-api-families.md), [ADR-007](./adr/007-platform-ops-upgrades.md), and [ADR-025](./adr/025-api-revision-versioning.md) (client-pinnable API revision inside family majors).
 
 ## Community cloud SDKs (later)
 
@@ -101,7 +101,7 @@ The first targeted managed path is DigitalOcean. Other providers should arrive l
 - [Self-host (Path A / Path B)](./self-host.md)
 - [Community cloud SDKs](../sdk/README.md)
 - [Security](./security.md)
-- [API families plan](./api-families.md)
+- [API families](./api-families.md) · [family reference](./api/)
 - [Monorepo structure](./monorepo.md)
 - [Release CI/CD](./release-cicd.md)
 - [Public docs (`one.majesta.net`)](./architecture/public-docs-site.md) — separate CMS aggregator ([BP-067](../backlog/BP-067-public-docs-site.md))
