@@ -58,8 +58,8 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 | G-HOSTED-LOOP-SHIP | by-design | none | n/a (MCP ships; hosted loop does not) | |
 | G-NO-SCRATCH-ORG | known-remainder | none | n/a — [BP-048](../backlog/BP-048-one-cli.md) Wave D | |
 | G-CROSS-INSTALL-SSO | by-design | none | n/a — [BP-037](../backlog/BP-037-install-claim-customer-sso.md) | |
-| G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | not-run — [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) WS-0 | |
-| G-IDE-USERDATA | missing-lab-packaging | none | procedure in Mac runbook; Electron not launched | |
+| G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | campaign 1 not-run; campaign 2 S-E-HONESTY scored Idle-state only (Pack/Validate/Deploy not clicked) — [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) WS-0 | |
+| G-IDE-USERDATA | missing-lab-packaging | none | campaign 1: Electron not launched; campaign 2 S-E used `--user-data-dir=…-sim-a` | |
 | G-COMPOSE-SINGLE | by-design | none | everyday Compose is one `dev` install; overlay is the two-install lab | |
 | S-B-LOOKUP-FAIL-WITHOUT-PKG | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | **open** | |
 | S-B-AUTHZ-STUBS | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | **open** | |
@@ -125,7 +125,7 @@ Open defects from this run: **#28**, **#29**.
 
 Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Lab: [docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml). Fixtures: `scripts/customer-install-sim-generate.sh`.
 
-**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). **S-C recorded 2026-09-05** (same lab; named+48 stubs org-deployed to **dev only**; suite contract failed AccountId; #29 still truncates). **S-D recorded 2026-09-05** (same SHA `5732d48` repo→org on test then prod; SiteVisit__c describes on prod; business rows did not copy; suite still #37). Re-test #28 / #29; do not re-file.
+**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). **S-C recorded 2026-09-05** (same lab; named+48 stubs org-deployed to **dev only**; suite contract failed AccountId; #29 still truncates). **S-D recorded 2026-09-05** (same SHA `5732d48` repo→org on test then prod; SiteVisit__c describes on prod; business rows did not copy; suite still #37). **S-E recorded 2026-09-05** (Electron on `DISPLAY=:1`; all 16 beats have rows — see S-E table below). Re-test #28 / #29; do not re-file.
 
 ### Beat catalog (record each)
 
@@ -176,7 +176,7 @@ Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation
 | 13 | pass |
 | 9 | pass-with-workaround |
 | 3 | fail |
-| 0 | not-run (S-A–S-D complete; S-E not started) |
+| 0 | not-run (S-A–S-D; S-E in table below) |
 
 Open defects from this card: **#28** (S-A; do not re-file), **#29** (S-C/S-D retest; comment pending-file), **#34** (S-B lookup validate), **#35** (S-B client_credentials docs), **#37** (S-C suite AccountId fixture; S-D same-SHA suite still red), **#38** (S-C generated `updateRecord` `id`). Ignore [#36](https://github.com/MajestaNet/one/issues/36) (accidental empty `gh issue create` probe; close was denied).
 
@@ -225,5 +225,5 @@ Lab: Same native three-DB as S-A–S-D; DISPLAY=:1 set; Electron launched with i
 
 **Second userData process:** NO (optional; single process sufficient to demonstrate env switching).
 
-**Remaining blockers:** None. All 16 S-E beats completed successfully. Electron was already running from previous session (not relaunched). All Build panels, Query/Monitor/Explorer, Govern mode, theme toggle, and honesty checks verified. No product bugs or frozen-chrome-honesty issues detected in exercised panels.
+**Coordinator note:** all 16 S-E ids have rows. Several actuals are **panel-presence**, not a full click-through: Deploy Pack/Validate/Deploy was not run (Idle only — BP-066 lying-green after HTTP 200 still unproven); Govern subpanels (Users / Integrations / Permissions) were not opened; Repo “Choose folder…” was not confirmed against `.customer-sandbox/one-acme-sim`; Object Manager did not create a throwaway field to prove dual-write. Outcomes left as the executor scored them. No second `--user-data-dir` process.
 
