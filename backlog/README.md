@@ -93,3 +93,5 @@ Priority: **BP-065** Phase 2 → **BP-048** → **BP-052** → **BP-040** → id
 Open source is **neither automatically more nor less secure**. This `backlog/` tree is the intended **public product risk list** (scrub rules in [BP-026](./BP-026-oss-security-public-backlog.md)); vulnerability reports stay private until fixed. Do not paste advisory detail, PoCs, or customer data into public BP bodies. IDE trust-boundary outcomes live in [control-ide-security-audit.md](../docs/architecture/control-ide-security-audit.md).
 
 **Tree audit (2026-08-25):** Item headers were checked against routes, migrations, and tests. Statuses that still said Open/Pending after the work landed (BP-009 Phase 7, BP-033/065 Phase 1) were aligned to the tree. Frozen chrome files stay omitted from the table; IDs remain in the retired-trackers list above.
+
+Confirmed SI-campaign **defects** are GitHub issues (`[campaign G-…]`), not new BP files. Registry: [customer-rollout-gap-log.md](../docs/customer-rollout-gap-log.md). Fix PRs cite `Fixes #<issue>`.

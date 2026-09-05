@@ -46,7 +46,7 @@ Cross-plane work must cite **both** playbooks: API ownership stays with the Go a
 1. **Name the concern** in the parent prompt (e.g. “AuthZ Role scopes” or “Control IDE Connect panel”, not “fix the API”).
 2. **Attach the playbook path** and the module-map row for that concern.
 3. **List allowed packages** explicitly; tell the subagent not to edit outside that set unless the task requires a documented cross-boundary change.
-4. **Point at open BPs** from [`backlog/README.md`](../../backlog/README.md) that touch the area.
+4. **Point at open BPs** from [`backlog/README.md`](../../backlog/README.md) that touch the area. If the task is a campaign defect, point at the GitHub issue (`[campaign G-…]`) and require `Fixes #N` — do not spawn a new BP.
 5. Prefer the domain specialist in `.cursor/agents/` whose description matches the paths — do not invent a parallel stack or a second product tree.
 6. For IDE work, verify with `npm test` / `make test-ide`; for Go work, verify with `go test` / `make test`. Do not tell an IDE agent to run product `make ci` as its primary check.
 7. For GitHub `docs/` edits, do not add Astro/`make docs-check` to this repo. Do not run product `make ci` as a docs-only check.
@@ -55,7 +55,7 @@ Cross-plane work must cite **both** playbooks: API ownership stays with the Go a
 
 - `cmd/api`, `cmd/worker`, `cmd/migrate` are wiring only — expect most backend edits under `internal/`.
 - Cross-family work (e.g. Metadata write + Deploy reject list) must cite both playbooks and keep ownership rules (`managed` vs `custom`) intact.
-- When closing or de-risking a backlog item, update the BP file and the table in `backlog/README.md`.
+- When closing or de-risking a backlog item, update the BP file and the table in `backlog/README.md`. When closing a campaign GitHub issue, mark the beat `closed` in [customer-rollout-gap-log.md](../customer-rollout-gap-log.md) and cite `Fixes #N`.
 - Vendor/agent docs live under `docs/`, `backlog/`, `.cursor/` — they must never enter product images (see [monorepo.md](../monorepo.md)).
 - Control IDE under `tools/control-ide` is vendor plane (ADR-012) — never widen the product image COPY allowlist to include it. Spawn `control-ide` for install-coupling lockstep ([BP-065](../../backlog/BP-065-ide-backend-coupling.md)); do not spawn it to add Electron-only product chrome ([ADR-030](../adr/030-install-agent-runtime.md)).
 - Do not scaffold a public-docs publisher or CMS in this repo ([agent-public-docs.md](./agent-public-docs.md), [BP-067](../../backlog/BP-067-public-docs-site.md)). Do not spawn a docs agent to change Go routes or Control IDE.

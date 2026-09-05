@@ -1,3 +1,7 @@
+# Single-install local loop (INSTALL_ROLE=dev, :8080).
+# Prod + test siblings for the SI campaign: docker-compose.multi-env.yml
+# (docs/customer-rollout-test-run.md). Not a third product install path.
+
 services:
   postgres:
     image: postgres:16-alpine

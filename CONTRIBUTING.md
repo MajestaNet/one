@@ -8,7 +8,9 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) and [NOTI
 
 Do **not** open a public GitHub issue for vulnerabilities. Follow [SECURITY.md](SECURITY.md).
 
-Do not commit secrets, customer data, exploit PoCs, or live advisory detail. The public risk list is [`backlog/`](backlog/README.md) ([BP-026](backlog/BP-026-oss-security-public-backlog.md)).
+Confirmed test-campaign defects (SI rollout) **are** public GitHub issues titled `[campaign G-…]`. File them from [.github/ISSUE_TEMPLATE/campaign-finding.md](.github/ISSUE_TEMPLATE/campaign-finding.md). Do **not** add a new `backlog/BP-*.md` item for those; the architecture remainder list stays in [`backlog/`](backlog/README.md). Fix PRs must include `Fixes #<issue>`.
+
+Do not commit secrets, customer data, exploit PoCs, or live advisory detail. The public architecture-risk list is [`backlog/`](backlog/README.md) ([BP-026](backlog/BP-026-oss-security-public-backlog.md)).
 
 ## Tests
 
