@@ -2,9 +2,9 @@
 
 A **scripted, scored customer journey** that a new SI (or vendor agent) can attempt against two sibling installs. The goal is to find **product, docs, and ease-of-use gaps**, not to replace `make test` / `make test-ide`.
 
-Gap log: [customer-rollout-gap-log.md](./customer-rollout-gap-log.md). Fill a row per scenario card. Customer YAML stays under gitignored `.customer-sandbox/` — never product `internal/seed`.
+Gap log: [customer-rollout-gap-log.md](./customer-rollout-gap-log.md) (run tables + **GitHub issue registry**). Customer YAML stays under gitignored `.customer-sandbox/` — never product `internal/seed`.
 
-**Status:** alpha lab. First headless run (2026-09-05, native two-install, no Electron) is in [customer-rollout-gap-log.md](./customer-rollout-gap-log.md). Path A DigitalOcean is a follow-on pass with the same cards if DO credentials exist.
+**Status:** alpha lab. First headless run (2026-09-05) is in the gap log. Open defects: [#28](https://github.com/MajestaNet/one/issues/28), [#29](https://github.com/MajestaNet/one/issues/29). Path A DigitalOcean is a follow-on pass with the same cards if DO credentials exist.
 
 ## Locked choices
 
@@ -79,7 +79,7 @@ docker compose -f deploy/docker-compose.multi-env.yml down -v
 
 Two empty databases on one Postgres 16, unique `INSTALL_ID` / JWT key / claim token / `PORT` per process. Export `DENO_PATH` (or put Deno 2.9.3 on `PATH`) in **both** API and worker shells — suites run Deno in the API; async automations run Deno in the worker.
 
-Start **prod API first**, wait `/readyz`, then its worker; repeat for test. API and worker both call `EnsureKernel`; concurrent first-boot migrate can fail on a non-idempotent kernel SQL file (gap log G-MIGRATE-RACE).
+Start **prod API first**, wait `/readyz`, then its worker; repeat for test. API and worker both call `EnsureKernel`; concurrent first-boot migrate is [#28](https://github.com/MajestaNet/one/issues/28).
 
 ```bash
 # example — two DBs on 127.0.0.1:5432
@@ -102,19 +102,22 @@ Copy [`.env.example`](../.env.example) for a single-install `make api` loop. Two
 
 Headless helper: [scripts/customer-rollout-headless.sh](../scripts/customer-rollout-headless.sh) (Compose by default; `SKIP_COMPOSE=1` when the APIs are already up).
 
-## Capture protocol (ease of use)
+## Capture protocol (same every card)
 
-Score **function and friction**. Each card records:
+Score **function and friction**. After **every** card A–F, do these three steps — do not invent a new format:
+
+1. **Add one row** to the gap log **Run results** table (date, beat id, card, outcome, DX, class, issue, one-line actual).
+2. **File or skip an issue** using the table in [customer-rollout-gap-log.md](./customer-rollout-gap-log.md) (GitHub issue vs none vs existing BP remainder). Template: [.github/ISSUE_TEMPLATE/campaign-finding.md](../.github/ISSUE_TEMPLATE/campaign-finding.md). Helper: `scripts/file-campaign-finding.sh`.
+3. **Do not** open a new `backlog/BP-*.md` item. Architecture remainders already have BPs; confirmed bugs get GitHub issues so a fix PR can say `Fixes #N`.
 
 | Field | What to write |
 |---|---|
 | Expected path | The operator doc you used first |
-| Actual steps | Count, elapsed time, dead ends |
-| Outcome | `pass` / `pass-with-workaround` / `fail` |
+| Actual | One line in the run table (count / dead end / error code) |
+| Outcome | `pass` / `pass-with-workaround` / `fail` / `blocked-no-display` / `not-run` |
 | DX (1–5) | Docs findability, error quality, recovery, time-to-green |
-| Gap class | `docs-drift` · `missing-lab-packaging` · `product-bug` · `authz-confusion` · `frozen-chrome-honesty` ([BP-066](../backlog/BP-066-ide-demo-client-fidelity.md)) · `known-remainder` (BP-048 / BP-031 / BP-065) |
-
-Copy the row template from [customer-rollout-gap-log.md](./customer-rollout-gap-log.md).
+| Class | `docs-drift` · `missing-lab-packaging` · `product-bug` · `authz-confusion` · `frozen-chrome-honesty` · `known-remainder` · `by-design` |
+| Issue | `#N` / `none` / `fixed-in-#27` |
 
 ## Scenario catalog
 
@@ -148,6 +151,8 @@ Pin `One-API-Revision` from `GET /version` (`apiRevision.recommended`, alias of 
 
 6. Score: could you do this from [self-host.md](./self-host.md) alone, or did you need this runbook because the default Compose file is a single `INSTALL_ROLE=dev` stack?
 
+**Record this card** (same as every card): one run-results row; file a GitHub issue only if the tracking table says so. First run: migrate race is [#28](https://github.com/MajestaNet/one/issues/28).
+
 ### B. Connecting 2+ Control IDEs
 
 **Allowed docs:** [local-development-mac.md](./local-development-mac.md), [customer-connect.md](./customer-connect.md) Path A.
@@ -175,7 +180,7 @@ npx electron --user-data-dir="${ONE_IDE_B_DATA:-$HOME/.local/share/one-control-i
 3. Negatives: expired token; `http://localhost:8081` while thinking it is prod; a JWT without `deploy` on `GET /deploy/v1/environment`.
 4. Honesty ([BP-066](../backlog/BP-066-ide-demo-client-fidelity.md)): Deploy must not show customer tests **Passed** on HTTP 200 alone; Operate chat must not auto-green a tool loop that did not run.
 
-**Desktop required.** If this lab has no display, mark B `blocked-no-display` and keep the launch recipe as the procedure.
+**Desktop required.** If this lab has no display, mark B `blocked-no-display` and keep the launch recipe as the procedure. **Record this card.** First run: no GitHub issue (not launched); honesty remainder stays [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md), not a new BP.
 
 ### C. Spin up and connect a test env besides prod
 
@@ -211,7 +216,7 @@ go run ./cmd/one org use test
 go run ./cmd/one org list
 ```
 
-`ONE_CREDENTIAL_STORE=file` if the lab has no OS keychain. There is **no** `one org scratch` (BP-048 remainder) — a second env is a full install.
+`ONE_CREDENTIAL_STORE=file` if the lab has no OS keychain. There is **no** `one org scratch` ([BP-048](../backlog/BP-048-one-cli.md) remainder) — a second env is a full install. **Record this card.** Loopback peer `baseUrl` is by-design (no issue); do not file a defect to allow `localhost`.
 
 ### D. Develop a custom object and automation
 
@@ -289,6 +294,8 @@ curl -sS -X POST http://localhost:8081/client/v1/query \
   -d '{"object":"Project__c"}'
 ```
 
+**Record this card.** First run: JSONLogic / Deno docs closed in [#27](https://github.com/MajestaNet/one/pull/27); live path must still hit the worker.
+
 ### E. Deploy from source (repo → org)
 
 **Allowed docs:** [customer-developer-workflow.md](./customer-developer-workflow.md).
@@ -298,6 +305,8 @@ curl -sS -X POST http://localhost:8081/client/v1/query \
 3. Prod: `one org use prod`, **same Git SHA**, validate then deploy. `GET /metadata/v1/objects/Project__c` on prod. Business **rows** must **not** copy (data packs are a separate Client path).
 4. Twin in IDE A: Build → Deploy → Pack from local HEAD → Validate vs org → Deploy to org. GUI status must match CLI (lying-green is a fail).
 5. Anti-patterns (expect failure): peer promote (removed), packing `.one/baseline`, mutating managed `Account` fields.
+
+**Record this card.** First run: suite truncation is [#29](https://github.com/MajestaNet/one/issues/29). Pack checksum differences are by-design (no issue).
 
 ### F. Agentic development
 
@@ -345,6 +354,8 @@ curl -sS -X POST http://localhost:8081/mcp \
 6. Contrast hosted loop: `POST /client/v1/agents/runs` **cannot** upsert metadata or `org_deploy`. If Operate chat pretends otherwise, that is BP-066.
 7. Stdio fallback [`tools/one-mcp`](../tools/one-mcp) only if the host cannot speak Streamable HTTP.
 
+**Record this card.** First run: hosted loop wall is by-design (no issue). Do not file a defect asking `/agents/runs` to `org_deploy`.
+
 ## Dual-IDE and CLI cheat sheet
 
 ```bash
@@ -377,7 +388,8 @@ Headless API/CLI/MCP slices (no Electron): [scripts/customer-rollout-headless.sh
 
 ## Related
 
-- [customer-rollout-gap-log.md](./customer-rollout-gap-log.md)
+- [customer-rollout-gap-log.md](./customer-rollout-gap-log.md) — run tables + GitHub issue registry
+- Open campaign defects: [#28](https://github.com/MajestaNet/one/issues/28) (migrate race), [#29](https://github.com/MajestaNet/one/issues/29) (suite report truncation)
 - [customer-developer-workflow.md](./customer-developer-workflow.md)
 - [ci-customer-tests.md](./ci-customer-tests.md)
 - [install-ide-connect-build-plan.md](./architecture/install-ide-connect-build-plan.md)

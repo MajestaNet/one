@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/MajestaNet/one/blob/main/SECURITY.md
+    about: Do not file public issues for vulnerabilities. Follow SECURITY.md.
+  - name: Architecture risk (backlog)
+    url: https://github.com/MajestaNet/one/blob/main/backlog/README.md
+    about: Foreseeable product-design remainders live as BP-* files, not GitHub issues.

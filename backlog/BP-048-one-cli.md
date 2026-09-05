@@ -51,13 +51,6 @@ Follow [one-cli-build-plan.md](../docs/architecture/one-cli-build-plan.md):
 | auth `client_credentials` mint; `environments/` alias hints; org httptest | Open — [remainder plan](../docs/architecture/agentic-remainders/02-bp-048-one-cli.md) Phase R2 |
 | Async Deploy waiter (`202` / `DEPLOY_BUSY`) | Open — [BP-033](./BP-033-customer-runtime-isolation.md) Phase 1 HTTP is in tree; CLI waiter is not |
 
-### Campaign 2026-09-05 (customer-rollout)
-
-[customer-rollout-gap-log.md](../docs/customer-rollout-gap-log.md): `one project init` / `auth login` / `org use` / `org validate` / `org deploy --suite` worked on two sibling installs. Newly evidenced remainders (status stays Partially mitigated):
-
-- Scratch orgs still deferred — second env is a full install (G-NO-SCRATCH-ORG)
-- `one org deploy --suite` truncates suite JSON in the terminal; full report is `GET /deploy/v1/tests/runs/:id` (G-CLI-SUITE-TRUNC)
-
 ## Related
 
 - [Remainder tech design + agentic build plan](../docs/architecture/agentic-remainders/02-bp-048-one-cli.md)
