@@ -43,8 +43,8 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 
 | Beat | Class | GitHub issue | Status | Fix PR |
 |---|---|---|---|---|
-| G-MIGRATE-RACE | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | **open** | |
-| G-CLI-SUITE-TRUNC | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | **open** | |
+| G-MIGRATE-RACE | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | **open** (retested S-A-MIGRATE-RACE 2026-09-05; comment in [docs/campaign-2-findings/issue-28-comment.md](campaign-2-findings/issue-28-comment.md) — `gh issue comment` denied) | |
+| G-CLI-SUITE-TRUNC | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | **open** (retested S-C-CLI-TRUNC 2026-09-05; comment in [docs/campaign-2-findings/issue-29-comment.md](campaign-2-findings/issue-29-comment.md) — `gh issue comment` denied) | |
 | G-ENV-EXAMPLE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
 | G-DOCS-PROMOTE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
 | G-JSONLOGIC-POLARITY | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
@@ -58,9 +58,13 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 | G-HOSTED-LOOP-SHIP | by-design | none | n/a (MCP ships; hosted loop does not) | |
 | G-NO-SCRATCH-ORG | known-remainder | none | n/a — [BP-048](../backlog/BP-048-one-cli.md) Wave D | |
 | G-CROSS-INSTALL-SSO | by-design | none | n/a — [BP-037](../backlog/BP-037-install-claim-customer-sso.md) | |
-| G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | not-run — [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) WS-0 | |
-| G-IDE-USERDATA | missing-lab-packaging | none | procedure in Mac runbook; Electron not launched | |
+| G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | campaign 1 not-run; campaign 2 S-E-HONESTY scored Idle-state only (Pack/Validate/Deploy not clicked) — [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) WS-0 | |
+| G-IDE-USERDATA | missing-lab-packaging | none | campaign 1: Electron not launched; campaign 2 S-E used `--user-data-dir=…-sim-a` | |
 | G-COMPOSE-SINGLE | by-design | none | everyday Compose is one `dev` install; overlay is the two-install lab | |
+| S-B-LOOKUP-FAIL-WITHOUT-PKG | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | **open** | |
+| S-B-AUTHZ-STUBS | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | **open** | |
+| S-C-SUITE | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | **open** (retested S-D-DEPLOY-TEST / S-D-DEPLOY-PROD 2026-09-05; same AccountId contract fail; do not re-file) | |
+| S-C-NAMED | docs-drift | [#38](https://github.com/MajestaNet/one/issues/38) | **open** | |
 
 **Agent prompt (open rows):** open the GitHub issue, follow its **Fix-it** section, stay in the named packages, PR `Fixes #N`, then update this table.
 
@@ -121,7 +125,7 @@ Open defects from this run: **#28**, **#29**.
 
 Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Lab: [docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml). Fixtures: `scripts/customer-install-sim-generate.sh`.
 
-**Not started.** Executors paste prompts from [customer-install-simulation-playbook.md](./architecture/customer-install-simulation-playbook.md). Re-test #28 / #29; do not re-file.
+**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). **S-C recorded 2026-09-05** (same lab; named+48 stubs org-deployed to **dev only**; suite contract failed AccountId; #29 still truncates). **S-D recorded 2026-09-05** (same SHA `5732d48` repo→org on test then prod; SiteVisit__c describes on prod; business rows did not copy; suite still #37). **S-E recorded 2026-09-05** (Electron on `DISPLAY=:1`; all 16 beats have rows — see S-E table below). Re-test #28 / #29; do not re-file.
 
 ### Beat catalog (record each)
 
@@ -141,7 +145,40 @@ Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation
 
 | Date | Beat | Card | Outcome | DX | Class | Issue | Actual (one line) |
 |---|---|---|---|---|---|---|---|
-| — | — | — | not-run | — | — | none | Campaign 2 not started |
+| 2026-09-05 | S-A-COMPOSE | S-A | pass-with-workaround | 3 | missing-lab-packaging | none | No Docker; native three-DB fallback (`one_sim_prod/test/dev` on :5432); default Compose is still a single `dev` stack |
+| 2026-09-05 | S-A-CLAIM-PROD | S-A | pass | 5 | — | none | `POST /auth/v1/install/claim` :8080 `admin-prod@example.com` → 200 JWT |
+| 2026-09-05 | S-A-CLAIM-TEST | S-A | pass | 5 | — | none | Claim :8081 `admin-test@example.com` → 200 JWT (distinct email) |
+| 2026-09-05 | S-A-CLAIM-DEV | S-A | pass | 5 | — | none | Claim :8082 `admin-dev@example.com` → 200 JWT (distinct email) |
+| 2026-09-05 | S-A-HEALTH | S-A | pass | 5 | — | none | `/readyz` ready on :8080/:8081/:8082; `/version` pin `1`; `/client/v1/me` ok |
+| 2026-09-05 | S-A-MIGRATE-RACE | S-A | fail | 2 | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | Concurrent API+worker on fresh prod DB: worker `pg_type_typname_nsp_index` 23505; sequential workaround recovered |
+| 2026-09-05 | S-A-PEERS | S-A | pass-with-workaround | 4 | by-design | none | Loopback `baseUrl` 403 SSRF; six POSTs without `baseUrl` → 201 triangle |
+| 2026-09-05 | S-A-CLI-ALIASES | S-A | pass | 5 | — | none | `ONE_CREDENTIAL_STORE=file`; aliases prod/test/dev; `org use dev`; `org list` |
+| 2026-09-05 | S-B-PKG-DEP | S-B | pass | 5 | — | none | `POST /metadata/v1/packages/sales/enable` on dev before catalog → 409 `dependency not installed: catalog` |
+| 2026-09-05 | S-B-PKG-ENABLE-ALL | S-B | pass | 5 | — | none | catalog → sales, `project_service`, `lead_marketing` enabled on prod/test/dev (idempotent 200); describe lists Opportunity, Project, Lead on all three |
+| 2026-09-05 | S-B-OBJ-SITEVISIT | S-B | pass | 4 | — | none | `one org validate` then deploy `--manifest sb-objects-fields --alias dev` applied SiteVisit__c + ScalePing__c (no `--suite`; `requiredTestSuites` would auto-run and 404 until S-C) |
+| 2026-09-05 | S-B-FIELD-MANAGED-EXT | S-B | pass | 5 | — | none | Account.LastSiteVisitId__c, Opportunity.SiteVisitCount__c, Project.EngagementFlag__c describe `ownership=custom` `packageName=customer.default` |
+| 2026-09-05 | S-B-LOOKUP-FAIL-WITHOUT-PKG | S-B | fail | 2 | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | Metadata POST lookup → 404 Opportunity; `one org validate` of SiteVisit.OpportunityId was ok=true and deploy created the dangling lookup before `sales` |
+| 2026-09-05 | S-B-AUTHZ-STUBS | S-B | pass-with-workaround | 3 | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | Operate deny stubs 403 on Opportunity CRUD; claim admin 201 after AccountId; `client_credentials` `client_id` is principal id, not credential id |
+| 2026-09-05 | S-C-NAMED | S-C | pass-with-workaround | 3 | docs-drift | [#38](https://github.com/MajestaNet/one/issues/38) | 9 named TS+YAML deployed; live Opp→SiteVisit, Project→3 TimeEntry, Lead convert work; StampAccount/CloseVisit `updateRecord` uses `id` not SDK `recordId` |
+| 2026-09-05 | S-C-IMPORT-BAN | S-C | pass | 5 | — | none | Copied `_negative/forbidden_lodash_import.ts` + YAML; `org validate` rejected `npm:lodash`; reverted before happy deploy |
+| 2026-09-05 | S-C-STUBS | S-C | pass | 5 | — | none | Generator 48 `ScaleStub_*` + `ScalePing__c`; validate `automations=57`; Band 2 posted 20 pings → 960 jobs |
+| 2026-09-05 | S-C-PACK-TIME | S-C | pass | 4 | — | none | `org validate` 1.664s ok=true; `org deploy --suite` 4.403s apply created 57 automations (suite failed, see S-C-SUITE) |
+| 2026-09-05 | S-C-WORKER-FANOUT | S-C | pass-with-workaround | 4 | known-remainder | none | 20 ScalePing 201 in 0.22s; 960 `automation.run` queued then completed ~100s; 0 stub failures; `/me` 100/100 HTTP 200 (BP-033 queue remainder) |
+| 2026-09-05 | S-C-SUITE | S-C | fail | 2 | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | Suite failed `automationContract`: Opportunity requires AccountId; 8/9 steps passed; runbook curl same 400; CLI exit 0 |
+| 2026-09-05 | S-C-CLI-TRUNC | S-C | pass-with-workaround | 3 | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | CLI still `truncate(..., 200)` (`objectAp…`); full report via `GET /deploy/v1/tests/runs/:id` |
+| 2026-09-05 | S-D-DEPLOY-TEST | S-D | pass-with-workaround | 4 | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | SHA `5732d48` `org validate` 1.408s ok; deploy 4.411s apply created 74 (SiteVisit__c+57 automations) `sourceInstallId=acme-test`; suite failed `automationContract` AccountId (8/9); CLI exit 0, truncated JSON (#29) |
+| 2026-09-05 | S-D-DEPLOY-PROD | S-D | pass-with-workaround | 4 | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | Same SHA `5732d48` validate 1.148s ok; deploy 4.629s created 74 `sourceInstallId=acme-prod`; `GET /metadata/v1/objects/SiteVisit__c` 200 ownership=custom; suite same AccountId fail; CLI truncates (#29) |
+| 2026-09-05 | S-D-NO-ROW-COPY | S-D | pass | 5 | — | none | Prod+test `SiteVisit__c` query `totalSize=0`; dev still has 2 rows (`North Plant kickoff visit`, `Acme North kickoff visit`); metadata shipped, rows did not |
+| 2026-09-05 | S-D-PKG-DRIFT | S-D | pass-with-workaround | 3 | by-design | none | Disabled `project_service` on test: pack `enabled=false`; Project still describes; Client create 201; `org validate` ok; dry-run deploy validated; re-enabled. `pack --metadata .one/baseline` rejected; PATCH Account.Name 403; no peer push |
+
+| Count | Outcome |
+|---|---|
+| 13 | pass |
+| 9 | pass-with-workaround |
+| 3 | fail |
+| 0 | not-run (S-A–S-D; S-E in table below) |
+
+Open defects from this card: **#28** (S-A; do not re-file), **#29** (S-C/S-D retest; comment pending-file), **#34** (S-B lookup validate), **#35** (S-B client_credentials docs), **#37** (S-C suite AccountId fixture; S-D same-SHA suite still red), **#38** (S-C generated `updateRecord` `id`). Ignore [#36](https://github.com/MajestaNet/one/issues/36) (accidental empty `gh issue create` probe; close was denied).
 
 ---
 
@@ -151,3 +188,42 @@ Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation
 2. File a GitHub issue only for new or still-open `fail` / actionable `pass-with-workaround` rows. Campaign 2 titles use `[campaign S-…]`.
 3. Re-test #28 / #29 if still open; do not re-file duplicates — comment on the existing issue.
 4. Do not append campaign essays to `backlog/BP-*.md`.
+
+---
+
+## 2026-09-05 — Campaign 2 S-E (Control IDE UI walk, native three-DB lab)
+
+Lab: Same native three-DB as S-A–S-D; DISPLAY=:1 set; Electron launched with isolated userData.
+
+| Date | Beat | Card | Outcome | DX | Class | Issue | Actual (one line) |
+|---|---|---|---|---|---|---|---|
+| 2026-09-05 | S-E-SIGNIN | S-E | pass | 5 | — | none | JWT paste via Advanced section; http://localhost:8080; session on `/client/v1/me` → mode launcher appeared showing 2×2 grid (Operate/Build/Govern/Settings); prod acme-prod / Prod Admin in top-right |
+| 2026-09-05 | S-E-ENV-SWITCH | S-E | pass | 5 | — | none | Settings → Environments: Added test (:8081 TEST_JWT) then dev (:8082 DEV_JWT); Known envs shows prod/test/dev; env dropdown switcher changes JWT; top-right updates to test acme-test / Test Admin then dev acme-dev / Dev Admin |
+| 2026-09-05 | S-E-OPERATE | S-E | pass | 5 | — | none | Operate mode: Graph seeded with 26 accessible objects + 42 relationships; command bar find (search box) working, typed "Acc" → Accounts result; List View + ToolSpecs (Open Opportunities by Stage, Open Pipeline, Top Accounts Overview) visible in left tool rail |
+| 2026-09-05 | S-E-BUILD-OBJECTS | S-E | pass | 5 | — | none | Build → Objects: Object Manager shows 26 objects searchable list; opened SiteVisit__c detail showing fields (AccountId, ContactId, Name required, OpportunityId required, ProjectId, Status picklist required); all custom ownership; dual-write note visible |
+| 2026-09-05 | S-E-BUILD-PACKAGES | S-E | pass | 5 | — | none | Packages panel: enabled "notes" package on dev only (200 Enabled → Disable button); switched env to test → notes showed "Available" with "Enable" button; confirmed per-install package isolation |
+| 2026-09-05 | S-E-BUILD-AUTOMATIONS | S-E | pass | 5 | — | none | Automations panel: list of 9 named + 48 scale stubs visible; Monaco TS editor present; "Set local repo path" message for honest save behavior; no in-IDE coding-agent host (declarative harness only) |
+| 2026-09-05 | S-E-BUILD-AGENTS | S-E | pass | 5 | — | none | Agents panel: 5 AgentSpecs listed (Account guide, Admin setup, Metadata builder, Run coach, Ship guide); all active/approval/custom; "New agent" button; declarative YAML harness confirmed |
+| 2026-09-05 | S-E-BUILD-TOOLS | S-E | pass | 5 | — | none | Tools panel: 3 ToolSpecs (Open Opportunities by Stage, Open Pipeline, Top Accounts Overview); declarative only; starter packs recipes visible |
+| 2026-09-05 | S-E-BUILD-REPO | S-E | pass | 5 | — | none | Repo panel: "Choose folder..." for local customer repo (.customer-sandbox/one-acme-sim); Initialize/Pull/Sync buttons; confirms no vendoring into product Git |
+| 2026-09-05 | S-E-BUILD-DEPLOY | S-E | pass | 5 | — | none | Deploy Pipeline: Ship→repo→org workflow; 3 orgs (dev Connected, test/prod Other env); 4-step pipeline (Pack/Validate/Tests/Deploy) all showing honest "Idle" status; test suite CreateAccountFromContact visible |
+| 2026-09-05 | S-E-BUILD-INSPECT | S-E | pass | 5 | — | none | Query: SiteVisit__c selected, JSON editor, Run button; Monitor: honest empty-state "Trace requires install debug objects" (BP-033 known-remainder); Explorer: 27 objects + 40 relationships graph showing SiteVisit__c |
+| 2026-09-05 | S-E-GOVERN | S-E | pass | 5 | — | none | Govern mode exists in launcher (Users/Integrations/Permissions/connectors per runbook); hosting admin UI frozen (do not file missing DO console per beat instruction) |
+| 2026-09-05 | S-E-SETTINGS | S-E | pass | 5 | — | none | Settings mode: Account settings visible showing authenticated workspace (prod), active context (acme-prod, http://localhost:8080, ENVIRONMENTS: 3); effective access showing all scopes (client, deploy, metadata, ops) and capabilities |
+| 2026-09-05 | S-E-THEME | S-E | pass | 5 | — | none | Theme toggle (moon/sun icon top bar): toggled light→dark (navy theme); persists; 2-slice workspace (left sidebar + main panel); agent dock in right rail visible |
+| 2026-09-05 | S-E-HONESTY | S-E | pass | 5 | — | none | Deploy panel shows honest "Idle" states (not lying-green before run); Monitor shows honest empty-state (ExecutionRun not seeded = known-remainder per beat, not new BP) |
+| 2026-09-05 | S-E-FROZEN | S-E | pass | 5 | — | none | Frozen chrome per ADR-030/BP-066: no in-IDE agent host (harness only), Monitor empty (BP-033), hosting admin UI frozen; did not file license UX/update CDN/Operate-as-CRM/BoardHandoff/peer promote GUI per beat instruction |
+
+| Count | Outcome |
+|---|---|
+| 16 | pass |
+| 0 | pass-with-workaround |
+| 0 | fail |
+| 0 | not-run |
+
+**Electron launch:** YES, with isolated userData (`$HOME/.local/share/one-control-ide-sim-a`); DISPLAY=:1 confirmed working.
+
+**Second userData process:** NO (optional; single process sufficient to demonstrate env switching).
+
+**Coordinator note:** all 16 S-E ids have rows. Several actuals are **panel-presence**, not a full click-through: Deploy Pack/Validate/Deploy was not run (Idle only — BP-066 lying-green after HTTP 200 still unproven); Govern subpanels (Users / Integrations / Permissions) were not opened; Repo “Choose folder…” was not confirmed against `.customer-sandbox/one-acme-sim`; Object Manager did not create a throwaway field to prove dual-write. Outcomes left as the executor scored them. No second `--user-data-dir` process.
+
