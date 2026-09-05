@@ -43,7 +43,7 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 
 | Beat | Class | GitHub issue | Status | Fix PR |
 |---|---|---|---|---|
-| G-MIGRATE-RACE | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | **open** | |
+| G-MIGRATE-RACE | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | **open** (retested S-A-MIGRATE-RACE 2026-09-05; comment in [docs/campaign-2-findings/issue-28-comment.md](campaign-2-findings/issue-28-comment.md) — `gh issue comment` denied) | |
 | G-CLI-SUITE-TRUNC | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | **open** | |
 | G-ENV-EXAMPLE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
 | G-DOCS-PROMOTE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
@@ -121,7 +121,7 @@ Open defects from this run: **#28**, **#29**.
 
 Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Lab: [docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml). Fixtures: `scripts/customer-install-sim-generate.sh`.
 
-**Not started.** Executors paste prompts from [customer-install-simulation-playbook.md](./architecture/customer-install-simulation-playbook.md). Re-test #28 / #29; do not re-file.
+**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). S-B–S-E not started. Re-test #28 / #29; do not re-file.
 
 ### Beat catalog (record each)
 
@@ -141,7 +141,23 @@ Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation
 
 | Date | Beat | Card | Outcome | DX | Class | Issue | Actual (one line) |
 |---|---|---|---|---|---|---|---|
-| — | — | — | not-run | — | — | none | Campaign 2 not started |
+| 2026-09-05 | S-A-COMPOSE | S-A | pass-with-workaround | 3 | missing-lab-packaging | none | No Docker; native three-DB fallback (`one_sim_prod/test/dev` on :5432); default Compose is still a single `dev` stack |
+| 2026-09-05 | S-A-CLAIM-PROD | S-A | pass | 5 | — | none | `POST /auth/v1/install/claim` :8080 `admin-prod@example.com` → 200 JWT |
+| 2026-09-05 | S-A-CLAIM-TEST | S-A | pass | 5 | — | none | Claim :8081 `admin-test@example.com` → 200 JWT (distinct email) |
+| 2026-09-05 | S-A-CLAIM-DEV | S-A | pass | 5 | — | none | Claim :8082 `admin-dev@example.com` → 200 JWT (distinct email) |
+| 2026-09-05 | S-A-HEALTH | S-A | pass | 5 | — | none | `/readyz` ready on :8080/:8081/:8082; `/version` pin `1`; `/client/v1/me` ok |
+| 2026-09-05 | S-A-MIGRATE-RACE | S-A | fail | 2 | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | Concurrent API+worker on fresh prod DB: worker `pg_type_typname_nsp_index` 23505; sequential workaround recovered |
+| 2026-09-05 | S-A-PEERS | S-A | pass-with-workaround | 4 | by-design | none | Loopback `baseUrl` 403 SSRF; six POSTs without `baseUrl` → 201 triangle |
+| 2026-09-05 | S-A-CLI-ALIASES | S-A | pass | 5 | — | none | `ONE_CREDENTIAL_STORE=file`; aliases prod/test/dev; `org use dev`; `org list` |
+
+| Count | Outcome |
+|---|---|
+| 5 | pass |
+| 2 | pass-with-workaround |
+| 1 | fail |
+| 0 | not-run (S-A complete; S-B–S-E not started) |
+
+Open defects from this card: **#28** (retested; do not re-file). `#29` not in S-A scope.
 
 ---
 
