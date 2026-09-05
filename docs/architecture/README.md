@@ -26,6 +26,7 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [hosted-agent-tool-loop-build-plan.md](./hosted-agent-tool-loop-build-plan.md) | **Shipped:** hosted `/client/v1/agents/runs` executes MCP tools as the run actor ([BP-006](../../backlog/BP-006-agent-guardrails.md) mitigated) |
 | [agent-control-ide.md](./agent-control-ide.md) | Control IDE (Electron / React / Vitest under `tools/control-ide`) — optional client; **refactor for install cleanup** ([BP-065](../../backlog/BP-065-ide-backend-coupling.md)); no new Electron-only product chrome |
 | [agent-public-docs.md](./agent-public-docs.md) | GitHub product docs in this repo; public host is a **separate CMS aggregator** ([BP-067](../../backlog/BP-067-public-docs-site.md)) |
+| [customer-install-simulation-playbook.md](./customer-install-simulation-playbook.md) | Execute campaign 2 (dev/test/prod lab, packages, automations at scale, IDE UX). Paste-ready prompts. Findings → GitHub `[campaign S-…]`, not new BPs |
 
 ## Read in this order (data architecture agents)
 
@@ -85,7 +86,7 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [agentic-remainders/](./agentic-remainders/README.md) | **Finish work-order remainder designs** + paste-ready build prompts (slots 1–12: BP-065 → CLI → skills → inference → Experience → claim/SSO → directory → isolation → install/distro → API revision → headless Client → OTEL/OSS/automations) |
 | [hosted-agent-tool-loop-build-plan.md](./hosted-agent-tool-loop-build-plan.md) | **Shipped:** Hosted agent tool loop — MCP names, `internal/agentloop`, write parking ([BP-006](../../backlog/BP-006-agent-guardrails.md) mitigated; AuthZ already in [customization-authz.md](./customization-authz.md)) |
 | [builder-connect.md](../builder-connect.md) | Builder MCP + CLI connect recipes (no Control IDE required) |
-| [self-host.md](../self-host.md) | Dual-path install: Path A App Platform / Path B Compose+Helm; community `sdk/` pointer. Two-install lab: [customer-rollout-test-run.md](../customer-rollout-test-run.md) |
+| [self-host.md](../self-host.md) | Dual-path install: Path A App Platform / Path B Compose+Helm; community `sdk/` pointer. Two-install lab: [customer-rollout-test-run.md](../customer-rollout-test-run.md). Three-env simulation: [customer-install-simulation-test-run.md](../customer-install-simulation-test-run.md) |
 | [install-ide-connect-build-plan.md](./install-ide-connect-build-plan.md) | **Active:** single-Prod default → Control IDE connect / first admin (App Platform happy path); multi-env opt-in |
 | [ide-api-version-compatibility-build-plan.md](./ide-api-version-compatibility-build-plan.md) | **Implemented:** API revision pin (`One-API-Revision` + `/r{N}/`) + soft product tested-against window ([ADR-025](../adr/025-api-revision-versioning.md) / BP-025 Mitigated) |
 | [customer-repo-init-build-plan.md](./customer-repo-init-build-plan.md) | **Active:** initialize customer Git from prod + IDE clone/pull sync (`one/v1`) |
@@ -108,7 +109,8 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [adr/](../adr/) | Architecture decision records ([index](../adr/README.md)) |
 | [customer-customizations.md](../customer-customizations.md) | Product vs customer boundary |
 | [customer-developer-workflow.md](../customer-developer-workflow.md) | Best-practice customer DX loop (Git host agnostic; validate → deploy) |
-| [customer-rollout-test-run.md](../customer-rollout-test-run.md) | SI customer-rollout campaign + [gap log](../customer-rollout-gap-log.md) (run tables; defects are GitHub `[campaign G-…]` issues, not new BPs) |
+| [customer-rollout-test-run.md](../customer-rollout-test-run.md) | SI customer-rollout campaign 1 (prod + test) + [gap log](../customer-rollout-gap-log.md) (GitHub `[campaign G-…]` issues, not new BPs) |
+| [customer-install-simulation-test-run.md](../customer-install-simulation-test-run.md) | Campaign 2: three-env customer simulation (packages, automations at scale, IDE UX) · [playbook + prompts](./customer-install-simulation-playbook.md) · beats `S-…` in the [gap log](../customer-rollout-gap-log.md) |
 | [ops.md](../ops.md) / [product-upgrades.md](../product-upgrades.md) | How managed packages ride image upgrades |
 | [sdk/aws/docs/managed-paas-profile.md](../../sdk/aws/docs/managed-paas-profile.md) | Community AWS managed PaaS analog (opinionated ECS Fargate) — not Path A |
 | [sdk/aws/docs/managed-channel.md](../../sdk/aws/docs/managed-channel.md) | Community / non-GA managed-cell notes (not product channel) |

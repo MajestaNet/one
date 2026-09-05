@@ -70,4 +70,4 @@ See [BP-032](../backlog/BP-032-customer-dx-validate-deploy.md) and [customer-dx-
 3. Sign in **once per install** — each install has its own JWT issuer. Cross-install “one login unlocks all” is **not** supported; see [install-ide-connect-build-plan.md](./architecture/install-ide-connect-build-plan.md) Phase 3.
 4. Multi-env release: switch the env switcher to the target org, checkout the same Git revision, Validate vs org → Deploy to org.
 
-Local two-install Compose lab: [customer-rollout-test-run.md](./customer-rollout-test-run.md) (`deploy/docker-compose.multi-env.yml`).
+Local two-install Compose lab: [customer-rollout-test-run.md](./customer-rollout-test-run.md) (`deploy/docker-compose.multi-env.yml`). Three-env (dev / test / prod) simulation: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md) (`deploy/docker-compose.dev-test-prod.yml`).

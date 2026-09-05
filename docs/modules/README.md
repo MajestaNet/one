@@ -91,6 +91,7 @@ Hard uninstall (delete managed metadata and records) is out of scope.
 - [API families](../api-families.md)
 - [Customer customizations](../customer-customizations.md)
 - [Customer agents](../customer-agents.md)
+- [Customer-install simulation](../customer-install-simulation-test-run.md) — enable the same packs on every sibling install before deploying custom lookups
 
 ## Retired
 

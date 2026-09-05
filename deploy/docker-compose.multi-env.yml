@@ -7,6 +7,8 @@
 #
 # Prod API: http://localhost:8080   Test API: http://localhost:8081
 # See docs/customer-rollout-test-run.md
+# Three-env follow-on: deploy/docker-compose.dev-test-prod.yml
+# (docs/customer-install-simulation-test-run.md). Do not run both overlays at once.
 #
 # The single-stack file deploy/docker-compose.yml stays the everyday local loop
 # (one install, INSTALL_ROLE=dev). This overlay is prod-first + an opt-in test sibling.
