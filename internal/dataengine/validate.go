@@ -65,7 +65,16 @@ func NormalizeAndValidateFields(fields []metadata.FieldDefinition, input map[str
 		if def.FieldType == metadata.FieldTypeAutonumber {
 			return nil, validationErrorf("Field %s is autonumber and cannot be set", key)
 		}
-		result[key] = coerceValue(def, value)
+		coerced := coerceValue(def, value)
+		if isBlankOptionalValue(coerced) {
+			if def.Required {
+				return nil, validationErrorf("Missing required field: %s", def.APIName)
+			}
+			// Empty optional strings (blank email, lookup, picklist, …) are omitted
+			// so clients that post every described field as "" do not 400.
+			continue
+		}
+		result[key] = coerced
 	}
 
 	if mode == "create" {
@@ -97,6 +106,14 @@ func NormalizeAndValidateFields(fields []metadata.FieldDefinition, input map[str
 		}
 	}
 	return result, nil
+}
+
+func isBlankOptionalValue(value any) bool {
+	if value == nil {
+		return true
+	}
+	s, ok := value.(string)
+	return ok && strings.TrimSpace(s) == ""
 }
 
 func coerceValue(def metadata.FieldDefinition, value any) any {

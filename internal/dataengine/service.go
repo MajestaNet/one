@@ -86,7 +86,11 @@ func (s *Service) createWith(ctx context.Context, objectAPIName string, input ma
 	if err := RejectImmutableSystemFields(input); err != nil {
 		return nil, err
 	}
-	ownerID, _ := optionalOwnerID(input)
+	ownerID, setOwner := optionalOwnerID(input)
+	if !setOwner && actor != nil && strings.TrimSpace(actor.ID) != "" {
+		id := actor.ID
+		ownerID = &id
+	}
 	applyCommercialCreateDefaults(objectAPIName, input)
 	data, err := NormalizeAndValidateFields(desc.Fields, input, "create")
 	if err != nil {

@@ -13,7 +13,8 @@ Use the SVG files. Do **not** type the `MAJESTA.NET` wordmark. The globe is the 
 | `logo-two-colour.svg` | Sign in / mode launcher on light |
 | `logo-white.svg` / `logo-navy.svg` / `logo.svg` / `symbol.svg` / `symbol-white.svg` | Spare lockups / `currentColor` |
 | `symbol/gold-{256,512,1024}.png` | Raster source for the app icon |
-| `app-icon.png` | Gold globe on navy, 1024² — electron-builder |
+| `app-icon.png` | Gold globe on navy, 1024² — electron-builder **and** running window/dock (`BrowserWindow` / `app.dock`) |
+| `app-icon.svg` | Composed source for the raster app icon |
 
 Ivory lockups, site CSS, and marketing fonts are **not** copied.
 

@@ -1,4 +1,5 @@
 import type { QueryFilter } from "../../operate/types";
+import { listIdentityField } from "../../operate/recordClient";
 import type { RunGraphBinding, RunGraphDocument, RunGraphNode } from "./types";
 
 export const DEFAULT_COLLECTION_OBJECTS = ["Account", "Contact", "Opportunity"] as const;
@@ -56,7 +57,8 @@ export function collectionListFilters(
   binding?: RunGraphBinding,
 ): QueryFilter[] {
   const search = node.searchQ?.trim();
-  const searchFilters: QueryFilter[] = search ? [{ field: "Name", op: "like", value: search }] : [];
+  const field = listIdentityField(node.ref?.objectApiName ?? "");
+  const searchFilters: QueryFilter[] = search ? [{ field, op: "like", value: search }] : [];
   return [...searchFilters, ...bindingFiltersAsQuery(binding)];
 }
 
