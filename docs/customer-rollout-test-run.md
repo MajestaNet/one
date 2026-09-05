@@ -6,6 +6,8 @@ Gap log: [customer-rollout-gap-log.md](./customer-rollout-gap-log.md) (run table
 
 **Status:** alpha lab. First headless run (2026-09-05) is in the gap log. Open defects: [#28](https://github.com/MajestaNet/one/issues/28), [#29](https://github.com/MajestaNet/one/issues/29). Path A DigitalOcean is a follow-on pass with the same cards if DO credentials exist.
 
+Heavier follow-on (dev + test + prod, managed packages linked to a custom object, TypeScript automations at scale, full Control IDE walk): [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md) · [playbook + agent prompts](./architecture/customer-install-simulation-playbook.md).
+
 ## Locked choices
 
 | Choice | Value |

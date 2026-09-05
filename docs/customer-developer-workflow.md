@@ -121,6 +121,7 @@ There is no “Promote to peer” step in this workflow.
 ## Related
 
 - [customer-rollout-test-run.md](./customer-rollout-test-run.md) — scored SI journey; defects in the [gap-log issue registry](./customer-rollout-gap-log.md)
+- [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md) — three-env customer simulation + [executor prompts](./architecture/customer-install-simulation-playbook.md)
 - [customer-dx-build-plan.md](./architecture/customer-dx-build-plan.md)
 - [customer-repo-init-build-plan.md](./architecture/customer-repo-init-build-plan.md)
 - [customer-repo.md](./customer-repo.md)

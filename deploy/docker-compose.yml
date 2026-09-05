@@ -1,6 +1,9 @@
 # Single-install local loop (INSTALL_ROLE=dev, :8080).
-# Prod + test siblings for the SI campaign: docker-compose.multi-env.yml
-# (docs/customer-rollout-test-run.md). Not a third product install path.
+# Prod + test siblings for campaign 1: docker-compose.multi-env.yml
+# (docs/customer-rollout-test-run.md).
+# Dev + test + prod for campaign 2: docker-compose.dev-test-prod.yml
+# (docs/customer-install-simulation-test-run.md).
+# Not a third product install path.
 
 services:
   postgres:

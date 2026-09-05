@@ -1,12 +1,12 @@
 # Campaign finding (SI rollout)
 
-Use this for a **confirmed** gap from [docs/customer-rollout-test-run.md](../docs/customer-rollout-test-run.md). Do **not** open a new `backlog/BP-*.md` item. Do **not** use this template for security vulnerabilities ([SECURITY.md](../SECURITY.md)).
+Use this for a **confirmed** gap from [docs/customer-rollout-test-run.md](../docs/customer-rollout-test-run.md) (beats `G-…`) or [docs/customer-install-simulation-test-run.md](../docs/customer-install-simulation-test-run.md) (beats `S-…`). Do **not** open a new `backlog/BP-*.md` item. Do **not** use this template for security vulnerabilities ([SECURITY.md](../SECURITY.md)).
 
 ## Campaign
 
 - Run date:
-- Beat id (`G-…`):
-- Scenario card (`A`–`F`):
+- Beat id (`G-…` or `S-…`):
+- Scenario card (`A`–`F` or `S-A`–`S-E`):
 - Outcome: `fail` / `pass-with-workaround`
 - DX (1–5):
 - Class: `product-bug` / `docs-drift` / `missing-lab-packaging` / `authz-confusion`
