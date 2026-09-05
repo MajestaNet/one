@@ -4,7 +4,7 @@ A **scripted, scored customer journey** that a new SI (or vendor agent) can atte
 
 Gap log: [customer-rollout-gap-log.md](./customer-rollout-gap-log.md). Fill a row per scenario card. Customer YAML stays under gitignored `.customer-sandbox/` — never product `internal/seed`.
 
-**Status:** alpha lab. Path A DigitalOcean is a follow-on pass with the same cards if DO credentials exist.
+**Status:** alpha lab. First headless run (2026-09-05, native two-install, no Electron) is in [customer-rollout-gap-log.md](./customer-rollout-gap-log.md). Path A DigitalOcean is a follow-on pass with the same cards if DO credentials exist.
 
 ## Locked choices
 
@@ -74,6 +74,33 @@ Logs should show `one-api listening`, then `bootstrap/seed complete`. Tear down:
 ```bash
 docker compose -f deploy/docker-compose.multi-env.yml down -v
 ```
+
+### Native fallback (no Docker)
+
+Two empty databases on one Postgres 16, unique `INSTALL_ID` / JWT key / claim token / `PORT` per process. Export `DENO_PATH` (or put Deno 2.9.3 on `PATH`) in **both** API and worker shells — suites run Deno in the API; async automations run Deno in the worker.
+
+Start **prod API first**, wait `/readyz`, then its worker; repeat for test. API and worker both call `EnsureKernel`; concurrent first-boot migrate can fail on a non-idempotent kernel SQL file (gap log G-MIGRATE-RACE).
+
+```bash
+# example — two DBs on 127.0.0.1:5432
+createdb one_prod && createdb one_test
+export PATH="$HOME/.deno/bin:$PATH"
+export DENO_PATH="$(command -v deno)"
+export APP_ENV=development FEATURE_FLAGS=agents PRODUCT_VERSION=0.1.0 CUSTOMER_ID=acme-rollout
+# prod
+DATABASE_URL=postgres://one:one@127.0.0.1:5432/one_prod PORT=8080 \
+  INSTALL_ID=acme-prod INSTALL_ROLE=prod \
+  AUTH_JWT_SIGNING_KEY=rollout-prod-jwt-hmac-secret-change-me-32b \
+  INSTALL_CLAIM_TOKEN=rollout-prod-claim-token-change-me \
+  API_KEYS=rollout-prod-admin+admin PLATFORM_PUBLIC_URL=http://localhost:8080 \
+  go run ./cmd/api
+# after /readyz — worker with the same DATABASE_URL (no PORT)
+# then repeat INSTALL_ID=acme-test PORT=8081 / one_test
+```
+
+Copy [`.env.example`](../.env.example) for a single-install `make api` loop. Two-install native labs should **not** share `AUTH_JWT_SIGNING_KEY` or `INSTALL_CLAIM_TOKEN`.
+
+Headless helper: [scripts/customer-rollout-headless.sh](../scripts/customer-rollout-headless.sh) (Compose by default; `SKIP_COMPOSE=1` when the APIs are already up).
 
 ## Capture protocol (ease of use)
 
@@ -209,7 +236,7 @@ go run ./cmd/one org deploy -dir .customer-sandbox/one-acme-rollout --alias test
 
 #### D2. New work — `Project__c` + `CreateProject_From_Account`
 
-Hand-edit in the customer repo (surface 1). Copy-paste shapes (JSONLogic name required; ADR-014: only `one:automation`):
+Hand-edit in the customer repo (surface 1). Copy-paste shapes. JSONLogic expressions are **error conditions**: `true` means the record is invalid (same polarity as Salesforce validation rules). ADR-014: only `one:automation`.
 
 `metadata/objects/Project__c.yaml`
 
@@ -236,7 +263,8 @@ errorMessage: Project Name is required
 ownership: custom
 packageName: customer.default
 expression:
-  "!!":
+  # JSONLogic true => record is invalid (Name missing).
+  "!":
     var: Name
 ```
 
@@ -247,7 +275,19 @@ Surfaces 2–3 for the **same** object:
 - Control IDE Build → Objects / Automations (if panels are honest; else log BP-066).
 - MCP `upsert_object` / `upsert_field` (customize job class) — scenario F.
 
-Prove runtime on test: create an Account → worker runs the automation → query `Project__c`. Grant `automationAccess` / `canRun` on a permission set; confirm deny without it.
+Prove runtime on test: create an Account → worker runs the automation → query `Project__c`. Client query body field is `object` (not `objectApiName`); create responses use `Id`. Grant `automationAccess` / `canRun` on a permission set; confirm deny without it.
+
+```bash
+curl -sS -X POST http://localhost:8081/client/v1/sobjects/Account \
+  -H "Authorization: Bearer $TEST_JWT" -H "One-API-Revision: 1" \
+  -H "Content-Type: application/json" \
+  -d '{"Name":"Live Rollout Account"}'
+# wait for worker, then:
+curl -sS -X POST http://localhost:8081/client/v1/query \
+  -H "Authorization: Bearer $TEST_JWT" -H "One-API-Revision: 1" \
+  -H "Content-Type: application/json" \
+  -d '{"object":"Project__c"}'
+```
 
 ### E. Deploy from source (repo → org)
 
@@ -263,7 +303,7 @@ Prove runtime on test: create an Account → worker runs the automation → quer
 
 Point the agent at **test**, in parallel with the IDEs.
 
-1. `FEATURE_FLAGS` includes `agents` on this Compose lab. Empty `FEATURE_FLAGS` also enables agents in code (`Config.AgentsEnabled`); production docs that say “omit the flag to keep MCP dark” disagree with that default — log the contradiction if you hit it.
+1. `FEATURE_FLAGS` includes `agents` on this Compose lab. Empty `FEATURE_FLAGS` also **enables** agents (`Config.AgentsEnabled`). To keep MCP dark, set a **non-empty** list that does not include `agents` — omitting the variable is not enough.
 2. Create an agent principal (claim JWT / admin key), Roles with `client` + `metadata` + `deploy` (SystemAdmin is enough for the lab), issue a credential, mint `grant_type=client_credentials`.
 3. Catalog:
 
@@ -325,7 +365,7 @@ go run ./cmd/one org validate -dir .customer-sandbox/one-acme-rollout
 go run ./cmd/one org deploy  -dir .customer-sandbox/one-acme-rollout --suite CreateProjectFromAccount
 ```
 
-Headless API/CLI/MCP slices (no Electron): [scripts/customer-rollout-headless.sh](../scripts/customer-rollout-headless.sh).
+Headless API/CLI/MCP slices (no Electron): [scripts/customer-rollout-headless.sh](../scripts/customer-rollout-headless.sh). Pass `SKIP_COMPOSE=1` when prod `:8080` and test `:8081` are already up.
 
 ## Explicit non-goals
 

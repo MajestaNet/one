@@ -109,7 +109,7 @@ YAML maps to Deploy snapshot JSON fields (`internal/deploy` types). Every custom
 |---|---|---|
 | `metadata/objects/<apiName>.yaml` | `apiName`, `label`, `pluralLabel`, `storageMode`, `features` | |
 | `metadata/fields/<object>/<apiName>.yaml` | `objectApiName`, `apiName`, `label`, `fieldType`, … | |
-| `metadata/validation-rules/<object>/<apiName>.yaml` | `objectApiName`, `apiName`, `expression`, … | |
+| `metadata/validation-rules/<object>/<apiName>.yaml` | `objectApiName`, `apiName`, `expression`, … | JSONLogic **error** expression: `true` means the record is invalid. Name-required is `"!": { var: Name }`, not `"!!"`. |
 | `metadata/automations/<apiName>.yaml` | `apiName`, `objectApiName`, `triggerEvent`, `execution`, `entryFile`, … | Code automations: pair with `src/automations/` ([ADR-014](./adr/014-customer-code-automations.md)) |
 | `src/automations/<name>.ts` | `export default async function run(ctx)` | No third-party imports; Deno guest only |
 | `tests/automations/<name>_test.ts` | Unit tests against mock `ctx` | Pack / Deploy gate |
@@ -119,11 +119,11 @@ YAML maps to Deploy snapshot JSON fields (`internal/deploy` types). Every custom
 | `metadata/canvases/<apiName>.yaml` | Deprecated CanvasSpec path (alias during ToolSpec migration; [ADR-018](./adr/018-crm-canvas-document.md)) | Prefer `metadata/tools/` |
 | `metadata/tools/<apiName>.yaml` | ToolSpec (rail chrome + `one.canvas/v1` document; [ADR-021](./adr/021-run-mode-toolspec.md)) | Declarative only — no JS/React assets; [ADR-021](./adr/021-run-mode-toolspec.md) |
 | `metadata/experiences/<apiName>.yaml` | Client Experience (`homeUrl`, `connectedAppApiName`, `allowedOrigins`; [ADR-019](./adr/019-client-experience-oss-kits.md)) | Config only — SPA code hosted on customer infra |
-| Connectors / install secrets / egress | Managed via Metadata API on each install | Secret ciphertext is install-local; re-bind after promote |
+| Connectors / install secrets / egress | Managed via Metadata API on each install | Secret ciphertext is install-local; re-bind after each org deploy |
 | `metadata/data-roles/<apiName>.yaml` | `apiName`, `label`, optional parent | ADR-016 |
 | `metadata/object-sharing/<object>.yaml` | `objectApiName`, `defaultAccess`, `sharingRulesEnabled` | OWD |
 | `metadata/sharing-rules/<object>/<apiName>.yaml` | criteria rule fields | |
-| `.one/baseline/**` | managed objects/fields + `manifest.yaml` | **Read-only**; ignored by pack/promote |
+| `.one/baseline/**` | managed objects/fields + `manifest.yaml` | **Read-only**; ignored by pack / org deploy |
 | `tests/<apiName>.yaml` | `apiName`, `label`, `steps` | Customer test suites |
 
 ## Environments
