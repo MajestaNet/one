@@ -96,7 +96,7 @@ Not product runtime. Lives under `tools/control-ide` only ([ADR-012](./adr/012-c
 | Layer | Choice | Notes |
 |---|---|---|
 | Shell | Electron 43 | Desktop installers via electron-builder + `@electron/fuses` |
-| UI | React 19 + **own CSS tokens** + `ui/` primitives | Monaco for YAML; self-hosted IBM Plex; no third-party design-system kit — [control-ide-design.md](./control-ide-design.md), navy/gold restyle [BP-068](../backlog/BP-068-ide-brand-visual.md) |
+| UI | React 19 + **own CSS tokens** + `ui/` primitives | Monaco for YAML; self-hosted IBM Plex; no third-party design-system kit — [control-ide-design.md](./control-ide-design.md), navy/gold restyle [BP-068](../backlog/BP-068-ide-brand-visual.md) mitigated |
 | Chat UI | `@assistant-ui/react` + Majesta One external-store runtime | Headless Thread/Composer; runs stay on Go `/client/v1/agents/runs` |
 | Operate graph layout | `@dagrejs/dagre` + owned SVG | Explorer tool only — no cytoscape/vis in Operate v1 |
 | Run Tool renderers | `@base-ui/react` · `@tanstack/react-table` + `@tanstack/react-virtual` · `@dnd-kit/*` · `@xyflow/react` · `react-hook-form` + `zod` (+ `@hookform/resolvers`) · `recharts` · `react-markdown` | Headless engines painted with Majesta One tokens under `tools/control-ide/src/renderer/run/` — [ADR-021](./adr/021-run-mode-toolspec.md) |

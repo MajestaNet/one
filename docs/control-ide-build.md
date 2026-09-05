@@ -76,7 +76,7 @@ Electron cannot fully hide JS; real protection is **no public web deploy** + **l
 ## Milestone sequence
 
 1. **Done** — Vitest coverage, path-filtered CI, Linux AppImage smoke, `control-ide-v*` release workflow (unsigned private Release).
-2. **Now** — Own CSS design tokens ([control-ide-design.md](./control-ide-design.md)); navy/gold restyle is [BP-068](../backlog/BP-068-ide-brand-visual.md); `electron-updater` scaffold gated on `UPDATE_FEED_URL` (no live feed in CI).
+2. **Now** — Own CSS design tokens ([control-ide-design.md](./control-ide-design.md)); navy/gold restyle shipped ([BP-068](../backlog/BP-068-ide-brand-visual.md) mitigated); `electron-updater` scaffold gated on `UPDATE_FEED_URL` (no live feed in CI).
 3. **Frozen (ADR-030)** — Private update CDN; Mac notarization + Windows Authenticode; customer download portal; distribution E2E; local/file-based CI update-feed smoke.
 4. **Later** — Staged rollouts / dual channels once the private feed exists.
 
