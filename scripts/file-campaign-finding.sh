@@ -3,6 +3,7 @@
 # Then paste the printed URL into docs/customer-rollout-gap-log.md Issue registry.
 #
 #   scripts/file-campaign-finding.sh G-MIGRATE-RACE "short title" ./body.md [labels]
+#   scripts/file-campaign-finding.sh S-C-WORKER-FANOUT "short title" ./body.md [labels]
 #
 # Body should follow .github/ISSUE_TEMPLATE/campaign-finding.md
 # Fourth arg is comma-separated labels (default: bug).

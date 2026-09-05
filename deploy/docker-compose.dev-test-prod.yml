@@ -1,19 +1,23 @@
-# Two sibling installs for the customer-rollout campaign.
-# Not a third product install path — Path B Compose, twice, under one CUSTOMER_ID.
+# Three sibling installs (dev / test / prod) for the customer-install simulation campaign.
+# Not a third product install path — Path B Compose, three times, under one CUSTOMER_ID.
 #
 # From repo root:
-#   docker compose -f deploy/docker-compose.multi-env.yml up --build -d
-#   docker compose -f deploy/docker-compose.multi-env.yml down -v
+#   docker compose -f deploy/docker-compose.dev-test-prod.yml up --build -d
+#   docker compose -f deploy/docker-compose.dev-test-prod.yml down -v
 #
-# Prod API: http://localhost:8080   Test API: http://localhost:8081
-# See docs/customer-rollout-test-run.md
-# Three-env follow-on: deploy/docker-compose.dev-test-prod.yml
-# (docs/customer-install-simulation-test-run.md). Do not run both overlays at once.
+# Prod API: http://localhost:8080
+# Test API: http://localhost:8081
+# Dev  API: http://localhost:8082
+# See docs/customer-install-simulation-test-run.md
+#
+# Do not run this overlay at the same time as docker-compose.multi-env.yml or
+# docker-compose.yml — host ports 8080 / 5432 collide.
 #
 # The single-stack file deploy/docker-compose.yml stays the everyday local loop
-# (one install, INSTALL_ROLE=dev). This overlay is prod-first + an opt-in test sibling.
+# (one install, INSTALL_ROLE=dev). This overlay is a simulated customer topology:
+# prod + opt-in test + opt-in dev, same CUSTOMER_ID, unique JWT issuers.
 
-name: one-rollout
+name: one-sim
 
 x-build: &image-build
   context: ..
@@ -30,7 +34,7 @@ x-common-env: &common-env
   API_REVISION_CURRENT: "1"
   API_REVISION_MIN: "1"
   MIGRATIONS_PATH: /migrations
-  CUSTOMER_ID: acme-rollout
+  CUSTOMER_ID: acme-sim
 
 services:
   postgres-prod:
@@ -42,7 +46,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - one_rollout_pg_prod:/var/lib/postgresql/data
+      - one_sim_pg_prod:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U one -d one"]
       interval: 5s
@@ -58,7 +62,23 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - one_rollout_pg_test:/var/lib/postgresql/data
+      - one_sim_pg_test:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U one -d one"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres-dev:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: one
+      POSTGRES_PASSWORD: one
+      POSTGRES_DB: one
+    ports:
+      - "5434:5432"
+    volumes:
+      - one_sim_pg_dev:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U one -d one"]
       interval: 5s
@@ -76,8 +96,8 @@ services:
       DATABASE_URL: postgres://one:one@postgres-prod:5432/one
       PORT: "8080"
       API_KEYS: rollout-prod-admin+admin,rollout-prod-agent:client
-      AUTH_JWT_SIGNING_KEY: rollout-prod-jwt-hmac-secret-change-me-32b
-      INSTALL_CLAIM_TOKEN: rollout-prod-claim-token-change-me
+      AUTH_JWT_SIGNING_KEY: sim-prod-jwt-hmac-secret-change-me-32bxx
+      INSTALL_CLAIM_TOKEN: sim-prod-claim-token-change-me
       PLATFORM_PUBLIC_URL: http://localhost:8080
       INSTALL_ID: acme-prod
       INSTALL_ROLE: prod
@@ -117,8 +137,8 @@ services:
       DATABASE_URL: postgres://one:one@postgres-test:5432/one
       PORT: "8080"
       API_KEYS: rollout-test-admin+admin,rollout-test-agent:client
-      AUTH_JWT_SIGNING_KEY: rollout-test-jwt-hmac-secret-change-me-32b
-      INSTALL_CLAIM_TOKEN: rollout-test-claim-token-change-me
+      AUTH_JWT_SIGNING_KEY: sim-test-jwt-hmac-secret-change-me-32bxx
+      INSTALL_CLAIM_TOKEN: sim-test-claim-token-change-me
       PLATFORM_PUBLIC_URL: http://localhost:8081
       INSTALL_ID: acme-test
       INSTALL_ROLE: test
@@ -147,6 +167,48 @@ services:
       api-test:
         condition: service_started
 
+  api-dev:
+    build:
+      <<: *image-build
+      args:
+        CMD: api
+        VERSION: "0.1.0"
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgres://one:one@postgres-dev:5432/one
+      PORT: "8080"
+      API_KEYS: rollout-dev-admin+admin,rollout-dev-agent:client
+      AUTH_JWT_SIGNING_KEY: sim-dev-jwt-hmac-secret-change-me-32bxxx
+      INSTALL_CLAIM_TOKEN: sim-dev-claim-token-change-me
+      PLATFORM_PUBLIC_URL: http://localhost:8082
+      INSTALL_ID: acme-dev
+      INSTALL_ROLE: dev
+    ports:
+      - "8082:8080"
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+
+  worker-dev:
+    build:
+      <<: *image-build
+      args:
+        CMD: worker
+        VERSION: "0.1.0"
+    environment:
+      <<: *common-env
+      DATABASE_URL: postgres://one:one@postgres-dev:5432/one
+      WEBHOOK_TIMEOUT_MS: "10000"
+      WORKER_POLL_MS: "2000"
+      INSTALL_ID: acme-dev
+      INSTALL_ROLE: dev
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+      api-dev:
+        condition: service_started
+
 volumes:
-  one_rollout_pg_prod:
-  one_rollout_pg_test:
+  one_sim_pg_prod:
+  one_sim_pg_test:
+  one_sim_pg_dev:

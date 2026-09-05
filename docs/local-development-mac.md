@@ -93,7 +93,7 @@ Start the worker **after** `/readyz` is ready (API and worker both apply kernel 
 make worker
 ```
 
-Two-install lab (prod + test): [customer-rollout-test-run.md](./customer-rollout-test-run.md).
+Two-install lab (prod + test): [customer-rollout-test-run.md](./customer-rollout-test-run.md). Three-env simulation (dev / test / prod): [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md).
 
 ## 4. Mint a Majesta One JWT (for Control IDE)
 
@@ -148,7 +148,7 @@ npx electron --user-data-dir="${ONE_IDE_A_DATA:-$HOME/.local/share/one-control-i
 npx electron --user-data-dir="${ONE_IDE_B_DATA:-$HOME/.local/share/one-control-ide-b}" .
 ```
 
-Connect each window independently. Multi-env + dual-IDE campaign: [customer-rollout-test-run.md](./customer-rollout-test-run.md).
+Connect each window independently. Multi-env + dual-IDE campaign: [customer-rollout-test-run.md](./customer-rollout-test-run.md). Three-env IDE walk: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md) card S-E.
 
 ### Optional Mac installer (unsigned)
 
