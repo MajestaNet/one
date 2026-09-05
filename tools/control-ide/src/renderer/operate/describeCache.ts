@@ -5,6 +5,7 @@ export type GlobalDescribeObject = {
   label?: string;
   pluralLabel?: string;
   packageName?: string;
+  storageMode?: string;
 };
 
 export type GlobalDescribe = {
@@ -98,6 +99,12 @@ export function normalizeGlobalObjects(raw: unknown): GlobalDescribeObject[] {
           : o.packageName == null
             ? undefined
             : String(o.packageName),
+      storageMode:
+        typeof o.storageMode === "string"
+          ? o.storageMode
+          : typeof o.storage_mode === "string"
+            ? o.storage_mode
+            : undefined,
     }))
     .filter((o) => o.apiName);
 }
@@ -109,6 +116,7 @@ export function normalizeDescribeObject(raw: unknown, fallbackApiName: string): 
     apiName: d.apiName ?? fallbackApiName,
     label: d.label,
     pluralLabel: d.pluralLabel,
+    storageMode: d.storageMode,
     fields: fields
       .map((f) => normalizeField(f))
       .filter((f): f is DescribeField => Boolean(f?.apiName)),

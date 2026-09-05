@@ -1,4 +1,5 @@
 import { flattenRecordRow } from "../../operate/queryAutocomplete";
+import { queryRecords } from "../../operate/recordClient";
 import type { RunGraphFetch } from "./api";
 import type { RunGraphBinding, RunGraphNode } from "./types";
 
@@ -65,16 +66,13 @@ export async function executeRunGraphSignalBinding(
     throw new Error("Signal node does not reference this binding");
   }
   const limit = Math.min(50, Math.max(1, Math.trunc(binding.limit ?? 25)));
-  const raw = (await fetchFn("/client/v1/query", {
-    method: "POST",
-    body: JSON.stringify({
-      object: binding.objectApiName,
-      select: binding.fields,
-      filters: binding.filters ?? [],
-      sort: binding.sort ?? [],
-      limit,
-    }),
-  })) as { records?: Record<string, unknown>[] };
+  const raw = await queryRecords(fetchFn, {
+    object: binding.objectApiName,
+    select: binding.fields,
+    filters: binding.filters ?? [],
+    sort: binding.sort ?? [],
+    limit,
+  });
   return {
     nodeId: node.id,
     bindingId: binding.id,

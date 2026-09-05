@@ -20,6 +20,8 @@ import {
   rankSuggestions,
   resultColumns,
 } from "./queryAutocomplete";
+import { isKernelIdentityObject, queryRecords } from "./recordClient";
+import type { QueryFilter, SortSpec } from "./types";
 
 const RESULT_CAP = 50;
 
@@ -218,12 +220,21 @@ export function QueryPanel({
       }
       if (!body.object) body.object = objectName;
       const limit = typeof body.limit === "number" ? body.limit : 25;
-      body.limit = Math.min(Math.max(1, limit), RESULT_CAP);
-      const q = (await bridge.fetch("/client/v1/query", {
-        method: "POST",
-        body: JSON.stringify(body),
-        signal: ac.signal,
-      })) as { records?: Record<string, unknown>[] };
+      body.limit = Math.min(Math.max(1, Math.trunc(limit)), RESULT_CAP);
+      const objectApiName = String(body.object);
+      const q = isKernelIdentityObject(objectApiName)
+        ? await queryRecords(bridge.fetch, {
+            object: objectApiName,
+            select: Array.isArray(body.select) ? (body.select as string[]) : undefined,
+            filters: Array.isArray(body.filters) ? (body.filters as QueryFilter[]) : undefined,
+            sort: Array.isArray(body.sort) ? (body.sort as SortSpec[]) : undefined,
+            limit: body.limit,
+          })
+        : ((await bridge.fetch("/client/v1/query", {
+            method: "POST",
+            body: JSON.stringify(body),
+            signal: ac.signal,
+          })) as { records?: Record<string, unknown>[] });
       if (ac.signal.aborted) return;
       const records = (q.records ?? []).slice(0, RESULT_CAP).map(flattenRecordRow);
       setRows(records);

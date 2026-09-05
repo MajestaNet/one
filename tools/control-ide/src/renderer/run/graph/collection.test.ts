@@ -29,6 +29,13 @@ describe("collection helpers", () => {
       { field: "Name", op: "like", value: "Acme" },
       { field: "Type", op: "eq", value: "Customer" },
     ]);
+    const contact: RunGraphNode = {
+      id: "contacts",
+      kind: "collection",
+      ref: { objectApiName: "Contact" },
+      searchQ: "Shah",
+    };
+    expect(collectionListFilters(contact)).toEqual([{ field: "LastName", op: "like", value: "Shah" }]);
   });
 });
 

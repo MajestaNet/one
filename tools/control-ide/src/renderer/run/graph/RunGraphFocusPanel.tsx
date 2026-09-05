@@ -3,9 +3,10 @@ import type { AppBridge } from "../../App";
 import { ActivityFeed } from "../../operate/ActivityFeed";
 import { describeCache, normalizeDescribeObject } from "../../operate/describeCache";
 import { fetchEnabledPackages, relatedListsFor } from "../../operate/packages";
-import { editableFields, RecordForm, requiredMissing } from "../../operate/RecordForm";
+import { RecordForm, requiredMissing } from "../../operate/RecordForm";
 import { RelatedLists } from "../../operate/RelatedLists";
 import { displayName } from "../../operate/types";
+import { getRecord, recordWritePayload, updateRecord } from "../../operate/recordClient";
 import { resultColumns } from "../../operate/queryAutocomplete";
 import type { DescribeObject } from "../../operate/types";
 import { Button, DataTable, Spinner } from "../../ui";
@@ -71,7 +72,7 @@ function RunGraphRecordFocus({
     setError("");
     try {
       const cachedDescribe = describeCache.getObject(installId, objectApiName);
-      const [nextDescribe, rawRecord, packages] = await Promise.all([
+      const [nextDescribe, packages] = await Promise.all([
         cachedDescribe
           ? Promise.resolve(cachedDescribe)
           : fetchFn(`/client/v1/describe/${encodeURIComponent(objectApiName)}`).then((raw) => {
@@ -79,12 +80,9 @@ function RunGraphRecordFocus({
               describeCache.setObject(installId, objectApiName, normalized);
               return normalized;
             }),
-        fetchFn(
-          `/client/v1/sobjects/${encodeURIComponent(objectApiName)}/${encodeURIComponent(recordId)}`,
-        ),
         fetchEnabledPackages(fetchFn),
       ]);
-      const nextRecord = flattenRecord(rawRecord as RecordMap);
+      const nextRecord = flattenRecord(await getRecord(fetchFn, objectApiName, recordId));
       setDescribe(nextDescribe);
       setRecord(nextRecord);
       setFormValues(nextRecord);
@@ -134,17 +132,8 @@ function RunGraphRecordFocus({
     setError("");
     setNotice("");
     try {
-      const payload = Object.fromEntries(
-        editableFields(fields).flatMap((field) =>
-          Object.prototype.hasOwnProperty.call(formValues, field.apiName)
-            ? [[field.apiName, formValues[field.apiName]]]
-            : [],
-        ),
-      );
-      await fetchFn(
-        `/client/v1/sobjects/${encodeURIComponent(objectApiName)}/${encodeURIComponent(recordId)}`,
-        { method: "PATCH", body: JSON.stringify(payload) },
-      );
+      const payload = recordWritePayload(fields, formValues);
+      await updateRecord(fetchFn, objectApiName, recordId, payload);
       await load();
       onRecordSaved?.(node);
       setNotice("Record saved.");

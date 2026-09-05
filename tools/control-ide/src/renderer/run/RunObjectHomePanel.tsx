@@ -19,7 +19,16 @@ import {
   viewsForObject,
 } from "../operate/views";
 import { KeyValueList } from "../ui/KeyValueList";
-import { editableFields, RecordForm, requiredMissing } from "../operate/RecordForm";
+import { RecordForm, requiredMissing } from "../operate/RecordForm";
+import {
+  createRecord,
+  getRecord,
+  listIdentityField,
+  queryRecords,
+  recordWritePayload,
+  updateRecord,
+  type QueryRecordsInput,
+} from "../operate/recordClient";
 import { pinRecordToHomeGraph } from "./graph/pinRecord";
 import { buildBulkPatchRequests, summarizeCompositeResponse } from "../operate/bulkComposite";
 
@@ -38,7 +47,20 @@ export function parseObjectHomeRailId(id: string): string | null {
 
 /** Prefer Name-like fields first; default to 5 data columns (no forced Id column). */
 export function defaultFieldColumns(fields: DescribeField[], max = DEFAULT_COLUMN_COUNT): { key: string; label: string }[] {
-  const preferred = ["Name", "Subject", "Title", "Email", "StageName", "Status", "Industry", "Phone"];
+  const preferred = [
+    "Name",
+    "LastName",
+    "FirstName",
+    "DisplayName",
+    "Subject",
+    "Title",
+    "Email",
+    "StageName",
+    "Status",
+    "Industry",
+    "Phone",
+    "MobilePhone",
+  ];
   const byName = new Map(fields.map((f) => [f.apiName, f]));
   const cols: { key: string; label: string }[] = [];
   for (const key of preferred) {
@@ -271,15 +293,20 @@ export function RunObjectHomePanel({
           const kept = prev.filter((k) => valid.has(k) || k === "id" || k === "Id");
           return kept.length ? kept : defaults.map((c) => c.key);
         });
-        const body: Record<string, unknown> = { object: apiName, limit: 50 };
-        if (filters.length) body.filters = filters;
-        const q = (await bridge.fetch("/client/v1/query", {
-          method: "POST",
-          body: JSON.stringify(body),
-        })) as { records?: Row[] };
+        const validFields = new Set((objectDesc.fields ?? []).map((f) => f.apiName));
+        const usableFilters = filters.filter((f) => validFields.has(f.field));
+        if (usableFilters.length !== filters.length) {
+          setActiveFilters(usableFilters);
+        }
+        const body: QueryRecordsInput = { object: apiName, limit: 50 };
+        if (usableFilters.length) body.filters = usableFilters;
+        const q = await queryRecords(bridge.fetch, body);
         setRows((q.records ?? []).map(flattenRecord));
+        const identity = listIdentityField(apiName);
         const firstFilterable =
-          (objectDesc.fields ?? []).find((f) => f.filterable !== false)?.apiName || "Name";
+          (objectDesc.fields ?? []).find((f) => f.apiName === identity)?.apiName ||
+          (objectDesc.fields ?? []).find((f) => f.filterable !== false)?.apiName ||
+          identity;
         setFilterField((cur) =>
           (objectDesc.fields ?? []).some((f) => f.apiName === cur) ? cur : firstFilterable,
         );
@@ -300,9 +327,7 @@ export function RunObjectHomePanel({
       setBusy("record");
       setErr("");
       try {
-        const raw = (await bridge.fetch(
-          `/client/v1/sobjects/${encodeURIComponent(apiName)}/${encodeURIComponent(id)}`,
-        )) as Row;
+        const raw = await getRecord(bridge.fetch, apiName, id);
         setRecord(flattenRecord(raw));
         setFormValues(flattenRecord(raw));
         setFormMode(null);
@@ -412,21 +437,13 @@ export function RunObjectHomePanel({
     setBusy("save");
     setErr("");
     try {
-      const payload = Object.fromEntries(
-        editableFields(desc.fields ?? []).map((field) => [field.apiName, formValues[field.apiName]]),
-      );
+      const payload = recordWritePayload(desc.fields ?? [], formValues);
       let id = selectedId;
       if (formMode === "create") {
-        const created = (await bridge.fetch(`/client/v1/sobjects/${encodeURIComponent(objectName)}`, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        })) as Row;
+        const created = await createRecord(bridge.fetch, objectName, payload);
         id = recordId(created);
       } else if (formMode === "edit" && selectedId) {
-        await bridge.fetch(
-          `/client/v1/sobjects/${encodeURIComponent(objectName)}/${encodeURIComponent(selectedId)}`,
-          { method: "PATCH", body: JSON.stringify(payload) },
-        );
+        await updateRecord(bridge.fetch, objectName, selectedId, payload);
       }
       await loadList(objectName, activeFilters);
       if (id) await loadRecord(objectName, id);
