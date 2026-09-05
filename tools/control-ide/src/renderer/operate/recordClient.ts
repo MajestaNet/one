@@ -8,8 +8,8 @@ export type RecordFetch = (path: string, init?: RequestInit) => Promise<unknown>
 export type QueryRecordsInput = {
   object: string;
   select?: string[];
-  filters?: QueryFilter[];
-  sort?: SortSpec[];
+  filters?: QueryFilter[] | unknown[];
+  sort?: SortSpec[] | unknown[];
   limit?: number;
 };
 
@@ -190,10 +190,10 @@ async function queryKernelUser(
     | Record<string, unknown>[];
   const list = Array.isArray(raw) ? raw : (raw.principals ?? []);
   let rows = list.map(principalToRecord);
-  for (const filter of input.filters ?? []) {
+  for (const filter of (input.filters ?? []) as QueryFilter[]) {
     rows = rows.filter((row) => matchesFilter(row, filter));
   }
-  rows = sortRecords(rows, input.sort ?? []);
+  rows = sortRecords(rows, (input.sort ?? []) as SortSpec[]);
   const limit = Math.min(Math.max(1, Math.trunc(input.limit ?? 50)), 200);
   rows = rows.slice(0, limit).map((row) => projectSelect(row, input.select));
   return { records: rows };

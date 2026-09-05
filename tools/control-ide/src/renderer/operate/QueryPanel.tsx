@@ -220,7 +220,8 @@ export function QueryPanel({
       }
       if (!body.object) body.object = objectName;
       const limit = typeof body.limit === "number" ? body.limit : 25;
-      body.limit = Math.min(Math.max(1, Math.trunc(limit)), RESULT_CAP);
+      const cappedLimit = Math.min(Math.max(1, Math.trunc(limit)), RESULT_CAP);
+      body.limit = cappedLimit;
       const objectApiName = String(body.object);
       const q = isKernelIdentityObject(objectApiName)
         ? await queryRecords(bridge.fetch, {
@@ -228,7 +229,7 @@ export function QueryPanel({
             select: Array.isArray(body.select) ? (body.select as string[]) : undefined,
             filters: Array.isArray(body.filters) ? (body.filters as QueryFilter[]) : undefined,
             sort: Array.isArray(body.sort) ? (body.sort as SortSpec[]) : undefined,
-            limit: body.limit,
+            limit: cappedLimit,
           })
         : ((await bridge.fetch("/client/v1/query", {
             method: "POST",

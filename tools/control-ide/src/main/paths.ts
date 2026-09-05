@@ -309,10 +309,8 @@ export function resolveAppIconPath(
 ): string | undefined {
   const candidates = [
     path.join(fromDir, "app-icon.png"),
-    path.join(fromDir, "dist/app-icon.png"),
     path.join(fromDir, "../dist/app-icon.png"),
     path.join(fromDir, "../public/app-icon.png"),
-    path.join(fromDir, "public/app-icon.png"),
     path.join(fromDir, "../assets/brand/app-icon.png"),
     path.join(fromDir, "assets/brand/app-icon.png"),
   ];
