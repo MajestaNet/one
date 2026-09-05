@@ -41,7 +41,7 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 9. **[ADR-003: SQL query engine](../adr/003-sql-query-engine.md)** — Go + Postgres query/index strategy.
 10. **[ADR-013: High-volume flexible storage](../adr/013-high-volume-flexible-storage.md)** — shared `records` risks; `storage_mode=high_volume`; LIST/RANGE partitioning ladder. Product `messages` example retired ([ADR-032](../adr/032-retire-messages-polymorphic-lookup.md)).
 11. **[Customer customizations](../customer-customizations.md)** — managed vs customer; never commit customer metadata into product paths.
-12. **[API families / ADR-004](../api-families.md)** — Client / Metadata / Deploy ownership boundaries.
+12. **[API families / ADR-004](../api-families.md)** — overview; endpoint catalogs under [docs/api/](../api/); ownership in [ADR-004](../adr/004-three-api-families.md).
 13. **[Backlog](../../backlog/README.md)** — open BP-001 / BP-035 / BP-049 follow-ups before large data-model changes.
 
 ## Document map
@@ -52,7 +52,8 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [module-map.md](./module-map.md) | Concern → code packages (agent router) |
 | [agent-routing.md](./agent-routing.md) | Spawn/focus subagents correctly |
 | [architecture.md](../architecture.md) | Product architecture overview |
-| [data-model.md](../data-model.md) | **Canonical** core data model + agent rules for changing it |
+| [data-model.md](../data-model.md) | Contributor core data model + agent rules for changing it. **Public catalog:** [objects.md](../objects.md) |
+| [objects.md](../objects.md) | Customer object catalog (core + module index). Not `GET /describe`. |
 | [sales-service-data-model.md](./sales-service-data-model.md) | Optional Sales / Service / catalog / bridge architecture |
 | [agent-data-architecture.md](./agent-data-architecture.md) | Playbook: data / seed / query |
 | [agent-authz.md](./agent-authz.md) | Playbook: AuthN / AuthZ |
@@ -96,7 +97,8 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [deploy-cloud-agnostic-build-plan.md](./deploy-cloud-agnostic-build-plan.md) | **Active:** host-free `/deploy/v1/cloud/*` + `CloudHost` port; DO aliases; community AWS skeleton |
 | [deploy-cloud-capability-contract.md](./deploy-cloud-capability-contract.md) | **Contract:** host-free Deploy cloud verbs; DO product first; AWS managed profile = community |
 | [digitalocean-distribution-build-plan.md](./digitalocean-distribution-build-plan.md) | Strategy: Path A+B + role matrix + community `sdk/`; Marketplace = BP-028 deferred; Deploy API = BP-030 |
-| [public-docs-site.md](./public-docs-site.md) | Pointer: `one.majesta.net` is a **separate CMS aggregator**; do not implement the publisher here |
+| [public-docs-site.md](./public-docs-site.md) | Pointer + CMS source map: `one.majesta.net` is a **separate CMS aggregator**; family pages in [`docs/api/`](../api/); `/objects` from [objects.md](../objects.md); production pin is `v*` |
+| [api-families.md](../api-families.md) | Customer API overview. Endpoint catalogs: [`docs/api/`](../api/). Historical phases: [api-families-build-plan.md](./api-families-build-plan.md) |
 | [public-docs-site-build-plan.md](./public-docs-site-build-plan.md) | **Superseded** in this repo — no in-tree phases ([BP-067](../../backlog/BP-067-public-docs-site.md)) |
 | [agent-public-docs.md](./agent-public-docs.md) | Playbook: GitHub `docs/` only; no Astro/Netlify/CMS dependency |
 | [agent-api-families.md](./agent-api-families.md) | Playbook: HTTP API families |

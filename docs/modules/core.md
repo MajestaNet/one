@@ -18,7 +18,7 @@ Recorded in `package_installs` as `core`. Bump `CorePackageVersion` in `internal
 | Account | `records` JSONB | Organization / party |
 | Contact | `records` JSONB | Person; optional `AccountId` |
 
-See [data-model.md](../data-model.md) for standard fields and relationship rules. Party rules: Account↔Contact remains optional; no Party base object ([ADR-020](../adr/020-cdm-managed-packages.md)).
+See [objects.md](../objects.md) for the public field catalog and [data-model.md](../data-model.md) for storage / performance. Party rules: Account↔Contact remains optional; no Party base object ([ADR-020](../adr/020-cdm-managed-packages.md)).
 
 ## Platform actions
 
