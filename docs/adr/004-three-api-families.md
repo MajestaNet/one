@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — **implemented** (Phases A–E; see [api-families.md](../api-families.md), BP-010 mitigated). Product image upgrades are a separate Ops family ([ADR-007](./007-platform-ops-upgrades.md), Phase F).
+Accepted — **implemented** (Phases A–E; see [api-families.md](../api-families.md) and [`docs/api/`](../api/), BP-010 mitigated). Product image upgrades are a separate Ops family ([ADR-007](./007-platform-ops-upgrades.md), Phase F).
 
 ## Context
 
@@ -75,7 +75,7 @@ Graduated wire compatibility **inside** family majors uses a client-pinnable **A
 
 ## Related
 
-- [API families plan](../api-families.md)
+- [API families overview](../api-families.md) · [family reference](../api/) · [historical plan](../architecture/api-families-build-plan.md)
 - [ADR-001 Dedicated install deploy](./001-dedicated-install.md)
 - [ADR-006 Majesta One JWT auth](./006-jwt-auth.md)
 - [ADR-025 API revision versioning](./025-api-revision-versioning.md)

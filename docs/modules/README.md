@@ -11,7 +11,7 @@ Domain packaging decisions: [ADR-020](../adr/020-cdm-managed-packages.md). Attri
 | Customer customizations | Customer admin (Metadata API) | `custom` | Local write; Deploy promote between same-`CUSTOMER_ID` installs |
 | Managed modules | Majesta One product | `managed` | Always-on seed and/or admin **enable**; Majesta One upgrades via product image |
 
-Runtime schema remains authenticated (`GET /client/v1/describe`, `GET /metadata/v1/objects/...`). There is no anonymous schema catalog.
+Runtime schema remains authenticated (`GET /client/v1/describe`, `GET /metadata/v1/objects/...`). There is no anonymous schema catalog. Public docs use [objects.md](../objects.md) plus the tables in this folder — not describe.
 
 **Platform actions** (integrity verbs such as `lead.convert`) are product Go registered on the module, invoked on Client `GET/POST /client/v1/actions/{apiName}`, and gated by `package_installs` — [ADR-029](../adr/029-platform-actions.md). They are not customer automations and are not locked TypeScript in the pack.
 
@@ -82,7 +82,9 @@ Hard uninstall (delete managed metadata and records) is out of scope.
 
 ## Related
 
-- [Core data model](../data-model.md)
+- [Objects (public catalog)](../objects.md)
+- [Core data model](../data-model.md) (contributor)
+- [Metadata API](../api/metadata.md)
 - [Attribute mapping](../architecture/cdm-mapping.md)
 - [Industry packages](../architecture/cdm-industry-packages.md)
 - [Sales & Service data model](../architecture/sales-service-data-model.md)

@@ -6,7 +6,7 @@ For agents changing Majesta One’s data model, storage, seed packages, or query
 
 | Concern | Path |
 |---|---|
-| Canonical model + relationship rules | [`docs/data-model.md`](../data-model.md) |
+| Canonical model + relationship rules | [`docs/data-model.md`](../data-model.md) (contributor). Public catalog: [`docs/objects.md`](../objects.md) — do not publish `GET /describe`. |
 | Sales / Service optional modules | [`sales-service-data-model.md`](./sales-service-data-model.md), [`ADR-011`](../adr/011-sales-service-managed-modules.md) |
 | Decision record (core) | [`docs/adr/008-core-data-model.md`](../adr/008-core-data-model.md) |
 | Hybrid storage decision | [`docs/adr/002-hybrid-metadata-storage.md`](../adr/002-hybrid-metadata-storage.md) |

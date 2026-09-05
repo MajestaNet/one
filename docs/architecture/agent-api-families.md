@@ -6,7 +6,8 @@ For agents changing HTTP routing, family ownership, or which surface owns an ope
 
 | Concern | Path |
 |---|---|
-| Family design | [`docs/api-families.md`](../api-families.md), [`docs/adr/004-three-api-families.md`](../adr/004-three-api-families.md) |
+| Family design | [`docs/api-families.md`](../api-families.md) (overview), [`docs/api/`](../api/) (customer endpoint catalogs), [`docs/adr/004-three-api-families.md`](../adr/004-three-api-families.md) |
+| Historical phases (shipped) | [`api-families-build-plan.md`](./api-families-build-plan.md) |
 | Server wiring | `internal/httpapi/server.go` |
 | Client extras (events, activity-feed, agent runs, audit) | `internal/httpapi/client_extras.go` |
 | Metadata routes | `internal/httpapi/metadata_routes.go` |
@@ -83,4 +84,4 @@ Flat `/v1` remains a compatibility alias during transition — prefer family pat
 - [ ] Breaking Client wire changes bump / document `apiRevision` (ADR-025) when behavior diverges for pinned clients
 - [ ] Tests cover the new/changed route
 - [ ] Module map updated if a new key file appears
-- [ ] Customer-facing route changes **may** update GitHub `docs/` (e.g. [api-families.md](../api-families.md)) in the same PR; the public host is a separate CMS ([agent-public-docs.md](./agent-public-docs.md)). Do not add `tools/one-docs`.
+- [ ] Customer-facing route changes **may** update the matching [`docs/api/{client,metadata,deploy,ops,auth}.md`](../api/) page in the same PR (not by pasting the [overview](../api-families.md) five times); the public host is a separate CMS ([agent-public-docs.md](./agent-public-docs.md)). Do not add `tools/one-docs`. Do not publish `GET /describe` as a docs catalog ([objects.md](../objects.md)).
