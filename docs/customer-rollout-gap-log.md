@@ -63,7 +63,7 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 | G-COMPOSE-SINGLE | by-design | none | everyday Compose is one `dev` install; overlay is the two-install lab | |
 | S-B-LOOKUP-FAIL-WITHOUT-PKG | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | **open** | |
 | S-B-AUTHZ-STUBS | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | **open** | |
-| S-C-SUITE | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | **open** | |
+| S-C-SUITE | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | **open** (retested S-D-DEPLOY-TEST / S-D-DEPLOY-PROD 2026-09-05; same AccountId contract fail; do not re-file) | |
 | S-C-NAMED | docs-drift | [#38](https://github.com/MajestaNet/one/issues/38) | **open** | |
 
 **Agent prompt (open rows):** open the GitHub issue, follow its **Fix-it** section, stay in the named packages, PR `Fixes #N`, then update this table.
@@ -125,7 +125,7 @@ Open defects from this run: **#28**, **#29**.
 
 Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Lab: [docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml). Fixtures: `scripts/customer-install-sim-generate.sh`.
 
-**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). **S-C recorded 2026-09-05** (same lab; named+48 stubs org-deployed to **dev only**; suite contract failed AccountId; #29 still truncates). Re-test #28 / #29; do not re-file.
+**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). **S-C recorded 2026-09-05** (same lab; named+48 stubs org-deployed to **dev only**; suite contract failed AccountId; #29 still truncates). **S-D recorded 2026-09-05** (same SHA `5732d48` repo→org on test then prod; SiteVisit__c describes on prod; business rows did not copy; suite still #37). Re-test #28 / #29; do not re-file.
 
 ### Beat catalog (record each)
 
@@ -166,15 +166,19 @@ Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation
 | 2026-09-05 | S-C-WORKER-FANOUT | S-C | pass-with-workaround | 4 | known-remainder | none | 20 ScalePing 201 in 0.22s; 960 `automation.run` queued then completed ~100s; 0 stub failures; `/me` 100/100 HTTP 200 (BP-033 queue remainder) |
 | 2026-09-05 | S-C-SUITE | S-C | fail | 2 | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | Suite failed `automationContract`: Opportunity requires AccountId; 8/9 steps passed; runbook curl same 400; CLI exit 0 |
 | 2026-09-05 | S-C-CLI-TRUNC | S-C | pass-with-workaround | 3 | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | CLI still `truncate(..., 200)` (`objectAp…`); full report via `GET /deploy/v1/tests/runs/:id` |
+| 2026-09-05 | S-D-DEPLOY-TEST | S-D | pass-with-workaround | 4 | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | SHA `5732d48` `org validate` 1.408s ok; deploy 4.411s apply created 74 (SiteVisit__c+57 automations) `sourceInstallId=acme-test`; suite failed `automationContract` AccountId (8/9); CLI exit 0, truncated JSON (#29) |
+| 2026-09-05 | S-D-DEPLOY-PROD | S-D | pass-with-workaround | 4 | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | Same SHA `5732d48` validate 1.148s ok; deploy 4.629s created 74 `sourceInstallId=acme-prod`; `GET /metadata/v1/objects/SiteVisit__c` 200 ownership=custom; suite same AccountId fail; CLI truncates (#29) |
+| 2026-09-05 | S-D-NO-ROW-COPY | S-D | pass | 5 | — | none | Prod+test `SiteVisit__c` query `totalSize=0`; dev still has 2 rows (`North Plant kickoff visit`, `Acme North kickoff visit`); metadata shipped, rows did not |
+| 2026-09-05 | S-D-PKG-DRIFT | S-D | pass-with-workaround | 3 | by-design | none | Disabled `project_service` on test: pack `enabled=false`; Project still describes; Client create 201; `org validate` ok; dry-run deploy validated; re-enabled. `pack --metadata .one/baseline` rejected; PATCH Account.Name 403; no peer push |
 
 | Count | Outcome |
 |---|---|
-| 12 | pass |
-| 6 | pass-with-workaround |
+| 13 | pass |
+| 9 | pass-with-workaround |
 | 3 | fail |
-| 0 | not-run (S-A + S-B + S-C complete; S-D–S-E not started) |
+| 0 | not-run (S-A–S-D complete; S-E not started) |
 
-Open defects from this card: **#28** (S-A; do not re-file), **#29** (S-C retest; comment pending-file), **#34** (S-B lookup validate), **#35** (S-B client_credentials docs), **#37** (S-C suite AccountId fixture), **#38** (S-C generated `updateRecord` `id`). Ignore [#36](https://github.com/MajestaNet/one/issues/36) (accidental empty `gh issue create` probe; close was denied).
+Open defects from this card: **#28** (S-A; do not re-file), **#29** (S-C/S-D retest; comment pending-file), **#34** (S-B lookup validate), **#35** (S-B client_credentials docs), **#37** (S-C suite AccountId fixture; S-D same-SHA suite still red), **#38** (S-C generated `updateRecord` `id`). Ignore [#36](https://github.com/MajestaNet/one/issues/36) (accidental empty `gh issue create` probe; close was denied).
 
 ---
 
