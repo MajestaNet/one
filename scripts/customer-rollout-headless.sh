@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Headless slices of docs/customer-rollout-test-run.md (API, claim, CLI, MCP).
 # Does not launch Control IDE. Customer fixtures stay under .customer-sandbox/.
+#
+# Default: docker compose -f deploy/docker-compose.multi-env.yml
+# Native lab (APIs already up): SKIP_COMPOSE=1 ./scripts/customer-rollout-headless.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,7 +23,6 @@ export ONE_CREDENTIAL_STORE="${ONE_CREDENTIAL_STORE:-file}"
 need() { command -v "$1" >/dev/null 2>&1 || { echo "missing $1" >&2; exit 1; }; }
 need curl
 need jq
-need docker
 
 wait_ready() {
   local url=$1
@@ -31,8 +33,13 @@ wait_ready() {
 
 json_field() { jq -r "$1"; }
 
-echo "== compose up =="
-"${COMPOSE[@]}" up --build -d
+if [[ "${SKIP_COMPOSE:-}" == "1" ]]; then
+  echo "== skip compose (SKIP_COMPOSE=1); expecting APIs already up =="
+else
+  need docker
+  echo "== compose up =="
+  "${COMPOSE[@]}" up --build -d
+fi
 wait_ready "$PROD"
 wait_ready "$TEST"
 echo "  healthz/readyz ok on prod and test"
@@ -41,7 +48,7 @@ echo "== A claim prod =="
 PROD_CLAIM_JSON="$(curl -sS -X POST "${PROD}/auth/v1/install/claim" \
   -H 'Content-Type: application/json' \
   -d "{\"token\":\"${PROD_CLAIM}\",\"email\":\"admin-prod@example.com\",\"password\":\"${PROD_PASS}\",\"displayName\":\"Prod Admin\"}")"
-echo "$PROD_CLAIM_JSON" | jq '{claimed:(.access_token!=null),error:.error,.code}'
+echo "$PROD_CLAIM_JSON" | jq '{claimed:(.access_token!=null),error:.error,code:.code}'
 PROD_JWT="$(echo "$PROD_CLAIM_JSON" | json_field '.access_token // empty')"
 if [[ -z "$PROD_JWT" ]]; then
   echo "prod already claimed; minting via bootstrap key" >&2
@@ -55,7 +62,7 @@ echo "== A claim test =="
 TEST_CLAIM_JSON="$(curl -sS -X POST "${TEST}/auth/v1/install/claim" \
   -H 'Content-Type: application/json' \
   -d "{\"token\":\"${TEST_CLAIM}\",\"email\":\"admin-test@example.com\",\"password\":\"${TEST_PASS}\",\"displayName\":\"Test Admin\"}")"
-echo "$TEST_CLAIM_JSON" | jq '{claimed:(.access_token!=null),error:.error,.code}'
+echo "$TEST_CLAIM_JSON" | jq '{claimed:(.access_token!=null),error:.error,code:.code}'
 TEST_JWT="$(echo "$TEST_CLAIM_JSON" | json_field '.access_token // empty')"
 if [[ -z "$TEST_JWT" ]]; then
   TEST_JWT="$(curl -sS -X POST "${TEST}/auth/v1/token" \

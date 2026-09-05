@@ -41,6 +41,10 @@ Follow [ide-demo-client-uplift-build-plan.md](../docs/architecture/ide-demo-clie
 
 **Do not:** license JWS; update CDN; Operate record-UX / sales surfaces; peer-to-peer promote; in-IDE MCP host; new `ide.*` caps; `requireCapability(CapIDE*)` on family routes; wire `/client/v1/preferences` or principal canvases.
 
+### Campaign 2026-09-05 (customer-rollout)
+
+[customer-rollout-gap-log.md](../docs/customer-rollout-gap-log.md): Electron WS-0 (Deploy lying-green, dual `userData`) was **not** run (`blocked-no-display`). Hosted `POST /client/v1/agents/runs` returned `awaiting_approval` and did not `org_deploy` — API contrast confirmed; IDE chat honesty still Open.
+
 ## Explicit non-goals
 
 - Making Control IDE the GA path or Ship of record (`one` remains [BP-048](./BP-048-one-cli.md))

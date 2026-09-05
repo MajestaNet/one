@@ -73,7 +73,7 @@ Directory / SCIM remainders: [BP-017](../backlog/BP-017-identity-directory-produ
 
 ### What customers configure (not “define a server”)
 
-1. Set `FEATURE_FLAGS` to include `agents` (MCP stays dark without it; production often omits until hosted tool execution is complete — [BP-006](../backlog/BP-006-agent-guardrails.md)).
+1. Set `FEATURE_FLAGS` so it **includes** `agents` (Compose labs do this). Empty `FEATURE_FLAGS` also enables MCP (`Config.AgentsEnabled`). To keep MCP **dark**, set a non-empty list that does **not** include `agents` — omitting the variable is not enough ([BP-006](../backlog/BP-006-agent-guardrails.md)).
 2. Starter AgentSpecs are cloned automatically when `AUTO_SEED` runs (`agents_starter`). Create additional AgentSpecs via Metadata anytime.
 3. Create an agent principal (`principalType=agent`), assign Roles / permission sets, issue a credential (same Client identity admin as Path B).
 4. Point an external MCP client at `https://<install>/mcp` with that bearer (or call Client/Metadata HTTP directly).
@@ -89,7 +89,7 @@ AgentSpecs (`/metadata/v1/agents/playbooks`) hold instructions and allowlists. T
 | SSE listen (`GET /mcp`) | `405` — not offered in v1 |
 | Sessions (`DELETE /mcp`) | `405` — stateless; no `Mcp-Session-Id` |
 | Auth | Same as family APIs: Majesta One JWT or bootstrap API key; send `One-API-Revision` (inherits the service client pin, [BP-025](../backlog/BP-025-ide-api-version-compatibility.md)) |
-| Flag | `FEATURE_FLAGS` must include `agents` |
+| Flag | Include `agents` in `FEATURE_FLAGS` to turn MCP on. Empty flags also enable it; a non-empty list without `agents` keeps it dark |
 
 Supported JSON-RPC methods: `initialize`, `notifications/initialized`, `ping`, `tools/list`, `tools/call`.
 
