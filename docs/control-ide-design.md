@@ -91,4 +91,4 @@ Unchanged from ADR-012: Control IDE is vendor-plane only; AuthZ and Deploy logic
 - [ADR-030](./adr/030-install-agent-runtime.md) — freeze vs finish (update CDN / chrome frozen)
 - [BP-060](../backlog/BP-060-operate-graph-surface.md) — Operate graph surface (command bar, glance, drop Tools)
 - [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) — honest JWT demo client
-- [BP-068](../backlog/BP-068-ide-brand-visual.md) — navy/gold restyle + sourced logo ([ide-brand-visual-build-plan.md](./architecture/ide-brand-visual-build-plan.md))
+- [BP-068](../backlog/BP-068-ide-brand-visual.md) — navy/gold restyle + sourced logo, mitigated ([ide-brand-visual-build-plan.md](./architecture/ide-brand-visual-build-plan.md))

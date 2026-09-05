@@ -34,7 +34,7 @@ Control IDE is **vendor plane** (ADR-012). It never ships in product images. If 
 | Install → IDE connect | [`install-ide-connect-build-plan.md`](./install-ide-connect-build-plan.md) — single-Prod URL + first admin |
 | IDE ↔ API version compat | [`ide-api-version-compatibility-build-plan.md`](./ide-api-version-compatibility-build-plan.md) — API revision pin + soft product tested-against ([ADR-025](../adr/025-api-revision-versioning.md) / [BP-025](../../backlog/BP-025-ide-api-version-compatibility.md)) |
 | Demo-client fidelity (stubs vs shipped APIs) | [`ide-demo-client-uplift-build-plan.md`](./ide-demo-client-uplift-build-plan.md) — **active** honest JWT demo ([BP-066](../../backlog/BP-066-ide-demo-client-fidelity.md)); does not unfreeze license / Operate CRM / update CDN |
-| Brand / dual-theme restyle | [`ide-brand-visual-build-plan.md`](./ide-brand-visual-build-plan.md) — **active** navy/gold tokens + sourced SVG marks ([BP-068](../../backlog/BP-068-ide-brand-visual.md)); restyle existing chrome only |
+| Brand / dual-theme restyle | [`ide-brand-visual-build-plan.md`](./ide-brand-visual-build-plan.md) — **shipped** navy/gold tokens + sourced SVG marks ([BP-068](../../backlog/BP-068-ide-brand-visual.md) mitigated); restyle existing chrome only |
 | Install coupling cleanup | [`ide-backend-coupling-review.md`](./ide-backend-coupling-review.md) / [BP-065](../../backlog/BP-065-ide-backend-coupling.md) |
 | App README | [`tools/control-ide/README.md`](../../tools/control-ide/README.md) |
 | Electron main + IPC | `tools/control-ide/src/main/` |
