@@ -29,6 +29,20 @@ describe("defaultFieldColumns", () => {
     expect(cols.map((c) => c.key)).toEqual(["Name", "Industry", "Phone", "Website", "Type"]);
     expect(cols.some((c) => c.key === "id" || c.key === "Id")).toBe(false);
   });
+
+  it("prefers LastName then FirstName for Contact", () => {
+    const cols = defaultFieldColumns(
+      [
+        { apiName: "Salutation", label: "Salutation", fieldType: "picklist" },
+        { apiName: "FirstName", label: "First Name", fieldType: "text" },
+        { apiName: "MiddleName", label: "Middle Name", fieldType: "text" },
+        { apiName: "LastName", label: "Last Name", fieldType: "text" },
+        { apiName: "Email", label: "Email", fieldType: "email" },
+      ],
+      5,
+    );
+    expect(cols.map((c) => c.key).slice(0, 3)).toEqual(["LastName", "FirstName", "Email"]);
+  });
 });
 
 describe("RunObjectHomePanel", () => {
@@ -312,5 +326,51 @@ describe("RunObjectHomePanel", () => {
     await waitFor(() => expect(screen.getByTestId("run-object-home-bulk-result").textContent).toMatch(/1 updated, 1 forbidden/));
     const compositeCall = fetchFn.mock.calls.find(([p]) => p === "/client/v1/composite");
     expect(compositeCall).toBeTruthy();
+  });
+
+  it("lists User via principals instead of DataEngine query", async () => {
+    const fetchFn = vi.fn(async (path: string) => {
+      if (path === "/client/v1/describe") {
+        return {
+          sobjects: [{ name: "User", label: "User", labelPlural: "Users", storageMode: "kernel" }],
+        };
+      }
+      if (path === "/client/v1/describe/User") {
+        return {
+          apiName: "User",
+          storageMode: "kernel",
+          fields: [
+            { apiName: "DisplayName", label: "Display Name", fieldType: "text" },
+            { apiName: "Email", label: "Email", fieldType: "email" },
+          ],
+        };
+      }
+      if (path === "/client/v1/principals?principalType=user") {
+        return { principals: [{ id: "u1", displayName: "Ada Lovelace", email: "ada@x.com" }] };
+      }
+      throw new Error(`unexpected ${path}`);
+    });
+
+    render(
+      <RunObjectHomePanel
+        bridge={{
+          session: {
+            baseUrl: "http://localhost:8080",
+            token: "t",
+            scopes: ["client"],
+            isAdmin: true,
+            activeInstallId: "inst-1",
+          },
+          setSession: async () => undefined,
+          fetch: fetchFn,
+        }}
+        initialObjectApiName="User"
+        lockObject
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText("Ada Lovelace")).toBeTruthy());
+    expect(fetchFn).toHaveBeenCalledWith("/client/v1/principals?principalType=user");
+    expect(fetchFn.mock.calls.some(([path]) => path === "/client/v1/query")).toBe(false);
   });
 });

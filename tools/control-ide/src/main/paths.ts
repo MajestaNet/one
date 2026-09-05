@@ -295,3 +295,25 @@ export function resolveCustomerRepoTemplate(): string | null {
   }
   return null;
 }
+
+/** Packaged/dev locations for the Majesta globe window icon (not the Electron default). */
+export function resolveAppIconPath(
+  fromDir: string,
+  exists: (p: string) => boolean = (p) => {
+    try {
+      return fs.existsSync(p);
+    } catch {
+      return false;
+    }
+  },
+): string | undefined {
+  const candidates = [
+    path.join(fromDir, "app-icon.png"),
+    path.join(fromDir, "../dist/app-icon.png"),
+    path.join(fromDir, "../public/app-icon.png"),
+    path.join(fromDir, "../assets/brand/app-icon.png"),
+    path.join(fromDir, "assets/brand/app-icon.png"),
+  ];
+  return candidates.find((p) => exists(path.resolve(p)));
+}
+

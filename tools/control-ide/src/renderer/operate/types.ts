@@ -28,6 +28,7 @@ export type DescribeObject = {
   apiName?: string;
   label?: string;
   pluralLabel?: string;
+  storageMode?: string;
   fields?: DescribeField[];
 };
 
@@ -100,8 +101,22 @@ export const SYSTEM_FIELD_SKIP = new Set([
 ]);
 
 export function displayName(rec: Record<string, unknown>): string {
+  const first = String(rec.FirstName ?? rec.GivenName ?? "").trim();
+  const last = String(rec.LastName ?? rec.FamilyName ?? "").trim();
+  const combined = [first, last].filter(Boolean).join(" ");
   return String(
-    rec.Name ?? rec.name ?? rec.Subject ?? rec.LastName ?? rec.CaseNumber ?? rec.label ?? rec.id ?? rec.Id ?? "Untitled",
+    rec.Name ??
+      rec.name ??
+      rec.DisplayName ??
+      rec.displayName ??
+      rec.Subject ??
+      (combined || undefined) ??
+      rec.LastName ??
+      rec.CaseNumber ??
+      rec.label ??
+      rec.id ??
+      rec.Id ??
+      "Untitled",
   );
 }
 
