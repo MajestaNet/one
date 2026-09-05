@@ -58,7 +58,7 @@ Each BP header includes an **`Area:`** field — preferred code scope. Resolve A
 | [BP-065](./BP-065-ide-backend-coupling.md) | Medium | Partially mitigated | Neutralize Control IDE coupling on the Go install (Phase 1 AuthN landed; Phases 2–4 remain) |
 | [BP-066](./BP-066-ide-demo-client-fidelity.md) | Medium | Open | Control IDE as an honest JWT demo of shipped APIs |
 | [BP-067](./BP-067-public-docs-site.md) | Medium | Open (CMS extracted) | Public docs site (`one.majesta.net`) — separate CMS aggregator; this repo does not implement |
-| [BP-068](./BP-068-ide-brand-visual.md) | Medium | Open (implementation PR) | Control IDE brand restyle (navy/gold tokens + logo; not chrome expansion) |
+| [BP-068](./BP-068-ide-brand-visual.md) | Medium | Mitigated | Control IDE brand restyle (navy/gold tokens + logo; not chrome expansion) |
 
 Severity guide: **High** = likely to block real customer load, security, or the install agent-runtime / Ship path; **Medium** = will hurt before GA if ignored. Control IDE commercial delivery is **not** a High driver while chrome is frozen ([ADR-030](../docs/adr/030-install-agent-runtime.md)).
 
@@ -68,13 +68,13 @@ Do **not** add license UX, private update CDN, Operate-as-CRM, BoardHandoff, Que
 
 Historical IDs (files removed; decisions live in [ADR-030](../docs/adr/030-install-agent-runtime.md) and the [freeze table](../docs/architecture/agent-runtime-build-plan.md#freeze-vs-finish)): BP-015, BP-016, BP-018, BP-019, BP-020 (merged into BP-043), BP-021, BP-023, BP-024, BP-027, BP-034, BP-039 (superseded by ADR-021), BP-051, BP-057, BP-059, BP-062. Closed foundation history also dropped: BP-004 (metadata epoch cache), BP-005 (job/outbox SKIP LOCKED), BP-007 (package migrate), BP-012 (Go runtime — [ADR-005](../docs/adr/005-go-runtime.md)).
 
-BP-066 may change existing panels so they call shipped family routes honestly. BP-068 may retoken the dual theme and replace typed brand text with sourced SVG marks. Neither is a license to reopen the frozen list.
+BP-066 may change existing panels so they call shipped family routes honestly. BP-068 already retokened the dual theme and replaced typed brand text with sourced SVG marks. Neither is a license to reopen the frozen list.
 
 ## Alignment (reviewed vs product goals)
 
 **Finish — agent runtime:** [BP-065](./BP-065-ide-backend-coupling.md), [BP-048](./BP-048-one-cli.md), [BP-052](./BP-052-customer-inference.md), [BP-040](./BP-040-client-experience-oss-kits.md). [BP-014](./BP-014-agent-outbound-integrations.md) `invoke_skill` is Keep (deferred OAuth/ExecutionRun on BP-047/033).
 
-**Finish — optional IDE demo client:** [BP-066](./BP-066-ide-demo-client-fidelity.md), [BP-068](./BP-068-ide-brand-visual.md) (paint existing chrome; does not unfreeze the list above)
+**Finish — optional IDE demo client:** [BP-066](./BP-066-ide-demo-client-fidelity.md) (honest JWT panels; does not unfreeze the list above). [BP-068](./BP-068-ide-brand-visual.md) paint is Mitigated.
 
 **Finish — identity / install / distro:** BP-017, BP-013, BP-037, BP-063, BP-033, BP-029, BP-030, BP-011, BP-002, BP-025
 
@@ -84,9 +84,9 @@ BP-066 may change existing panels so they call shipped family routes honestly. B
 
 **Open product risk (non-IDE):** BP-008, BP-026, BP-028, BP-031, BP-035, BP-038, BP-047, BP-049
 
-**Keep (mitigated — do not reopen for IDE expansion):** BP-001, BP-003, BP-006, BP-009, BP-010, BP-032, BP-036, BP-043, BP-044, BP-050, BP-053, BP-054, BP-055, BP-056, BP-058, BP-060, BP-064
+**Keep (mitigated — do not reopen for IDE expansion):** BP-001, BP-003, BP-006, BP-009, BP-010, BP-032, BP-036, BP-043, BP-044, BP-050, BP-053, BP-054, BP-055, BP-056, BP-058, BP-060, BP-064, BP-068
 
-Priority: **BP-065** Phase 2 → **BP-048** → **BP-052** → **BP-040** → identity/claim → **BP-017** → **BP-033** → install/distro → **BP-025** pin gaps → headless Client → OTEL/OSS/automations. BP-066 may run in parallel with BP-065 lockstep; it does not outrank install Finish work. BP-068 is optional IDE paint in parallel with BP-066 (not install Finish). BP-067 is vendor-docs, not product runtime.
+Priority: **BP-065** Phase 2 → **BP-048** → **BP-052** → **BP-040** → identity/claim → **BP-017** → **BP-033** → install/distro → **BP-025** pin gaps → headless Client → OTEL/OSS/automations. BP-066 may run in parallel with BP-065 lockstep; it does not outrank install Finish work. BP-067 is vendor-docs, not product runtime.
 
 ### Security & transparency
 
