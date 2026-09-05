@@ -13,6 +13,7 @@ import {
   listFilesTree,
   listYamlTree,
   readTextUnderRoot,
+  resolveAppIconPath,
   resolveCustomerRepoTemplate,
   resolveUnderRoot,
   writeTextUnderRoot,
@@ -263,5 +264,18 @@ describe("repo root policy", () => {
       expect(registry.require(`${root}/`)).toBe(root);
       expect(registry.require(path.join(root, "metadata", ".."))).toBe(root);
     });
+  });
+});
+
+describe("resolveAppIconPath", () => {
+  it("prefers dist, then public, then brand assets", () => {
+    const fromDir = "/app/dist-electron";
+    expect(
+      resolveAppIconPath(fromDir, (p) => p.endsWith("/dist/app-icon.png") || p.endsWith("/assets/brand/app-icon.png")),
+    ).toBe(path.resolve("/app/dist/app-icon.png"));
+    expect(resolveAppIconPath(fromDir, (p) => p.endsWith("/assets/brand/app-icon.png"))).toBe(
+      path.resolve("/app/assets/brand/app-icon.png"),
+    );
+    expect(resolveAppIconPath(fromDir, () => false)).toBeUndefined();
   });
 });

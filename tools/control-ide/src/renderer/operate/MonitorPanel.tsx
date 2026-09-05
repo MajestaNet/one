@@ -12,6 +12,7 @@ import {
   type MonitorLogLine,
   type MonitorRingState,
 } from "./monitorRing";
+import { queryRecords } from "./recordClient";
 
 const ROW_HEIGHT = 28;
 const POLL_MS = 1500;
@@ -133,13 +134,10 @@ export function MonitorPanel({
       }
 
       try {
-        const uq = (await bridge.fetch("/client/v1/query", {
-          method: "POST",
-          body: JSON.stringify({ object: "User", limit: 50 }),
-        })) as { records?: Record<string, unknown>[] };
+        const uq = await queryRecords(bridge.fetch, { object: "User", limit: 50 });
         const list = (uq.records ?? []).map((r) => ({
           id: String(r.id ?? r.Id ?? ""),
-          label: String(r.Name ?? r.name ?? r.Username ?? r.Email ?? r.id ?? r.Id ?? "User"),
+          label: String(r.Name ?? r.name ?? r.DisplayName ?? r.Username ?? r.Email ?? r.id ?? r.Id ?? "User"),
         }));
         setUsers(list.filter((u) => u.id));
         if (list[0] && !userId) setUserId(list[0].id);

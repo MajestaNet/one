@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppBridge } from "../App";
 import { Button, EmptyState, PanelHeader, StatusBadge, Spinner } from "../ui";
 import { IconRecords } from "../icons/Icons";
-import { ActivityFeed } from "../operate/ActivityFeed";
+import { listIdentityField, queryRecords, recordWritePayload, createRecord, updateRecord } from "./recordClient";
+import { ActivityFeed } from "./ActivityFeed";
 import { RecordForm, requiredMissing } from "../operate/RecordForm";
 import { RelatedLists } from "../operate/RelatedLists";
 import { WhatToDo } from "../operate/WhatToDo";
@@ -27,7 +28,7 @@ import type {
   SavedView,
   SortSpec,
 } from "../operate/types";
-import { displayName, recordId } from "../operate/types";
+import { displayName, recordId } from "./types";
 import { BOARD_HANDOFF_MIME } from "../operate/handoff";
 
 type SeedRow = Record<string, unknown>;
@@ -216,17 +217,22 @@ export function CrmPanel({
         }));
         setFields(descFields);
 
-        const body: Record<string, unknown> = {
+        const validFields = new Set(descFields.map((f) => f.apiName).filter(Boolean));
+        const usableFilters = filters.filter((f) => validFields.has(f.field));
+        const identity = listIdentityField(objectApiName);
+        const fallbackSort = validFields.has(identity)
+          ? identity
+          : (descFields.find((f) => f.sortable !== false)?.apiName ?? identity);
+        const usableSort =
+          sort.filter((s) => validFields.has(s.field)).length > 0
+            ? sort.filter((s) => validFields.has(s.field))
+            : [{ field: fallbackSort, direction: "asc" as const }];
+        const q = await queryRecords(bridge.fetch, {
           object: objectApiName,
           limit: 50,
-        };
-        if (filters.length) body.filters = filters;
-        if (sort.length) body.sort = sort;
-
-        const q = (await bridge.fetch("/client/v1/query", {
-          method: "POST",
-          body: JSON.stringify(body),
-        })) as { records?: SeedRow[] };
+          filters: usableFilters.length ? usableFilters : undefined,
+          sort: usableSort.length ? usableSort : undefined,
+        });
         let mapped = q.records ?? [];
         if (preferIds?.length) {
           const rank = new Map(preferIds.map((id, i) => [id, i]));
@@ -301,8 +307,7 @@ export function CrmPanel({
     setHighlightIds([]);
     setFilterValue("");
     setListMode(t.boardField ? listMode : "list");
-    const nameField =
-      t.objectApiName === "Contact" ? "LastName" : t.objectApiName === "Case" ? "Subject" : "Name";
+    const nameField = listIdentityField(t.objectApiName);
     setFilterField(nameField);
     setSortField(nameField);
     setActiveSort([{ field: nameField, direction: "asc" }]);
@@ -374,14 +379,9 @@ export function CrmPanel({
       setBusy(true);
       setErr("");
       try {
-        const payload = { ...formValues };
-        delete payload.id;
-        delete payload.Id;
+        const payload = recordWritePayload(fields, formValues);
         if (creating) {
-          const created = (await bridge.fetch(`/client/v1/sobjects/${encodeURIComponent(objectName)}`, {
-            method: "POST",
-            body: JSON.stringify(payload),
-          })) as SeedRow;
+          const created = await createRecord(bridge.fetch, objectName, payload);
           await loadObject(objectName, activeFilters, activeSort);
           const id = recordId(created);
           if (id) {
@@ -389,10 +389,7 @@ export function CrmPanel({
             setCreating(false);
           }
         } else if (selectedId) {
-          await bridge.fetch(
-            `/client/v1/sobjects/${encodeURIComponent(objectName)}/${encodeURIComponent(selectedId)}`,
-            { method: "PATCH", body: JSON.stringify(payload) },
-          );
+          await updateRecord(bridge.fetch, objectName, selectedId, payload);
           await loadObject(objectName, activeFilters, activeSort, [selectedId]);
         }
       } catch (e) {

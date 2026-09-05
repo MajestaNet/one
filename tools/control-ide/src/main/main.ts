@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, safeStorage, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, safeStorage, shell } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -16,6 +16,7 @@ import {
   listYamlTree,
   readTextUnderRoot,
   resolveCustomerRepoTemplate,
+  resolveAppIconPath,
   writeTextUnderRoot,
 } from "./paths.js";
 import { createTrustedHandle } from "./ipcTrust.js";
@@ -190,10 +191,12 @@ function createWindow() {
     win.focus();
     return;
   }
+  const iconPath = resolveAppIconPath(__dirname);
   const next = new BrowserWindow({
     width: 1280,
     height: 840,
     backgroundColor: "#1B2E46",
+    ...(iconPath ? { icon: iconPath } : {}),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -202,6 +205,10 @@ function createWindow() {
       webviewTag: false,
     },
   });
+  if (iconPath && process.platform === "darwin") {
+    const img = nativeImage.createFromPath(iconPath);
+    if (!img.isEmpty()) app.dock?.setIcon(img);
+  }
 
   applyContentSecurityPolicy(next);
   hardenWebContents(next);
@@ -334,6 +341,10 @@ function failed(err: unknown): { ok: false; error: string } {
 }
 
 app.whenReady().then(() => {
+  app.setName("Majesta One Control");
+  if (process.platform === "win32") {
+    app.setAppUserModelId("net.majesta.one.controlide");
+  }
   const roots = repoRootRegistry();
   // Seed the allowlist from the persisted session so a restored repo path keeps working.
   roots.tryRegister(loadSession()?.repoPath);

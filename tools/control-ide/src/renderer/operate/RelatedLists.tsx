@@ -3,6 +3,7 @@ import type { AppBridge } from "../App";
 import { EmptyState, Spinner } from "../ui";
 import type { RelatedListDef } from "./types";
 import { displayName, recordId } from "./types";
+import { queryRecords } from "./recordClient";
 
 export function RelatedLists({
   bridge,
@@ -39,14 +40,11 @@ export function RelatedLists({
       setBusy(true);
       setErr("");
       try {
-        const q = (await bridge.fetch("/client/v1/query", {
-          method: "POST",
-          body: JSON.stringify({
-            object: def.objectApiName,
-            filters: [{ field: def.lookupField, op: "eq", value: parentId }],
-            limit: 25,
-          }),
-        })) as { records?: Record<string, unknown>[] };
+        const q = await queryRecords(bridge.fetch, {
+          object: def.objectApiName,
+          filters: [{ field: def.lookupField, op: "eq", value: parentId }],
+          limit: 25,
+        });
         if (!cancelled) setRows(q.records ?? []);
       } catch (e) {
         if (!cancelled) {

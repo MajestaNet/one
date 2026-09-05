@@ -1,6 +1,8 @@
 /** Resolve ToolSpec dataBindings through Client query (FLS + sharing enforced server-side). */
 
 import { flattenRecordRow } from "../operate/queryAutocomplete";
+import { queryRecords } from "../operate/recordClient";
+import { displayName } from "../operate/types";
 import type { FetchFn } from "./tools";
 import type { ToolDocument, ToolNode, ToolQueryBinding } from "./types";
 
@@ -119,7 +121,7 @@ export function applyBindingToNode(
   if (node.kind === "pipelineLane") {
     const cards = records.map((r) => ({
       id: String(r.id ?? r.Id ?? ""),
-      title: String(r.Name ?? r.name ?? r.Subject ?? r.id ?? r.Id ?? "Record"),
+      title: displayName(r),
     }));
     return { ...node, props: { ...node.props, cards } };
   }
@@ -135,16 +137,13 @@ async function queryBinding(
   fetchFn: FetchFn,
   binding: ToolQueryBinding,
 ): Promise<Record<string, unknown>[]> {
-  const raw = (await fetchFn("/client/v1/query", {
-    method: "POST",
-    body: JSON.stringify({
-      object: binding.objectApiName,
-      select: binding.query.select,
-      filters: binding.query.filters,
-      sort: binding.query.sort,
-      limit: binding.query.limit ?? 25,
-    }),
-  })) as { records?: Record<string, unknown>[] };
+  const raw = await queryRecords(fetchFn, {
+    object: binding.objectApiName,
+    select: binding.query.select,
+    filters: binding.query.filters,
+    sort: binding.query.sort,
+    limit: binding.query.limit ?? 25,
+  });
   return (raw.records ?? []).map(flattenRecordRow);
 }
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { AppBridge } from "../App";
 import { Button, DataTable, EmptyState, PanelHeader } from "../ui";
 import { IconRecords } from "../icons/Icons";
+import { queryRecords } from "../operate/recordClient";
 
 type DescribeResult = {
   apiName?: string;
@@ -12,10 +13,6 @@ type DescribeResult = {
     type?: string;
     dataType?: string;
   }>;
-};
-
-type QueryResult = {
-  records?: Array<Record<string, unknown>>;
 };
 
 export function ClientPanel({ bridge }: { bridge: AppBridge }) {
@@ -43,13 +40,10 @@ export function ClientPanel({ bridge }: { bridge: AppBridge }) {
     setErr("");
     setBusy("query");
     try {
-      const q = (await bridge.fetch("/client/v1/query", {
-        method: "POST",
-        body: JSON.stringify({
-          object: objectName,
-          limit: 5,
-        }),
-      })) as QueryResult;
+      const q = await queryRecords(bridge.fetch, {
+        object: objectName,
+        limit: 5,
+      });
       setRecords(q.records ?? []);
     } catch (e) {
       setErr(String(e));

@@ -70,8 +70,8 @@ INSERT INTO metadata_fields (
 	if id == "" || created["Name"] != "Ada" {
 		t.Fatalf("created=%v", created)
 	}
-	if created["OwnerId"] != nil {
-		t.Fatalf("OwnerId should be null by default, got %v", created["OwnerId"])
+	if created["OwnerId"] != ownerID {
+		t.Fatalf("OwnerId should default to the creating actor, got %v", created["OwnerId"])
 	}
 	if created["CreatedById"] != ownerID {
 		t.Fatalf("CreatedById=%v want %s", created["CreatedById"], ownerID)
