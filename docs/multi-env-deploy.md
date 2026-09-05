@@ -65,7 +65,9 @@ See [BP-032](../backlog/BP-032-customer-dx-validate-deploy.md) and [customer-dx-
 
 ### Control IDE when you add siblings
 
-1. Register each sibling with `baseUrl` via `POST /deploy/v1/peers` (feeds IDE env switcher).
+1. Register each sibling via `POST /deploy/v1/peers` (feeds IDE env switcher). `baseUrl` must be a non-loopback origin (HTTPS in production). Loopback URLs are rejected as an SSRF guard — paste the URL in Control IDE **Add environment…** instead.
 2. In Control IDE, use **Add environment…** or a peer’s **Connect…** chip (URL prefilled when `baseUrl` is set).
 3. Sign in **once per install** — each install has its own JWT issuer. Cross-install “one login unlocks all” is **not** supported; see [install-ide-connect-build-plan.md](./architecture/install-ide-connect-build-plan.md) Phase 3.
 4. Multi-env release: switch the env switcher to the target org, checkout the same Git revision, Validate vs org → Deploy to org.
+
+Local two-install Compose lab: [customer-rollout-test-run.md](./customer-rollout-test-run.md) (`deploy/docker-compose.multi-env.yml`).

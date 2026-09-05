@@ -5,9 +5,9 @@ Majesta One allows rich per-customer customization (objects, fields, validation,
 ## Golden rules
 
 1. **One product, many installs** — every customer runs the same Majesta One binaries from this monorepo.
-2. **Customization lives on the install** — create/change via Metadata API (`/metadata/v1`) on a customer environment.
-3. **Promote with Deploy, not Git product PRs** — move customer-owned artifacts between same-`CUSTOMER_ID` installs with `/deploy/v1`.
-4. **Customer Git is auto-provisioned** — one AWS CodeCommit repo per `CUSTOMER_ID` in `one/v1` format ([customer-repo.md](./customer-repo.md)); never commit that tree into this monorepo.
+2. **Customization lives on the install** — create/change via Metadata API (`/metadata/v1`) on a customer environment, or apply from customer Git with `one org deploy`.
+3. **Ship with repo → org, not Git product PRs** — the source of change is the customer `one/v1` repo; each install gets the same Git SHA via `one org validate` then `one org deploy` ([customer-developer-workflow.md](./customer-developer-workflow.md)). Do **not** peer-promote bundles between installs.
+4. **Customer Git is customer-owned** — one HTTPS repo per `CUSTOMER_ID` in `one/v1` format ([customer-repo.md](./customer-repo.md)); GitHub / GitLab / Bitbucket / CodeCommit are all fine. Never commit that tree into this monorepo.
 5. **Never commit customer metadata into product paths** — not under `cmd/`, `internal/`, `migrations/`, or `internal/seed`.
 6. **Local scratch is disposable** — use `.customer-sandbox/` (gitignored) or a throwaway Compose install; do not open a product PR that adds customer fixtures “just for Acme”.
 
@@ -15,10 +15,10 @@ Majesta One allows rich per-customer customization (objects, fields, validation,
 
 | Surface | Where it lives | How it ships to another env |
 |---|---|---|
-| Custom objects / fields / rules | Install DB (`ownership=custom`) | Deploy bundle → promote |
-| Automations, permission sets (customer) | Install DB | Deploy bundle → promote |
-| AgentSpecs (customer playbooks) | Install DB (`agent_playbooks`) | Deploy bundle → promote |
-| Customer test suites | Install DB (`/deploy/v1/tests`) | Included in customer promote / CI gate |
+| Custom objects / fields / rules | Install DB (`ownership=custom`) | Same Git SHA → `one org deploy` (or Deploy API apply) |
+| Automations, permission sets (customer) | Install DB | Same Git SHA → `one org deploy` |
+| AgentSpecs (customer playbooks) | Install DB (`agent_playbooks`) | Same Git SHA → `one org deploy` |
+| Customer test suites | Install DB (`/deploy/v1/tests`) | Included in the customer pack / CI gate |
 | Managed core definitions (`core` / `platform`) | Product seed (`ownership=managed`) | Product image upgrade only |
 | Optional managed modules | Product image + `package_installs` | Admin enable via `/metadata/v1/packages`; product upgrades enabled modules |
 | Platform actions (`lead.convert`, …) | Product Go catalog ([ADR-029](./adr/029-platform-actions.md)) | Image upgrade; **gated** by enabled packages; customers wrap via `ctx.invokeAction`, they do not own the verb |
@@ -29,13 +29,13 @@ Deploy **rejects** managed package internals in customer bundles. Metadata API *
 ## Recommended workflow (customer or SI)
 
 ```text
-1. Install Majesta One product vX on test (+ optional staging/prod); provision CUSTOMER_REPO_URL (CodeCommit or operator Git)
-2. As admin on prod: POST /deploy/v1/packages/initialize-repo (or `one` / Metadata — Control IDE Repo is optional)
+1. Install Majesta One product vX on test (+ optional staging/prod); point `CUSTOMER_REPO_URL` at the customer’s HTTPS Git (any host)
+2. As admin on prod: POST /deploy/v1/packages/initialize-repo (or `one project init` / Metadata — Control IDE Repo is optional)
 3. Clone the customer Git repo locally (any editor). Dual-write YAML under metadata/ (not .one/baseline)
 4. Pack via POST /deploy/v1/packages/pack or `one pack`
 5. `one org validate` + customer tests on test until green
 6. CI gate (optional): docs/ci-customer-tests.md against test
-7. `one org deploy` (or Deploy API) to staging/prod
+7. `one org deploy` (or Deploy API) to staging/prod **from the same Git SHA** — not install→install promote
 8. Product upgrades (vX → vY) are a separate image roll; re-run customer tests after
 ```
 
@@ -93,9 +93,9 @@ Product tests may use **synthetic** customer-owned metadata created at test time
 | I want to… | Do this |
 |---|---|
 | Ship a platform bugfix | PR in this monorepo → CI → release tag → image roll |
-| Add Invoice.Discount__c for Acme | Metadata API on Acme test → Deploy promote |
+| Add Invoice.Discount__c for Acme | Metadata API or YAML in Acme’s customer Git → `one org deploy` to each env |
 | Add a new standard core field for all customers | Product change in managed seed + package migrate |
-| Gate Acme’s promote on tests | Deploy test suites on Acme test + [ci-customer-tests.md](./ci-customer-tests.md) |
+| Gate Acme’s org deploy on tests | Deploy test suites on Acme test + [ci-customer-tests.md](./ci-customer-tests.md) |
 | Experiment locally with a weird object | Compose install or `.customer-sandbox/` + API; delete when done |
 
 ## Related
@@ -107,5 +107,6 @@ Product tests may use **synthetic** customer-owned metadata created at test time
 - [Multi-env deploy](./multi-env-deploy.md)
 - [Customer repo format](./customer-repo.md)
 - [Customer developer workflow](./customer-developer-workflow.md) — best-practice DX loop
+- [Customer rollout test run](./customer-rollout-test-run.md) — scored SI journey; defects in the [gap-log issue registry](./customer-rollout-gap-log.md)
 - [Customer DX build plan](./architecture/customer-dx-build-plan.md)
 - [ADR-001](./adr/001-dedicated-install.md) · [ADR-004](./adr/004-three-api-families.md) · [ADR-008](./adr/008-core-data-model.md) · [ADR-012](./adr/012-customer-repo-and-control-ide.md)
