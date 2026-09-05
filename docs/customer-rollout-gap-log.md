@@ -44,7 +44,7 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 | Beat | Class | GitHub issue | Status | Fix PR |
 |---|---|---|---|---|
 | G-MIGRATE-RACE | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | **open** (retested S-A-MIGRATE-RACE 2026-09-05; comment in [docs/campaign-2-findings/issue-28-comment.md](campaign-2-findings/issue-28-comment.md) — `gh issue comment` denied) | |
-| G-CLI-SUITE-TRUNC | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | **open** | |
+| G-CLI-SUITE-TRUNC | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | **open** (retested S-C-CLI-TRUNC 2026-09-05; comment in [docs/campaign-2-findings/issue-29-comment.md](campaign-2-findings/issue-29-comment.md) — `gh issue comment` denied) | |
 | G-ENV-EXAMPLE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
 | G-DOCS-PROMOTE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
 | G-JSONLOGIC-POLARITY | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
@@ -63,6 +63,8 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 | G-COMPOSE-SINGLE | by-design | none | everyday Compose is one `dev` install; overlay is the two-install lab | |
 | S-B-LOOKUP-FAIL-WITHOUT-PKG | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | **open** | |
 | S-B-AUTHZ-STUBS | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | **open** | |
+| S-C-SUITE | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | **open** | |
+| S-C-NAMED | docs-drift | [#38](https://github.com/MajestaNet/one/issues/38) | **open** | |
 
 **Agent prompt (open rows):** open the GitHub issue, follow its **Fix-it** section, stay in the named packages, PR `Fixes #N`, then update this table.
 
@@ -123,7 +125,7 @@ Open defects from this run: **#28**, **#29**.
 
 Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Lab: [docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml). Fixtures: `scripts/customer-install-sim-generate.sh`.
 
-**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). Re-test #28 / #29; do not re-file.
+**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). **S-C recorded 2026-09-05** (same lab; named+48 stubs org-deployed to **dev only**; suite contract failed AccountId; #29 still truncates). Re-test #28 / #29; do not re-file.
 
 ### Beat catalog (record each)
 
@@ -157,15 +159,22 @@ Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation
 | 2026-09-05 | S-B-FIELD-MANAGED-EXT | S-B | pass | 5 | — | none | Account.LastSiteVisitId__c, Opportunity.SiteVisitCount__c, Project.EngagementFlag__c describe `ownership=custom` `packageName=customer.default` |
 | 2026-09-05 | S-B-LOOKUP-FAIL-WITHOUT-PKG | S-B | fail | 2 | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | Metadata POST lookup → 404 Opportunity; `one org validate` of SiteVisit.OpportunityId was ok=true and deploy created the dangling lookup before `sales` |
 | 2026-09-05 | S-B-AUTHZ-STUBS | S-B | pass-with-workaround | 3 | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | Operate deny stubs 403 on Opportunity CRUD; claim admin 201 after AccountId; `client_credentials` `client_id` is principal id, not credential id |
+| 2026-09-05 | S-C-NAMED | S-C | pass-with-workaround | 3 | docs-drift | [#38](https://github.com/MajestaNet/one/issues/38) | 9 named TS+YAML deployed; live Opp→SiteVisit, Project→3 TimeEntry, Lead convert work; StampAccount/CloseVisit `updateRecord` uses `id` not SDK `recordId` |
+| 2026-09-05 | S-C-IMPORT-BAN | S-C | pass | 5 | — | none | Copied `_negative/forbidden_lodash_import.ts` + YAML; `org validate` rejected `npm:lodash`; reverted before happy deploy |
+| 2026-09-05 | S-C-STUBS | S-C | pass | 5 | — | none | Generator 48 `ScaleStub_*` + `ScalePing__c`; validate `automations=57`; Band 2 posted 20 pings → 960 jobs |
+| 2026-09-05 | S-C-PACK-TIME | S-C | pass | 4 | — | none | `org validate` 1.664s ok=true; `org deploy --suite` 4.403s apply created 57 automations (suite failed, see S-C-SUITE) |
+| 2026-09-05 | S-C-WORKER-FANOUT | S-C | pass-with-workaround | 4 | known-remainder | none | 20 ScalePing 201 in 0.22s; 960 `automation.run` queued then completed ~100s; 0 stub failures; `/me` 100/100 HTTP 200 (BP-033 queue remainder) |
+| 2026-09-05 | S-C-SUITE | S-C | fail | 2 | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | Suite failed `automationContract`: Opportunity requires AccountId; 8/9 steps passed; runbook curl same 400; CLI exit 0 |
+| 2026-09-05 | S-C-CLI-TRUNC | S-C | pass-with-workaround | 3 | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | CLI still `truncate(..., 200)` (`objectAp…`); full report via `GET /deploy/v1/tests/runs/:id` |
 
 | Count | Outcome |
 |---|---|
-| 9 | pass |
-| 3 | pass-with-workaround |
-| 2 | fail |
-| 0 | not-run (S-A + S-B complete; S-C–S-E not started) |
+| 12 | pass |
+| 6 | pass-with-workaround |
+| 3 | fail |
+| 0 | not-run (S-A + S-B + S-C complete; S-D–S-E not started) |
 
-Open defects from this card: **#28** (S-A; do not re-file), **#34** (S-B lookup validate), **#35** (S-B client_credentials docs). `#29` not in S-B scope. Ignore [#36](https://github.com/MajestaNet/one/issues/36) (accidental empty `gh issue create` probe; close was denied).
+Open defects from this card: **#28** (S-A; do not re-file), **#29** (S-C retest; comment pending-file), **#34** (S-B lookup validate), **#35** (S-B client_credentials docs), **#37** (S-C suite AccountId fixture), **#38** (S-C generated `updateRecord` `id`). Ignore [#36](https://github.com/MajestaNet/one/issues/36) (accidental empty `gh issue create` probe; close was denied).
 
 ---
 
