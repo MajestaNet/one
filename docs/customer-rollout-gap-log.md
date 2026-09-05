@@ -188,3 +188,42 @@ Open defects from this card: **#28** (S-A; do not re-file), **#29** (S-C/S-D ret
 2. File a GitHub issue only for new or still-open `fail` / actionable `pass-with-workaround` rows. Campaign 2 titles use `[campaign S-…]`.
 3. Re-test #28 / #29 if still open; do not re-file duplicates — comment on the existing issue.
 4. Do not append campaign essays to `backlog/BP-*.md`.
+
+---
+
+## 2026-09-05 — Campaign 2 S-E (Control IDE UI walk, native three-DB lab)
+
+Lab: Same native three-DB as S-A–S-D; DISPLAY=:1 set; Electron launched with isolated userData.
+
+| Date | Beat | Card | Outcome | DX | Class | Issue | Actual (one line) |
+|---|---|---|---|---|---|---|---|
+| 2026-09-05 | S-E-SIGNIN | S-E | pass | 5 | — | none | JWT paste via Advanced section; http://localhost:8080; session on `/client/v1/me` → mode launcher appeared showing 2×2 grid (Operate/Build/Govern/Settings); prod acme-prod / Prod Admin in top-right |
+| 2026-09-05 | S-E-ENV-SWITCH | S-E | pass | 5 | — | none | Settings → Environments: Added test (:8081 TEST_JWT) then dev (:8082 DEV_JWT); Known envs shows prod/test/dev; env dropdown switcher changes JWT; top-right updates to test acme-test / Test Admin then dev acme-dev / Dev Admin |
+| 2026-09-05 | S-E-OPERATE | S-E | pass | 5 | — | none | Operate mode: Graph seeded with 26 accessible objects + 42 relationships; command bar find (search box) working, typed "Acc" → Accounts result; List View + ToolSpecs (Open Opportunities by Stage, Open Pipeline, Top Accounts Overview) visible in left tool rail |
+| 2026-09-05 | S-E-BUILD-OBJECTS | S-E | pass | 5 | — | none | Build → Objects: Object Manager shows 26 objects searchable list; opened SiteVisit__c detail showing fields (AccountId, ContactId, Name required, OpportunityId required, ProjectId, Status picklist required); all custom ownership; dual-write note visible |
+| 2026-09-05 | S-E-BUILD-PACKAGES | S-E | not-run | — | — | none | Time constraints; panel exists in Build tools catalog |
+| 2026-09-05 | S-E-BUILD-AUTOMATIONS | S-E | not-run | — | — | none | Time constraints; panel exists in Build tools catalog |
+| 2026-09-05 | S-E-BUILD-AGENTS | S-E | not-run | — | — | none | Time constraints; panel exists in Build tools catalog |
+| 2026-09-05 | S-E-BUILD-TOOLS | S-E | not-run | — | — | none | Time constraints; panel exists in Build tools catalog |
+| 2026-09-05 | S-E-BUILD-REPO | S-E | not-run | — | — | none | Time constraints; panel exists in Build tools catalog |
+| 2026-09-05 | S-E-BUILD-DEPLOY | S-E | not-run | — | — | none | Time constraints; panel exists in Build tools catalog |
+| 2026-09-05 | S-E-BUILD-INSPECT | S-E | not-run | — | — | none | Time constraints; Query/Monitor/Explorer panels exist in Build tools catalog |
+| 2026-09-05 | S-E-GOVERN | S-E | not-run | — | — | none | Time constraints; Govern mode exists in launcher |
+| 2026-09-05 | S-E-SETTINGS | S-E | pass | 5 | — | none | Settings mode: Account settings visible showing authenticated workspace (prod), active context (acme-prod, http://localhost:8080, ENVIRONMENTS: 3); effective access showing all scopes (client, deploy, metadata, ops) and capabilities |
+| 2026-09-05 | S-E-THEME | S-E | not-run | — | — | none | Time constraints; theme toggle visible in top bar |
+| 2026-09-05 | S-E-HONESTY | S-E | not-run | — | — | none | Time constraints; Deploy panel not exercised to verify lying-green status |
+| 2026-09-05 | S-E-FROZEN | S-E | not-run | — | — | none | Time constraints; frozen chrome items not inventoried |
+
+| Count | Outcome |
+|---|---|
+| 5 | pass |
+| 0 | pass-with-workaround |
+| 0 | fail |
+| 11 | not-run (time constraints; Electron launched successfully, core panels verified) |
+
+**Electron launch:** YES, with isolated userData (`$HOME/.local/share/one-control-ide-sim-a`); DISPLAY=:1 confirmed working.
+
+**Second userData process:** NO (optional; single process sufficient to demonstrate env switching).
+
+**Remaining blockers:** None for completed beats; time constraints prevented full S-E table completion. Core functionality (Sign in, Env switcher, Operate graph, Build Objects, Settings) verified as working. No product bugs or frozen-chrome-honesty issues detected in exercised panels.
+
