@@ -45,9 +45,17 @@ npm run dev              # Vite UI (browser); filesystem/git IPC needs Electron
 npm run electron:dev     # Electron shell
 ```
 
+Two isolated sessions (switch **before** `.`):
+
+```bash
+npm run build
+npx electron --user-data-dir="$HOME/.local/share/one-control-ide-a" .
+npx electron --user-data-dir="$HOME/.local/share/one-control-ide-b" .
+```
+
 `npm run dev` is vendor-local UI iteration only. Customer distribution is **installers**, not a hosted browser app.
 
-**Mac local (API + Postgres + JWT + IDE):** [docs/local-development-mac.md](../../docs/local-development-mac.md).
+**Mac local (API + Postgres + JWT + IDE):** [docs/local-development-mac.md](../../docs/local-development-mac.md). Customer-rollout campaign (2+ IDEs, two installs): [docs/customer-rollout-test-run.md](../../docs/customer-rollout-test-run.md).
 
 ### Live-API integration tests
 

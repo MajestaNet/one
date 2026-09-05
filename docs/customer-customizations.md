@@ -107,5 +107,6 @@ Product tests may use **synthetic** customer-owned metadata created at test time
 - [Multi-env deploy](./multi-env-deploy.md)
 - [Customer repo format](./customer-repo.md)
 - [Customer developer workflow](./customer-developer-workflow.md) — best-practice DX loop
+- [Customer rollout test run](./customer-rollout-test-run.md) — scored SI journey + [gap log](./customer-rollout-gap-log.md)
 - [Customer DX build plan](./architecture/customer-dx-build-plan.md)
 - [ADR-001](./adr/001-dedicated-install.md) · [ADR-004](./adr/004-three-api-families.md) · [ADR-008](./adr/008-core-data-model.md) · [ADR-012](./adr/012-customer-repo-and-control-ide.md)

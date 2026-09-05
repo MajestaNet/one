@@ -165,7 +165,9 @@ cp .env.example .env
 docker compose -f deploy/docker-compose.yml up --build
 ```
 
-API on `:8080`. Kernel migrate + optional core seed on boot when `AUTO_SEED=1`.
+API on `:8080`. Kernel migrate + optional core seed on boot when `AUTO_SEED=1`. This file is a **single** install (`INSTALL_ROLE=dev`) for the everyday local loop.
+
+**Two sibling installs (prod + test)** for a customer-rollout lab: [deploy/docker-compose.multi-env.yml](../deploy/docker-compose.multi-env.yml) — shared `CUSTOMER_ID`, unique DBs and ports `:8080` / `:8081`. Scenario cards: [customer-rollout-test-run.md](./customer-rollout-test-run.md).
 
 ### Helm on Kubernetes (DO / AWS / Azure / …)
 

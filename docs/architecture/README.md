@@ -85,7 +85,7 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [agentic-remainders/](./agentic-remainders/README.md) | **Finish work-order remainder designs** + paste-ready build prompts (slots 1–12: BP-065 → CLI → skills → inference → Experience → claim/SSO → directory → isolation → install/distro → API revision → headless Client → OTEL/OSS/automations) |
 | [hosted-agent-tool-loop-build-plan.md](./hosted-agent-tool-loop-build-plan.md) | **Shipped:** Hosted agent tool loop — MCP names, `internal/agentloop`, write parking ([BP-006](../../backlog/BP-006-agent-guardrails.md) mitigated; AuthZ already in [customization-authz.md](./customization-authz.md)) |
 | [builder-connect.md](../builder-connect.md) | Builder MCP + CLI connect recipes (no Control IDE required) |
-| [self-host.md](../self-host.md) | Dual-path install: Path A App Platform / Path B Compose+Helm; community `sdk/` pointer |
+| [self-host.md](../self-host.md) | Dual-path install: Path A App Platform / Path B Compose+Helm; community `sdk/` pointer. Two-install lab: [customer-rollout-test-run.md](../customer-rollout-test-run.md) |
 | [install-ide-connect-build-plan.md](./install-ide-connect-build-plan.md) | **Active:** single-Prod default → Control IDE connect / first admin (App Platform happy path); multi-env opt-in |
 | [ide-api-version-compatibility-build-plan.md](./ide-api-version-compatibility-build-plan.md) | **Implemented:** API revision pin (`One-API-Revision` + `/r{N}/`) + soft product tested-against window ([ADR-025](../adr/025-api-revision-versioning.md) / BP-025 Mitigated) |
 | [customer-repo-init-build-plan.md](./customer-repo-init-build-plan.md) | **Active:** initialize customer Git from prod + IDE clone/pull sync (`one/v1`) |
@@ -108,6 +108,7 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [adr/](../adr/) | Architecture decision records ([index](../adr/README.md)) |
 | [customer-customizations.md](../customer-customizations.md) | Product vs customer boundary |
 | [customer-developer-workflow.md](../customer-developer-workflow.md) | Best-practice customer DX loop (Git host agnostic; validate → deploy) |
+| [customer-rollout-test-run.md](../customer-rollout-test-run.md) | SI customer-rollout campaign: two installs, 2+ IDEs, custom object + automation, repo→org, MCP — plus [gap log](../customer-rollout-gap-log.md) |
 | [ops.md](../ops.md) / [product-upgrades.md](../product-upgrades.md) | How managed packages ride image upgrades |
 | [sdk/aws/docs/managed-paas-profile.md](../../sdk/aws/docs/managed-paas-profile.md) | Community AWS managed PaaS analog (opinionated ECS Fargate) — not Path A |
 | [sdk/aws/docs/managed-channel.md](../../sdk/aws/docs/managed-channel.md) | Community / non-GA managed-cell notes (not product channel) |

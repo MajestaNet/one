@@ -122,8 +122,22 @@ In Settings → Environments:
 Notes:
 
 - `npm run dev` opens the Vite UI in a browser — fine for layout iteration; filesystem/git IPC needs Electron (`electron:dev`).
-- Session tokens are stored via OS `safeStorage` in Electron userData.
+- Session tokens are stored via OS `safeStorage` in Electron userData. Two Control IDE processes that share `userData` share the JWT.
 - Sample template lives at `deploy/customer-repo-template` (not product seed).
+
+### Two Control IDE processes (isolated sessions)
+
+Chromium’s `--user-data-dir` switch must come **before** the app path. `npm run electron:dev -- --user-data-dir=…` appends the flag after `.` and may not isolate sessions.
+
+```bash
+cd tools/control-ide
+npm run build
+npx electron --user-data-dir="${ONE_IDE_A_DATA:-$HOME/.local/share/one-control-ide-a}" .
+# second terminal
+npx electron --user-data-dir="${ONE_IDE_B_DATA:-$HOME/.local/share/one-control-ide-b}" .
+```
+
+Connect each window independently. Multi-env + dual-IDE campaign: [customer-rollout-test-run.md](./customer-rollout-test-run.md).
 
 ### Optional Mac installer (unsigned)
 

@@ -120,6 +120,7 @@ There is no “Promote to peer” step in this workflow.
 
 ## Related
 
+- [customer-rollout-test-run.md](./customer-rollout-test-run.md) — scored SI journey (two installs, 2+ IDEs, MCP + `one`) and [gap log](./customer-rollout-gap-log.md)
 - [customer-dx-build-plan.md](./architecture/customer-dx-build-plan.md)
 - [customer-repo-init-build-plan.md](./architecture/customer-repo-init-build-plan.md)
 - [customer-repo.md](./customer-repo.md)

@@ -121,6 +121,7 @@ scripts/              Boundary checks + release helpers
 | Public docs (`one.majesta.net`) | Separate CMS aggregator — [docs/architecture/public-docs-site.md](docs/architecture/public-docs-site.md) |
 | Customer customizations (safe workflow) | [docs/customer-customizations.md](docs/customer-customizations.md) |
 | Mac local + Control IDE | [docs/local-development-mac.md](docs/local-development-mac.md) |
+| Customer rollout campaign (two installs, 2+ IDEs, MCP) | [docs/customer-rollout-test-run.md](docs/customer-rollout-test-run.md) |
 | Control IDE build / installers | [docs/control-ide-build.md](docs/control-ide-build.md) |
 
 ## License
