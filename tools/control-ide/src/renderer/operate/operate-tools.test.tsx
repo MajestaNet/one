@@ -383,6 +383,9 @@ describe("MonitorPanel", () => {
         flags = [];
         return { ok: true };
       }
+      if (path === "/client/v1/principals?principalType=user") {
+        return { principals: [{ id: "u1", displayName: "Ada" }] };
+      }
       if (path === "/client/v1/query") {
         const body = JSON.parse(String(init?.body ?? "{}")) as { object?: string };
         if (body.object === "TraceFlag") {
@@ -391,7 +394,7 @@ describe("MonitorPanel", () => {
         if (body.object === "ExecutionLogEntry") {
           return { records: [{ seq: 1, level: "info", message: "hello", at: "t" }] };
         }
-        return { records: [{ id: "u1", Name: "Ada" }] };
+        return { records: [] };
       }
       throw new Error(`unexpected ${path}`);
     });
