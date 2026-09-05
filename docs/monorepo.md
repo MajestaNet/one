@@ -22,7 +22,8 @@ See also: [glossary](./glossary.md), [release CI/CD](./release-cicd.md), [self-h
 ├── migrations/              Kernel SQL (product schema only)
 ├── deploy/                  Install / publish packaging
 │   ├── Dockerfile           Product images (cmd + internal + migrations only)
-│   ├── docker-compose.yml   Local/dev stack (Path B)
+│   ├── docker-compose.yml   Local/dev stack (Path B; one install)
+│   ├── docker-compose.multi-env.yml  Rollout lab: prod + test siblings
 │   ├── helm/one         Kubernetes chart (Path B; + values-doks.yaml)
 │   └── digitalocean/        App Platform Spec (Path A default)
 ├── sdk/                     Community SDKs (Apache-2.0; not in product image)

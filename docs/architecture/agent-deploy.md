@@ -13,7 +13,7 @@ For agents changing promotions, peers, bundles, multi-env trust, Ops image rolls
 | Deploy HTTP | `internal/httpapi/deploy_routes.go` |
 | Ops engine | `internal/ops/engine.go`, `ecs.go`, `roller.go` |
 | Ops HTTP | `internal/httpapi/ops_routes.go` |
-| Packaging | `deploy/Dockerfile`, `deploy/docker-compose.yml`, `deploy/helm/`, `deploy/digitalocean/`; community AWS under `sdk/aws/deploy/` (not GA) |
+| Packaging | `deploy/Dockerfile`, `deploy/docker-compose.yml`, `deploy/docker-compose.multi-env.yml` (rollout lab), `deploy/helm/`, `deploy/digitalocean/`; community AWS under `sdk/aws/deploy/` (not GA) |
 | Product boundary | [`docs/monorepo.md`](../monorepo.md), `scripts/assert-product-boundary.sh` |
 | Distribution plan | [`digitalocean-distribution-build-plan.md`](./digitalocean-distribution-build-plan.md) (strategy + role matrix) · [`do-app-platform-deploy-api-build-plan.md`](./do-app-platform-deploy-api-build-plan.md) (**active**) |
 | Deploy cloud contract | [`deploy-cloud-capability-contract.md`](./deploy-cloud-capability-contract.md) — host-free `/deploy/v1/cloud/*`; DO product adapter; AWS managed profile = community |
