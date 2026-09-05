@@ -26,7 +26,7 @@ Details: [docs/self-host.md](docs/self-host.md).
 
 ## Architecture
 
-See [docs/glossary.md](docs/glossary.md), [docs/architecture.md](docs/architecture.md), [docs/tech-stack.md](docs/tech-stack.md), [docs/monorepo.md](docs/monorepo.md), [docs/api-families.md](docs/api-families.md), and ADRs under [docs/adr](docs/adr). Foreseeable risks live in [backlog/](backlog/).
+See [docs/glossary.md](docs/glossary.md), [docs/architecture.md](docs/architecture.md), [docs/tech-stack.md](docs/tech-stack.md), [docs/monorepo.md](docs/monorepo.md), [docs/api-families.md](docs/api-families.md), family pages under [docs/api/](docs/api/), and ADRs under [docs/adr](docs/adr). Foreseeable risks live in [backlog/](backlog/).
 
 - **Postgres** for all state
 - **Go** platform API + worker

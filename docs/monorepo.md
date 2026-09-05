@@ -8,7 +8,7 @@ Majesta One is developed as **one monorepo**. The **entire repository** (product
 2. **Versioned release path** — every change can move through CI and become a publishable install artifact (GHCR images + digests on `v*` tags).
 3. **Hard product ↔ customer boundary** — customer customizations are developed and tested against installs (or a local sandbox), never baked into product images or release tarballs.
 
-See also: [glossary](./glossary.md), [release CI/CD](./release-cicd.md), [self-host](./self-host.md) (Path A App Platform / Path B Compose+Helm), [customer customizations](./customer-customizations.md), [API families](./api-families.md).
+See also: [glossary](./glossary.md), [release CI/CD](./release-cicd.md), [self-host](./self-host.md) (Path A App Platform / Path B Compose+Helm), [customer customizations](./customer-customizations.md), [API families](./api-families.md), [family reference](./api/).
 
 ## Top-level layout
 

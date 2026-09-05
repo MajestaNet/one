@@ -2,6 +2,8 @@
 
 Canonical product data architecture for Majesta One: what ships managed with every install, how it is stored, why it is hard to change fleet-wide, and how customers extend it.
 
+**Public object catalog:** [objects.md](./objects.md) (core tables + module index). This file is contributor architecture (storage, performance, migrate rules). Do not publish `GET /describe` as a docs catalog.
+
 See also [ADR-008](./adr/008-core-data-model.md), [ADR-002](./adr/002-hybrid-metadata-storage.md), [ADR-003](./adr/003-sql-query-engine.md).
 
 ## Principles
@@ -169,5 +171,6 @@ Data-architecture work should start at [`docs/architecture/README.md`](./archite
 - [ADR-013](./adr/013-high-volume-flexible-storage.md) — high-volume / shared `records` scale
 - [Managed modules](./modules/README.md)
 - [Customer customizations](./customer-customizations.md)
+- [Objects (public catalog)](./objects.md)
 - [API families](./api-families.md)
 - [ADR-004 ownership](./adr/004-three-api-families.md)
