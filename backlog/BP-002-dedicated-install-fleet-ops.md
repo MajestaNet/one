@@ -40,7 +40,6 @@ Agent-implementable remainder (Compose/Helm playbooks, optional Helm `/ops` roll
 - Secret rotation playbooks with zero-downtime key cutover
 - Optional per-operator version inventory across *their* installs (still install-local confirm/roll; no SaaS remote-control plane inside the product binary)
 - Observability hooks for upgrade outcomes (`PRODUCT_VERSION` + OTEL — BP-008)
-- **Campaign 2026-09-05 (customer-rollout):** native first boot can fail when API and worker both call `EnsureKernel` concurrently; kernel `0038_hard_delete_no_default` is not idempotent ([customer-rollout-gap-log.md](../docs/customer-rollout-gap-log.md) G-MIGRATE-RACE). Workaround: wait for API `/readyz` before starting the worker. Status stays Partially mitigated.
 
 ## Direction
 

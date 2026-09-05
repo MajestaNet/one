@@ -87,7 +87,7 @@ curl -s http://localhost:8080/readyz
 curl -s -H "Authorization: Bearer dev-admin-key" http://localhost:8080/client/v1/me
 ```
 
-Start the worker **after** `/readyz` is ready (API and worker both apply kernel SQL on boot; a concurrent first migrate can fail — [customer-rollout-gap-log.md](./customer-rollout-gap-log.md) G-MIGRATE-RACE). Export the same `.env` / `DENO_PATH`:
+Start the worker **after** `/readyz` is ready (API and worker both apply kernel SQL on boot; concurrent first migrate is [#28](https://github.com/MajestaNet/one/issues/28)). Export the same `.env` / `DENO_PATH`:
 
 ```bash
 make worker
@@ -237,7 +237,7 @@ See [AGENTS.md](../AGENTS.md) and [architecture/agent-routing.md](./architecture
 | `/auth/v1/token` 503 / disabled | `AUTH_JWT_SIGNING_KEY` non-empty; restart `make api` |
 | Google `PROVIDER_DISABLED` / unavailable | `AUTH_LOGIN_PROVIDERS=google` + client id/secret in the same shell as `make api` |
 | `one org deploy --suite` / live automation: `deno binary not found` | Deno 2.9.3 on `PATH` or `DENO_PATH` in **both** API and worker shells; product images already set `DENO_PATH` |
-| First boot migrate error from API and worker together | Wait for API `/readyz` before `make worker`; retry once if a kernel SQL file is not idempotent |
+| First boot migrate error from API and worker together | Wait for API `/readyz` before `make worker`; defect [#28](https://github.com/MajestaNet/one/issues/28) |
 | IDE Connect 401 | Token expired or wrong base URL; remint JWT |
 | IDE Connect works but Environments 403 | JWT scopes lack `deploy`; use admin bootstrap key to mint |
 | `npm run electron:dev` fails | Run `npm ci` in `tools/control-ide`; Node 20+ |

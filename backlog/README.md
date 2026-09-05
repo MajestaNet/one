@@ -94,4 +94,4 @@ Open source is **neither automatically more nor less secure**. This `backlog/` t
 
 **Tree audit (2026-08-25):** Item headers were checked against routes, migrations, and tests. Statuses that still said Open/Pending after the work landed (BP-009 Phase 7, BP-033/065 Phase 1) were aligned to the tree. Frozen chrome files stay omitted from the table; IDs remain in the retired-trackers list above.
 
-**Customer-rollout campaign (2026-09-05):** Headless SI journey logged in [customer-rollout-gap-log.md](../docs/customer-rollout-gap-log.md). No BP closed. Newly evidenced: concurrent API+worker migrate on [BP-002](./BP-002-dedicated-install-fleet-ops.md); CLI suite truncation / no scratch orgs on [BP-048](./BP-048-one-cli.md); [BP-066](./BP-066-ide-demo-client-fidelity.md) Electron WS-0 still unrun.
+Confirmed SI-campaign **defects** are GitHub issues (`[campaign G-…]`), not new BP files. Registry: [customer-rollout-gap-log.md](../docs/customer-rollout-gap-log.md). Fix PRs cite `Fixes #<issue>`.

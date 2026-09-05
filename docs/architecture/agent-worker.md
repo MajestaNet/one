@@ -25,7 +25,7 @@ Webhook idempotency: webhook_deliveries unique ledger
 At-least-once delivery with handler idempotency responsibility
 ```
 
-API **and** worker still call `EnsureKernel` on boot (`cmd/api`, `cmd/worker`). Concurrent first migrate is unsafe when a kernel SQL file is not idempotent — wait for API `/readyz` before starting the worker ([customer-rollout-gap-log.md](../customer-rollout-gap-log.md) G-MIGRATE-RACE).
+API **and** worker still call `EnsureKernel` on boot (`cmd/api`, `cmd/worker`). Concurrent first migrate is unsafe when a kernel SQL file is not idempotent — wait for API `/readyz` before starting the worker. Defect: [#28](https://github.com/MajestaNet/one/issues/28).
 
 ## What to do (change types)
 
@@ -68,7 +68,7 @@ API **and** worker still call `EnsureKernel` on boot (`cmd/api`, `cmd/worker`). 
 
 - External queue products as the default (SQS/etc.) without an ADR
 - Reintroducing Node/Graphile worker paths
-- Processing managed metadata migrations in the worker (those ride API boot / migrate). Today `cmd/worker` still calls `EnsureKernel` — do not add a *third* migrator; prefer serializing on API `/readyz` until that call is removed.
+- Processing managed metadata migrations in the worker (those ride API boot / migrate). Today `cmd/worker` still calls `EnsureKernel` — do not add a *third* migrator; prefer serializing on API `/readyz` until [#28](https://github.com/MajestaNet/one/issues/28) lands.
 
 ## Checklist before merging a worker PR
 

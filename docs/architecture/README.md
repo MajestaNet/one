@@ -108,7 +108,7 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [adr/](../adr/) | Architecture decision records ([index](../adr/README.md)) |
 | [customer-customizations.md](../customer-customizations.md) | Product vs customer boundary |
 | [customer-developer-workflow.md](../customer-developer-workflow.md) | Best-practice customer DX loop (Git host agnostic; validate → deploy) |
-| [customer-rollout-test-run.md](../customer-rollout-test-run.md) | SI customer-rollout campaign: two installs, 2+ IDEs, custom object + automation, repo→org, MCP — plus [gap log](../customer-rollout-gap-log.md) |
+| [customer-rollout-test-run.md](../customer-rollout-test-run.md) | SI customer-rollout campaign + [gap log](../customer-rollout-gap-log.md) (run tables; defects are GitHub `[campaign G-…]` issues, not new BPs) |
 | [ops.md](../ops.md) / [product-upgrades.md](../product-upgrades.md) | How managed packages ride image upgrades |
 | [sdk/aws/docs/managed-paas-profile.md](../../sdk/aws/docs/managed-paas-profile.md) | Community AWS managed PaaS analog (opinionated ECS Fargate) — not Path A |
 | [sdk/aws/docs/managed-channel.md](../../sdk/aws/docs/managed-channel.md) | Community / non-GA managed-cell notes (not product channel) |

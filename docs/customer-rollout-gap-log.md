@@ -1,387 +1,109 @@
 # Customer rollout gap log
 
-Companion to [customer-rollout-test-run.md](./customer-rollout-test-run.md). One row per scenario beat (or per distinct finding). Do not paste customer data, secrets, or exploit detail.
+Companion to [customer-rollout-test-run.md](./customer-rollout-test-run.md).
 
-## How to score
+This file is the **run record** and the **issue registry**. Every campaign uses the same tables. Do not paste secrets, customer data, or exploit detail.
+
+## Tracking (read this first)
+
+| Kind | Where | When to open |
+|---|---|---|
+| **Confirmed defect** | A **GitHub issue** titled `[campaign G-…]` | Outcome is `fail`, or `pass-with-workaround` that is **not** `by-design` / `known-remainder` |
+| **Architecture remainder** | [`backlog/BP-*.md`](../backlog/README.md) | Already a foreseeable product-design risk. **Do not** open a new BP from a campaign beat |
+| **Vulnerability** | [SECURITY.md](../SECURITY.md) only | Never a public issue or a BP body |
+
+Fix PRs cite **`Fixes #<issue>`**. After merge, set the registry row to `closed` and link the PR. Agents pick work from the registry **Open** rows, not from BP campaign notes.
+
+Template: [.github/ISSUE_TEMPLATE/campaign-finding.md](../.github/ISSUE_TEMPLATE/campaign-finding.md). Helper: [scripts/file-campaign-finding.sh](../scripts/file-campaign-finding.sh).
+
+## Record a beat (same fields every time)
+
+After **each** scenario card A–F (and each suffix beat), add **one** row to **Run results** and, if it needs a fix, **one** row to **Issue registry**.
 
 | Field | Values |
 |---|---|
-| Scenario | `A` … `F` plus optional suffix (`A-claim`, `C-peers`, …) |
+| Beat | `G-…` id (stable). Suffix ok (`G-EXEC-A-CLAIM`) |
+| Card | `A` … `F` |
 | Outcome | `pass` · `pass-with-workaround` · `fail` · `blocked-no-display` · `not-run` |
-| DX | `1` (unusable) … `5` (copy-paste green) for docs findability, error quality, recovery, time-to-green |
+| DX | `1`–`5` or `—` |
 | Class | `docs-drift` · `missing-lab-packaging` · `product-bug` · `authz-confusion` · `frozen-chrome-honesty` · `known-remainder` · `by-design` |
+| Issue | GitHub `#N` · `fixed-in-#27` · `none` (pass / by-design / remainder / not-run) |
 
-Link a backlog item when the class is honesty or a known remainder: [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md), [BP-048](../backlog/BP-048-one-cli.md), [BP-031](../backlog/BP-031-customer-repo-init-sync.md), [BP-065](../backlog/BP-065-ide-backend-coupling.md), [BP-029](../backlog/BP-029-app-platform-install.md).
-
-Row template:
+Row template (copy):
 
 ```text
-### G-ID — short title
-- Scenario:
-- Expected path (doc):
-- Actual steps / time:
-- Outcome:
-- DX (1–5):
-- Class:
-- BP / ADR:
-- Notes:
+| YYYY-MM-DD | G-ID | X | outcome | DX | class | none or #N | one-line actual |
 ```
 
 ---
 
-## Lab used (2026-09-05)
+## Issue registry (the work queue)
 
-Headless campaign on a cloud agent VM **without Docker**. Native fallback: Postgres 16 (`one_prod` / `one_test` on `127.0.0.1:5432`), four `go run` processes (API+worker × prod/test), Deno 2.9.3 at `DENO_PATH`. Customer fixtures in gitignored `.customer-sandbox/one-acme-rollout` (not in this repo). Control IDE / Electron was **not** launched (`tools/control-ide` had no `npm ci`; display present but scenario B marked desktop-required). Compose overlay was not executed here.
+Open rows are what an agent should implement. Closed rows stay for traceability.
 
----
+| Beat | Class | GitHub issue | Status | Fix PR |
+|---|---|---|---|---|
+| G-MIGRATE-RACE | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | **open** | |
+| G-CLI-SUITE-TRUNC | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | **open** | |
+| G-ENV-EXAMPLE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
+| G-DOCS-PROMOTE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
+| G-JSONLOGIC-POLARITY | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
+| G-FEATURE-FLAGS | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
+| G-DENO-PATH | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
+| G-DENO-API-VS-WORKER | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
+| G-QUERY-FIELD | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
+| G-NO-DOCKER | missing-lab-packaging | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
+| G-PEER-LOCAL | by-design | none | n/a (SSRF; omit `baseUrl`) | [#27](https://github.com/MajestaNet/one/pull/27) docs |
+| G-PACK-CHECKSUM-PER-ORG | by-design | none | n/a | |
+| G-HOSTED-LOOP-SHIP | by-design | none | n/a (MCP ships; hosted loop does not) | |
+| G-NO-SCRATCH-ORG | known-remainder | none | n/a — [BP-048](../backlog/BP-048-one-cli.md) Wave D | |
+| G-CROSS-INSTALL-SSO | by-design | none | n/a — [BP-037](../backlog/BP-037-install-claim-customer-sso.md) | |
+| G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | not-run — [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) WS-0 | |
+| G-IDE-USERDATA | missing-lab-packaging | none | procedure in Mac runbook; Electron not launched | |
+| G-COMPOSE-SINGLE | by-design | none | everyday Compose is one `dev` install; overlay is the two-install lab | |
 
-## Pre-seeded (confirm on the run)
-
-These were visible in the tree before the campaign. Confirm, then set Outcome.
-
-### G-COMPOSE-SINGLE — default Compose is one `dev` install
-
-- Scenario: A
-- Expected path (doc): [self-host.md](./self-host.md) Path B (“start with Prod”)
-- Actual steps / time: Overlay file exists; default [deploy/docker-compose.yml](../deploy/docker-compose.yml) is still one `INSTALL_ROLE=dev` stack. This VM had no Docker, so the overlay was not `up`’d; native two-DB lab used instead.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `missing-lab-packaging` / `docs-drift`
-- BP / ADR: [multi-env-deploy.md](./multi-env-deploy.md)
-- Notes: Campaign overlay [deploy/docker-compose.multi-env.yml](../deploy/docker-compose.multi-env.yml) is now linked from Path B docs. Everyday Compose remains a single install by design — testers who copy only `docker compose -f deploy/docker-compose.yml` never get a test sibling.
-
-### G-ENV-EXAMPLE — root `.env.example` missing
-
-- Scenario: A
-- Expected path (doc): [README.md](../README.md) / [local-development-mac.md](./local-development-mac.md) `cp .env.example .env`
-- Actual steps / time: Confirmed absent at campaign start (`.gitignore` keeps `!.env.example`). Native lab exported env by hand from Compose names.
-- Outcome: `fail`
-- DX (1–5): 2
-- Class: `docs-drift`
-- BP / ADR: —
-- Notes: Restored a root `.env.example` in the same change set as this log so the next native `make api` loop can copy-paste.
-
-### G-PEER-LOCAL — peer `baseUrl` rejects loopback
-
-- Scenario: C
-- Expected path (doc): [multi-env-deploy.md](./multi-env-deploy.md) `POST /deploy/v1/peers` with `baseUrl`
-- Actual steps / time: `POST /deploy/v1/peers` with `baseUrl: http://localhost:8081` → **403** `FORBIDDEN` / `Invalid baseUrl: target host "localhost" is blocked`. Same body without `baseUrl` → **201** both ways.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `by-design` (SSRF) with residual `docs-drift` if testers skip the loopback note
-- BP / ADR: —
-- Notes: Workaround: omit `baseUrl`; IDE Add environment. RFC1918 URLs remain allowed. Operator docs now say localhost is invalid.
-
-### G-DOCS-PROMOTE — customizations doc still says promote / CodeCommit
-
-- Scenario: E
-- Expected path (doc): [customer-customizations.md](./customer-customizations.md) vs [customer-developer-workflow.md](./customer-developer-workflow.md)
-- Actual steps / time: Golden rules still said “Promote with Deploy” and “auto-provisioned CodeCommit” while the modern DX is repo→org on any HTTPS Git.
-- Outcome: `fail`
-- DX (1–5): 2
-- Class: `docs-drift`
-- BP / ADR: [BP-032](../backlog/BP-032-customer-dx-validate-deploy.md) mitigated
-- Notes: Golden rules + surface table rewritten in this change set to match [customer-developer-workflow.md](./customer-developer-workflow.md).
-
-### G-FEATURE-FLAGS — omit vs empty vs MCP dark
-
-- Scenario: F
-- Expected path (doc): [customer-connect.md](./customer-connect.md) (production often omits `agents`)
-- Actual steps / time: Lab set `FEATURE_FLAGS=agents`. MCP catalog served `upsert_object` / `org_*`. Did not A/B empty vs omitted vs `FEATURE_FLAGS=core`.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `docs-drift`
-- BP / ADR: [ADR-010](./adr/010-customer-agentic-platform.md)
-- Notes: Empty `FEATURE_FLAGS` **enables** agents (`Config.AgentsEnabled`). Marketplace must set a non-empty list that does **not** include `agents` to keep MCP dark. [customer-connect.md](./customer-connect.md) updated to say that; “omit the flag” is the wrong instruction.
-
-### G-IDE-USERDATA — no dual-IDE recipe in Mac runbook (pre-change)
-
-- Scenario: B
-- Expected path (doc): [local-development-mac.md](./local-development-mac.md)
-- Actual steps / time: Recipe is now in the Mac runbook (`npx electron --user-data-dir=… .` **before** `.`). Not executed (no `npm ci` / Electron in this lab).
-- Outcome: `blocked-no-display`
-- DX (1–5): —
-- Class: `missing-lab-packaging`
-- BP / ADR: —
-- Notes: Procedure documented; session isolation unproven on this run.
-
-### G-NO-SCRATCH-ORG — second env is a full install
-
-- Scenario: C
-- Expected path (doc): testers looking for `one org scratch`
-- Actual steps / time: `one org list` / `org use test` worked against a second full install. No `scratch` subcommand.
-- Outcome: `pass`
-- DX (1–5): 4 (once you accept a second install)
-- Class: `known-remainder`
-- BP / ADR: [BP-048](../backlog/BP-048-one-cli.md)
-- Notes: Scratch orgs deferred. Two Compose projects / the multi-env file / native two-DB lab is the stand-in.
-
-### G-CROSS-INSTALL-SSO — one login does not unlock peers
-
-- Scenario: C
-- Expected path (doc): [multi-env-deploy.md](./multi-env-deploy.md) / install connect plan Phase 3
-- Actual steps / time: Distinct SystemAdmin emails on prod vs test (`admin-prod@…` / `admin-test@…`). Distinct JWTs. `one auth login --alias prod` and `--alias test` both required.
-- Outcome: `pass`
-- DX (1–5): 4
-- Class: `by-design` / `authz-confusion` if testers expect SSO across envs
-- BP / ADR: [BP-037](../backlog/BP-037-install-claim-customer-sso.md)
-- Notes: Each install is its own JWT issuer. Sign in once per URL.
-
-### G-IDE-DEPLOY-GREEN — Deploy test honesty
-
-- Scenario: B / E
-- Expected path (doc): IDE Build → Deploy vs `one org deploy --suite`
-- Actual steps / time: Electron not launched.
-- Outcome: `blocked-no-display`
-- DX (1–5): —
-- Class: `frozen-chrome-honesty`
-- BP / ADR: [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) WS-0
-- Notes: CLI suite status is the honesty baseline for this run. GUI lying-green still untested.
-
-### G-HOSTED-LOOP-SHIP — Operate chat cannot org_deploy
-
-- Scenario: F
-- Expected path (doc): [builder-connect.md](./builder-connect.md) hosted loop v1 subset
-- Actual steps / time: `POST /client/v1/agents/runs` with ShipGuide + “deploy my Project__c” returned `status: awaiting_approval` and did **not** call `org_deploy`. MCP catalog on the same install lists `org_deploy`.
-- Outcome: `pass`
-- DX (1–5): 4
-- Class: `by-design` (API). Electron pretence not checked.
-- BP / ADR: [BP-006](../backlog/BP-006-agent-guardrails.md) / [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md)
-- Notes: Metadata upserts and `org_*` stay on MCP / family HTTP / `one`. IDE chat honesty is still BP-066.
-
-### G-DENO-PATH — suite / worker without Deno
-
-- Scenario: D / E
-- Expected path (doc): [local-development-mac.md](./local-development-mac.md) Deno 2.9.3
-- Actual steps / time: First `--suite CreateAccountFromContact` failed with `deno binary not found (set DENO_PATH or install Deno 2.9.3)` because the **API** process lacked Deno. After `DENO_PATH` on the API, suites passed. Live Account→Project still failed until the **worker** also had `DENO_PATH`. Product images already set `DENO_PATH=/usr/local/bin/deno`.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 4 (message is clear; split across processes is not)
-- Class: `docs-drift` (now documented)
-- BP / ADR: [ADR-014](./adr/014-customer-code-automations.md)
-- Notes: Suites run Deno in the API; `execution: async` automations run Deno in the worker. See G-DENO-API-VS-WORKER.
+**Agent prompt (open rows):** open the GitHub issue, follow its **Fix-it** section, stay in the named packages, PR `Fixes #N`, then update this table.
 
 ---
 
-## Execution results
+## Run results
 
-Headless slices (API, claim, CLI, MCP, second install) ran without Electron. Scenario B needs a display.
+### 2026-09-05 — native two-install (no Docker, no Electron)
 
-### G-EXEC-A-HEALTH — prod and test /healthz /readyz
+Lab: Postgres 16 (`one_prod` / `one_test` on `127.0.0.1:5432`); four `go run` processes; Deno 2.9.3 via `DENO_PATH`. Fixtures in gitignored `.customer-sandbox/one-acme-rollout`. Compose overlay not executed. `DISPLAY` present; Control IDE not installed.
 
-- Scenario: A
-- Expected path (doc): this runbook “Bring the lab up”
-- Actual steps / time: First boot raced: API+worker both call `EnsureKernel`; migration `0038_hard_delete_no_default` is not idempotent (`DELETE FROM records WHERE deleted_at IS NOT NULL` after the sibling already dropped the column). Retry after 62 migrations applied succeeded. `/readyz` `{"status":"ready"}` on `:8080` and `:8081`.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 2
-- Class: `product-bug`
-- BP / ADR: [BP-002](../backlog/BP-002-dedicated-install-fleet-ops.md) (newly evidenced)
-- Notes: Workaround: wait for API `/readyz` before starting the worker. See G-MIGRATE-RACE.
-
-### G-EXEC-A-CLAIM — install claim on prod and test
-
-- Scenario: A
-- Expected path (doc): [customer-connect.md](./customer-connect.md) / [self-host.md](./self-host.md)
-- Actual steps / time: `POST /auth/v1/install/claim` on both installs with distinct emails. Happy path (not bootstrap key).
-- Outcome: `pass`
-- DX (1–5): 5
-- Class: —
-- BP / ADR: [BP-037](../backlog/BP-037-install-claim-customer-sso.md)
-- Notes: Claim tokens from the overlay (`rollout-prod-claim-token-change-me` / `rollout-test-claim-token-change-me`).
-
-### G-EXEC-A-ME — `/client/v1/me` + revision pin
-
-- Scenario: A
-- Expected path (doc): [builder-connect.md](./builder-connect.md) pin `One-API-Revision`
-- Actual steps / time: `GET /version` advertised revision `1`. `GET /client/v1/me` with the claim JWT succeeded on both installs.
-- Outcome: `pass`
-- DX (1–5): 5
-- Class: —
-- BP / ADR: [BP-025](../backlog/BP-025-ide-api-version-compatibility.md)
-- Notes: Pin header required on family routes as documented.
-
-### G-EXEC-B-IDE — two Electron userData sessions
-
-- Scenario: B
-- Expected path (doc): [local-development-mac.md](./local-development-mac.md)
-- Actual steps / time: Not run. `DISPLAY=:1` existed; Control IDE tree was not installed (`npm ci` not executed).
-- Outcome: `blocked-no-display`
-- DX (1–5): —
-- Class: —
-- BP / ADR: [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md)
-- Notes: Desktop required. Dual `--user-data-dir` remains a documented procedure.
-
-### G-EXEC-C-PEERS — register sibling without loopback baseUrl
-
-- Scenario: C
-- Expected path (doc): [multi-env-deploy.md](./multi-env-deploy.md)
-- Actual steps / time: Loopback `baseUrl` 403 (G-PEER-LOCAL). Peers without `baseUrl` 201 both ways.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `by-design`
-- BP / ADR: —
-- Notes: IDE env switcher with live peer URLs is untested without Electron.
-
-### G-EXEC-C-CLI-ALIAS — `one auth login` prod + test
-
-- Scenario: C
-- Expected path (doc): [builder-connect.md](./builder-connect.md)
-- Actual steps / time: `ONE_CREDENTIAL_STORE=file`; `one auth login --alias prod` / `--alias test`; `one org use test`; `one org list` showed both.
-- Outcome: `pass`
-- DX (1–5): 5
-- Class: —
-- BP / ADR: [BP-048](../backlog/BP-048-one-cli.md)
-- Notes: File store is required when the lab has no OS keychain.
-
-### G-EXEC-D-INIT — `one project init` into `.customer-sandbox`
-
-- Scenario: D
-- Expected path (doc): [customer-developer-workflow.md](./customer-developer-workflow.md)
-- Actual steps / time: `one project init -dir .customer-sandbox/one-acme-rollout --customer-id acme-rollout`. Nested git, `customerId: acme-rollout`. Tree remains gitignored.
-- Outcome: `pass`
-- DX (1–5): 5
-- Class: —
-- BP / ADR: [BP-048](../backlog/BP-048-one-cli.md)
-- Notes: Do not commit the sandbox into the product repo.
-
-### G-EXEC-D-TEMPLATE-DEPLOY — sample suite on test
-
-- Scenario: D / E
-- Expected path (doc): [deploy/customer-repo-template/README.md](../deploy/customer-repo-template/README.md)
-- Actual steps / time: Template `Referral__c` + `CreateAccount_From_Contact` deployed to test. First `--suite` failed without API Deno; second pass green after `DENO_PATH`.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: —
-- BP / ADR: [ADR-014](./adr/014-customer-code-automations.md)
-- Notes: Product worker **image** already includes Deno; native `go run ./cmd/api` does not.
-
-### G-EXEC-D-PROJECT — Project__c + automation on test
-
-- Scenario: D
-- Expected path (doc): [customer-repo.md](./customer-repo.md)
-- Actual steps / time: Added `Project__c` + `CreateProject_From_Account` + suite in the sandbox. First contract step failed: JSONLogic `true` means **invalid** — runbook sample `"!!": {var: Name}` fired when Name was present. Flipped to `"!": {var: Name}`. Suites then passed. Live Account “Post Deno Worker Account” created Project after worker `DENO_PATH` (worker log: `CreateProject_From_Account created Project for Post Deno Worker Account`).
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `docs-drift` (JSONLogic polarity)
-- BP / ADR: [ADR-014](./adr/014-customer-code-automations.md)
-- Notes: MCP `upsert_object` not used for this delta (hand-edit YAML). Query body field is `object`, not `objectApiName`. Create sobject returns `Id` (capital I).
-
-### G-EXEC-E-PROD — same SHA to prod
-
-- Scenario: E
-- Expected path (doc): [customer-developer-workflow.md](./customer-developer-workflow.md)
-- Actual steps / time: Same Git SHA `one org validate` / `org deploy --suite CreateProjectFromAccount` on prod. `GET /metadata/v1/objects/Project__c` returns custom ownership. Business rows did not copy.
-- Outcome: `pass`
-- DX (1–5): 4
-- Class: —
-- BP / ADR: [BP-032](../backlog/BP-032-customer-dx-validate-deploy.md)
-- Notes: Pack checksums differ per org because the pack includes `sourceInstallId` — same SHA, different checksums (G-PACK-CHECKSUM-PER-ORG). CLI truncates suite JSON (G-CLI-SUITE-TRUNC).
-
-### G-EXEC-F-MCP — `/mcp/tools` + initialize on test
-
-- Scenario: F
-- Expected path (doc): [builder-connect.md](./builder-connect.md)
-- Actual steps / time: `GET /mcp/tools` listed `upsert_object`, `org_validate`, `org_deploy`, `pack`, `invoke_skill`, …. `initialize` OK (`server.name=one`, protocol `2025-03-26`). `list_objects_metadata` showed Account/Contact/User + `Project__c` + `Referral__c`.
-- Outcome: `pass`
-- DX (1–5): 5
-- Class: —
-- BP / ADR: [ADR-030](./adr/030-install-agent-runtime.md)
-- Notes: Streamable HTTP JSON from curl worked; stdio `tools/one-mcp` not needed.
-
-### G-EXEC-F-HOSTED — agents/runs cannot org_deploy
-
-- Scenario: F
-- Expected path (doc): [builder-connect.md](./builder-connect.md)
-- Actual steps / time: See G-HOSTED-LOOP-SHIP. `awaiting_approval`; no metadata upsert / `org_deploy`.
-- Outcome: `pass`
-- DX (1–5): 4
-- Class: `by-design`
-- BP / ADR: [hosted-agent-tool-loop-build-plan.md](./architecture/hosted-agent-tool-loop-build-plan.md)
-- Notes: Testers who try to ship from Operate chat should hit this wall. IDE pretence not checked.
-
----
-
-## New evidence from this run
-
-### G-MIGRATE-RACE — API + worker concurrent EnsureKernel
-
-- Scenario: A
-- Expected path (doc): [local-development-mac.md](./local-development-mac.md) / [agent-worker.md](./architecture/agent-worker.md) (“migrations ride API boot”)
-- Actual steps / time: Both `cmd/api` and `cmd/worker` call `pool.EnsureKernel`. First native boot failed on non-idempotent `0038_hard_delete_no_default`.
-- Outcome: `fail`
-- DX (1–5): 2
-- Class: `product-bug`
-- BP / ADR: [BP-002](../backlog/BP-002-dedicated-install-fleet-ops.md)
-- Notes: Compose `depends_on: service_started` does not wait for `/readyz`, so the overlay can hit the same race. Workaround: start API, wait `/readyz`, then worker.
-
-### G-JSONLOGIC-POLARITY — validation fires when expression is true
-
-- Scenario: D
-- Expected path (doc): [customer-repo.md](./customer-repo.md) validation-rules row
-- Actual steps / time: `EvaluateValidationRules` treats JSONLogic `true` as invalid (Salesforce-style). Allowed docs did not say that. Campaign YAML `"!!": {var: Name}` rejected named Projects.
-- Outcome: `fail`
-- DX (1–5): 2
-- Class: `docs-drift`
-- BP / ADR: [ADR-002](./adr/002-hybrid-metadata-storage.md)
-- Notes: Runbook sample and [customer-repo.md](./customer-repo.md) now state polarity. Name-required is `"!": { var: Name }`.
-
-### G-CLI-SUITE-TRUNC — `one org deploy --suite` truncates JSON
-
-- Scenario: E
-- Expected path (doc): [customer-developer-workflow.md](./customer-developer-workflow.md)
-- Actual steps / time: CLI printed truncated suite JSON (`objectAp…`). Full report via `GET /deploy/v1/tests/runs/:id`.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `known-remainder`
-- BP / ADR: [BP-048](../backlog/BP-048-one-cli.md)
-- Notes: Does not hide pass/fail of the suite in this run; painful when diagnosing a red step.
-
-### G-QUERY-FIELD — query body uses `object`
-
-- Scenario: D
-- Expected path (doc): testers guessing from Metadata `objectApiName`
-- Actual steps / time: `POST /client/v1/query` with `objectApiName` → `VALIDATION_ERROR` `object is required`. Correct field is `object`. Create sobject returns `Id`.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `docs-drift`
-- BP / ADR: —
-- Notes: Runbook prove-runtime curl now uses `{"object":"Project__c"}`. Family contract lives in Client query docs / `@one/client`.
-
-### G-PACK-CHECKSUM-PER-ORG — same Git SHA, different pack checksum
-
-- Scenario: E
-- Expected path (doc): testers comparing pack checksums across orgs
-- Actual steps / time: Pack includes `sourceInstallId`, so checksums differ even when Git SHA matches.
-- Outcome: `pass`
-- DX (1–5): 4
-- Class: `by-design`
-- BP / ADR: [BP-032](../backlog/BP-032-customer-dx-validate-deploy.md)
-- Notes: Compare Git SHA / object describe, not pack checksum, across installs.
-
-### G-DENO-API-VS-WORKER — suites vs async automations
-
-- Scenario: D
-- Expected path (doc): “worker image includes Deno” implying live automations work after a green `--suite`
-- Actual steps / time: Green `--suite` on the API did **not** imply the worker could run `automation.run`. Second Account after worker restart with `DENO_PATH` created `Project__c`.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `docs-drift`
-- BP / ADR: [ADR-014](./adr/014-customer-code-automations.md)
-- Notes: Native labs must export `DENO_PATH` (or Deno on `PATH`) in **both** API and worker shells.
-
-### G-NO-DOCKER — Compose helper unusable without Docker
-
-- Scenario: A
-- Expected path (doc): [scripts/customer-rollout-headless.sh](../scripts/customer-rollout-headless.sh)
-- Actual steps / time: Script requires `docker`. This VM had none. Native Postgres + `go run` used instead.
-- Outcome: `pass-with-workaround`
-- DX (1–5): 3
-- Class: `missing-lab-packaging`
-- BP / ADR: —
-- Notes: Script now supports `SKIP_COMPOSE=1` when APIs are already up. Runbook documents the native two-DB fallback.
-
----
-
-## Summary (after the run)
+| Date | Beat | Card | Outcome | DX | Class | Issue | Actual (one line) |
+|---|---|---|---|---|---|---|---|
+| 2026-09-05 | G-EXEC-A-HEALTH | A | pass-with-workaround | 2 | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | Concurrent `EnsureKernel`; retry after 62 migrations |
+| 2026-09-05 | G-MIGRATE-RACE | A | fail | 2 | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | `0038` not idempotent; API+worker both migrate |
+| 2026-09-05 | G-EXEC-A-CLAIM | A | pass | 5 | — | none | `POST /auth/v1/install/claim` both installs |
+| 2026-09-05 | G-EXEC-A-ME | A | pass | 5 | — | none | `/version` pin `1`; `/client/v1/me` ok |
+| 2026-09-05 | G-ENV-EXAMPLE | A | fail | 2 | docs-drift | fixed-in-#27 | Root `.env.example` was missing |
+| 2026-09-05 | G-COMPOSE-SINGLE | A | pass-with-workaround | 3 | by-design | none | Default Compose is one `dev` stack |
+| 2026-09-05 | G-NO-DOCKER | A | pass-with-workaround | 3 | missing-lab-packaging | fixed-in-#27 | No Docker; native fallback + `SKIP_COMPOSE=1` |
+| 2026-09-05 | G-EXEC-B-IDE | B | blocked-no-display | — | — | none | Electron not launched |
+| 2026-09-05 | G-IDE-USERDATA | B | blocked-no-display | — | missing-lab-packaging | none | `--user-data-dir` recipe documented, unproven |
+| 2026-09-05 | G-IDE-DEPLOY-GREEN | B | blocked-no-display | — | frozen-chrome-honesty | none | GUI honesty not exercised |
+| 2026-09-05 | G-PEER-LOCAL | C | pass-with-workaround | 3 | by-design | none | Loopback `baseUrl` 403; omit `baseUrl` → 201 |
+| 2026-09-05 | G-EXEC-C-PEERS | C | pass-with-workaround | 3 | by-design | none | Peers both ways without `baseUrl` |
+| 2026-09-05 | G-EXEC-C-CLI-ALIAS | C | pass | 5 | — | none | `one auth login` prod+test; `org use test` |
+| 2026-09-05 | G-NO-SCRATCH-ORG | C | pass | 4 | known-remainder | none | Full second install; no `one org scratch` |
+| 2026-09-05 | G-CROSS-INSTALL-SSO | C | pass | 4 | by-design | none | Distinct claims / JWTs per install |
+| 2026-09-05 | G-EXEC-D-INIT | D | pass | 5 | — | none | `one project init` into `.customer-sandbox` |
+| 2026-09-05 | G-EXEC-D-TEMPLATE-DEPLOY | D | pass-with-workaround | 3 | docs-drift | fixed-in-#27 | `--suite` needed Deno on **API** |
+| 2026-09-05 | G-DENO-PATH | D | pass-with-workaround | 4 | docs-drift | fixed-in-#27 | Clear `DENO_PATH` error |
+| 2026-09-05 | G-DENO-API-VS-WORKER | D | pass-with-workaround | 3 | docs-drift | fixed-in-#27 | Suites=API Deno; async automations=worker Deno |
+| 2026-09-05 | G-JSONLOGIC-POLARITY | D | fail | 2 | docs-drift | fixed-in-#27 | JSONLogic `true` = invalid; `"!!"` was wrong |
+| 2026-09-05 | G-QUERY-FIELD | D | pass-with-workaround | 3 | docs-drift | fixed-in-#27 | Query body field is `object` |
+| 2026-09-05 | G-EXEC-D-PROJECT | D | pass-with-workaround | 3 | docs-drift | fixed-in-#27 | `Project__c` + live Account→Project after worker Deno |
+| 2026-09-05 | G-EXEC-E-PROD | E | pass | 4 | — | none | Same Git SHA on prod; rows did not copy |
+| 2026-09-05 | G-CLI-SUITE-TRUNC | E | pass-with-workaround | 3 | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | CLI `truncate(..., 200)` on suite JSON |
+| 2026-09-05 | G-PACK-CHECKSUM-PER-ORG | E | pass | 4 | by-design | none | Pack includes `sourceInstallId` |
+| 2026-09-05 | G-DOCS-PROMOTE | E | fail | 2 | docs-drift | fixed-in-#27 | Customizations doc said promote / CodeCommit |
+| 2026-09-05 | G-FEATURE-FLAGS | F | pass-with-workaround | 3 | docs-drift | fixed-in-#27 | Empty `FEATURE_FLAGS` enables agents |
+| 2026-09-05 | G-EXEC-F-MCP | F | pass | 5 | — | none | `/mcp/tools` + `initialize` on test |
+| 2026-09-05 | G-HOSTED-LOOP-SHIP | F | pass | 4 | by-design | none | `/agents/runs` → `awaiting_approval`; no `org_deploy` |
+| 2026-09-05 | G-EXEC-F-HOSTED | F | pass | 4 | by-design | none | Same as G-HOSTED-LOOP-SHIP |
 
 | Count | Outcome |
 |---|---|
@@ -391,10 +113,13 @@ Headless slices (API, claim, CLI, MCP, second install) ran without Electron. Sce
 | 3 | blocked-no-display |
 | 0 | not-run |
 
-Highest-severity new evidence (update [backlog/README.md](../backlog/README.md) only when a BP is closed or newly evidenced):
+Open defects from this run: **#28**, **#29**.
 
-- **G-MIGRATE-RACE** — concurrent `EnsureKernel` from API+worker; `0038` not idempotent. Noted on [BP-002](../backlog/BP-002-dedicated-install-fleet-ops.md) Remaining (status stays Partially mitigated).
-- **G-JSONLOGIC-POLARITY** / **G-DOCS-PROMOTE** / **G-ENV-EXAMPLE** — docs drift confirmed; patched in this change set (not a BP close).
-- **G-CLI-SUITE-TRUNC** / no `one org scratch` — remainder notes on [BP-048](../backlog/BP-048-one-cli.md).
-- **BP-066 WS-0** Electron honesty **not** exercised; hosted `/agents/runs` contrast confirmed at HTTP. Status stays Open.
-- **BP-048** scratch orgs remain deferred (G-NO-SCRATCH-ORG).
+---
+
+## Next run (copy)
+
+1. Duplicate the **Run results** table header; new date; same Beat ids where the card is the same.
+2. File a GitHub issue only for new or still-open `fail` / actionable `pass-with-workaround` rows.
+3. Re-test #28 / #29 if still open; do not re-file duplicates — comment on the existing issue.
+4. Do not append campaign essays to `backlog/BP-*.md`.
