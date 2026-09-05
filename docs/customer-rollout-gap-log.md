@@ -61,6 +61,8 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 | G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | not-run — [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) WS-0 | |
 | G-IDE-USERDATA | missing-lab-packaging | none | procedure in Mac runbook; Electron not launched | |
 | G-COMPOSE-SINGLE | by-design | none | everyday Compose is one `dev` install; overlay is the two-install lab | |
+| S-B-LOOKUP-FAIL-WITHOUT-PKG | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | **open** | |
+| S-B-AUTHZ-STUBS | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | **open** | |
 
 **Agent prompt (open rows):** open the GitHub issue, follow its **Fix-it** section, stay in the named packages, PR `Fixes #N`, then update this table.
 
@@ -121,7 +123,7 @@ Open defects from this run: **#28**, **#29**.
 
 Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Lab: [docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml). Fixtures: `scripts/customer-install-sim-generate.sh`.
 
-**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). S-B–S-E not started. Re-test #28 / #29; do not re-file.
+**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). Re-test #28 / #29; do not re-file.
 
 ### Beat catalog (record each)
 
@@ -149,15 +151,21 @@ Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation
 | 2026-09-05 | S-A-MIGRATE-RACE | S-A | fail | 2 | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | Concurrent API+worker on fresh prod DB: worker `pg_type_typname_nsp_index` 23505; sequential workaround recovered |
 | 2026-09-05 | S-A-PEERS | S-A | pass-with-workaround | 4 | by-design | none | Loopback `baseUrl` 403 SSRF; six POSTs without `baseUrl` → 201 triangle |
 | 2026-09-05 | S-A-CLI-ALIASES | S-A | pass | 5 | — | none | `ONE_CREDENTIAL_STORE=file`; aliases prod/test/dev; `org use dev`; `org list` |
+| 2026-09-05 | S-B-PKG-DEP | S-B | pass | 5 | — | none | `POST /metadata/v1/packages/sales/enable` on dev before catalog → 409 `dependency not installed: catalog` |
+| 2026-09-05 | S-B-PKG-ENABLE-ALL | S-B | pass | 5 | — | none | catalog → sales, `project_service`, `lead_marketing` enabled on prod/test/dev (idempotent 200); describe lists Opportunity, Project, Lead on all three |
+| 2026-09-05 | S-B-OBJ-SITEVISIT | S-B | pass | 4 | — | none | `one org validate` then deploy `--manifest sb-objects-fields --alias dev` applied SiteVisit__c + ScalePing__c (no `--suite`; `requiredTestSuites` would auto-run and 404 until S-C) |
+| 2026-09-05 | S-B-FIELD-MANAGED-EXT | S-B | pass | 5 | — | none | Account.LastSiteVisitId__c, Opportunity.SiteVisitCount__c, Project.EngagementFlag__c describe `ownership=custom` `packageName=customer.default` |
+| 2026-09-05 | S-B-LOOKUP-FAIL-WITHOUT-PKG | S-B | fail | 2 | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | Metadata POST lookup → 404 Opportunity; `one org validate` of SiteVisit.OpportunityId was ok=true and deploy created the dangling lookup before `sales` |
+| 2026-09-05 | S-B-AUTHZ-STUBS | S-B | pass-with-workaround | 3 | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | Operate deny stubs 403 on Opportunity CRUD; claim admin 201 after AccountId; `client_credentials` `client_id` is principal id, not credential id |
 
 | Count | Outcome |
 |---|---|
-| 5 | pass |
-| 2 | pass-with-workaround |
-| 1 | fail |
-| 0 | not-run (S-A complete; S-B–S-E not started) |
+| 9 | pass |
+| 3 | pass-with-workaround |
+| 2 | fail |
+| 0 | not-run (S-A + S-B complete; S-C–S-E not started) |
 
-Open defects from this card: **#28** (retested; do not re-file). `#29` not in S-A scope.
+Open defects from this card: **#28** (S-A; do not re-file), **#34** (S-B lookup validate), **#35** (S-B client_credentials docs). `#29` not in S-B scope. Ignore [#36](https://github.com/MajestaNet/one/issues/36) (accidental empty `gh issue create` probe; close was denied).
 
 ---
 
