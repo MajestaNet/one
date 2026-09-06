@@ -9,15 +9,19 @@ import (
 
 // writeSuiteReport prints a complete --suite result (pretty JSON, never truncated)
 // and returns true when the operator should treat the run as failed.
-func writeSuiteReport(w io.Writer, suite string, suiteBody []byte, suiteStatus int) bool {
-	fmt.Fprintf(w, "suite %s HTTP %d\n", suite, suiteStatus)
+func writeSuiteReport(w io.Writer, suite string, suiteBody []byte, suiteStatus int) (bool, error) {
+	if _, err := fmt.Fprintf(w, "suite %s HTTP %d\n", suite, suiteStatus); err != nil {
+		return false, err
+	}
 	var parsed any
 	if err := json.Unmarshal(suiteBody, &parsed); err == nil {
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
-		_ = enc.Encode(parsed)
-	} else {
-		fmt.Fprintln(w, string(suiteBody))
+		if err := enc.Encode(parsed); err != nil {
+			return false, err
+		}
+	} else if _, err := fmt.Fprintln(w, string(suiteBody)); err != nil {
+		return false, err
 	}
 
 	var report struct {
@@ -38,14 +42,16 @@ func writeSuiteReport(w io.Writer, suite string, suiteBody []byte, suiteStatus i
 		}
 	}
 	if runID != "" {
-		fmt.Fprintf(w, "API of record: GET /deploy/v1/tests/runs/%s\n", runID)
+		if _, err := fmt.Fprintf(w, "API of record: GET /deploy/v1/tests/runs/%s\n", runID); err != nil {
+			return false, err
+		}
 	}
 	if suiteStatus >= 300 {
-		return true
+		return true, nil
 	}
 	switch runStatus {
 	case "failed", "error":
-		return true
+		return true, nil
 	}
-	return false
+	return false, nil
 }

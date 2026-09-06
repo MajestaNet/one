@@ -9,7 +9,10 @@ import (
 func TestWriteSuiteReportPrettyPrintsAndDetectsFailure(t *testing.T) {
 	body := []byte(`{"run":{"id":"run-1","status":"failed","suiteApiName":"CreateAccountFromContact","results":[{"index":8,"type":"automationContract","status":"failed","message":"contract fixture create: Opportunity requires AccountId and/or ContactId","detail":{"objectApiName":"Opportunity"}}]},"mode":"sync"}`)
 	var buf bytes.Buffer
-	failed := writeSuiteReport(&buf, "CreateAccountFromContact", body, 201)
+	failed, err := writeSuiteReport(&buf, "CreateAccountFromContact", body, 201)
+	if err != nil {
+		t.Fatal(err)
+	}
 	out := buf.String()
 	if !failed {
 		t.Fatal("failed suite status must be treated as failure")
@@ -31,14 +34,22 @@ func TestWriteSuiteReportPrettyPrintsAndDetectsFailure(t *testing.T) {
 func TestWriteSuiteReportPassedIsNotFailure(t *testing.T) {
 	body := []byte(`{"run":{"id":"run-ok","status":"passed"}}`)
 	var buf bytes.Buffer
-	if writeSuiteReport(&buf, "OkSuite", body, 201) {
+	failed, err := writeSuiteReport(&buf, "OkSuite", body, 201)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if failed {
 		t.Fatalf("passed suite should not fail: %s", buf.String())
 	}
 }
 
 func TestWriteSuiteReportHTTPErrorIsFailure(t *testing.T) {
 	var buf bytes.Buffer
-	if !writeSuiteReport(&buf, "Broken", []byte(`{"error":"nope"}`), 500) {
+	failed, err := writeSuiteReport(&buf, "Broken", []byte(`{"error":"nope"}`), 500)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !failed {
 		t.Fatal("HTTP 500 must fail")
 	}
 }
