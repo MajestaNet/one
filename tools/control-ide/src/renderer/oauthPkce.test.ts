@@ -10,6 +10,7 @@ import {
   exchangeOneAuthorizationCode,
   exchangeOneIdToken,
   parseOAuthCallbackUrl,
+  resolvePkceRedirectUri,
   statesMatch,
   storePendingPkce,
   takePendingPkce,
@@ -188,5 +189,24 @@ describe("oauthPkce", () => {
     await expect(exchangeOneIdToken("http://localhost:8080", "bad")).rejects.toThrow(
       /INVALID_TOKEN/,
     );
+  });
+
+  it("uses the loopback redirect URI from Electron when prepareOAuthRedirect succeeds", async () => {
+    (window as unknown as { one: unknown }).one = {
+      prepareOAuthRedirect: vi.fn().mockResolvedValue({
+        ok: true,
+        redirectUri: "http://127.0.0.1:5173/oauth/callback",
+      }),
+    };
+    try {
+      await expect(resolvePkceRedirectUri()).resolves.toBe("http://127.0.0.1:5173/oauth/callback");
+    } finally {
+      delete (window as { one?: unknown }).one;
+    }
+  });
+
+  it("falls back to one-control:// when prepareOAuthRedirect is missing", async () => {
+    delete (window as { one?: unknown }).one;
+    await expect(resolvePkceRedirectUri()).resolves.toBe(DEFAULT_REDIRECT_URI);
   });
 });

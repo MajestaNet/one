@@ -198,6 +198,27 @@ function readTokenGrant(json: Record<string, unknown>): OneTokenGrant | null {
 
 export const DEFAULT_REDIRECT_URI = "one-control://oauth/callback";
 
+export type PrepareOAuthRedirectResult = { ok: boolean; redirectUri?: string; error?: string };
+
+/**
+ * Prefer the main-process loopback listener (`http://127.0.0.1:5173/oauth/callback`) so the
+ * OS browser does not have to open `one-control://` (which launches a second Electron on
+ * unpackaged macOS). Falls back to the custom-protocol URI when IPC is missing or bind fails.
+ */
+export async function resolvePkceRedirectUri(): Promise<string> {
+  const prepare = window.one?.prepareOAuthRedirect;
+  if (typeof prepare !== "function") return DEFAULT_REDIRECT_URI;
+  try {
+    const res = (await prepare()) as PrepareOAuthRedirectResult | undefined;
+    if (res?.ok && typeof res.redirectUri === "string" && res.redirectUri) {
+      return res.redirectUri;
+    }
+  } catch {
+    /* fall through */
+  }
+  return DEFAULT_REDIRECT_URI;
+}
+
 const PKCE_PENDING_KEY = "one.pkce.pending";
 
 export type PendingPkce = {
