@@ -47,7 +47,7 @@ describe("AccountSettingsPanel", () => {
 
   it("changes password and lists devices from Client APIs", async () => {
     const user = userEvent.setup();
-    const fetch = vi.fn(async (path: string, init?: RequestInit) => {
+    const fetch = vi.fn(async (path: string, _init?: RequestInit) => {
       if (path === "/client/v1/devices") {
         return { devices: [{ deviceId: "dev-1", label: "Laptop" }] };
       }
