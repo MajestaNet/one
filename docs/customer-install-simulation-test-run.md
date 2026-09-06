@@ -253,11 +253,15 @@ ADR-014: only `one:automation`. JSONLogic on `Name_Required` is an **error** con
 Live path on **dev** (worker must be running):
 
 ```bash
-# Opportunity create → wait → query SiteVisit__c
+# Account (required for Opportunity) then Opportunity create → wait → query SiteVisit__c
+ACCOUNT_ID=$(curl -sS -X POST http://localhost:8082/client/v1/sobjects/Account \
+  -H "Authorization: Bearer $DEV_JWT" -H "One-API-Revision: 1" \
+  -H "Content-Type: application/json" \
+  -d '{"Name":"North Plant"}' | python3 -c "import json,sys; print(json.load(sys.stdin).get('Id',''))")
 curl -sS -X POST http://localhost:8082/client/v1/sobjects/Opportunity \
   -H "Authorization: Bearer $DEV_JWT" -H "One-API-Revision: 1" \
   -H "Content-Type: application/json" \
-  -d '{"Name":"North Plant","StageName":"Prospecting","CloseDate":"2099-12-31"}'
+  -d "{\"Name\":\"North Plant\",\"StageName\":\"Prospecting\",\"CloseDate\":\"2099-12-31\",\"AccountId\":\"$ACCOUNT_ID\"}"
 ```
 
 Client query body field is `object` (not `objectApiName`); create responses use `Id`.

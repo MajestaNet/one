@@ -305,6 +305,18 @@ func ValidateBundleArtifact(
 				Path:     fmt.Sprintf("fields.%s.%s", field.ObjectAPIName, field.APIName),
 			})
 		}
+		if target := lookupReferenceTarget(field); target != "" {
+			_, targetInDB := objectByName[target]
+			targetInBundle := bundleObjects[target]
+			if !targetInDB && !targetInBundle {
+				report.Issues = append(report.Issues, ValidationIssue{
+					Severity: "error",
+					Code:     "LOOKUP_TARGET_MISSING",
+					Message:  fmt.Sprintf("Field %s.%s lookup target %s is not on this install (enable the managed package that provides it, or include that object in the pack)", field.ObjectAPIName, field.APIName, target),
+					Path:     fmt.Sprintf("fields.%s.%s", field.ObjectAPIName, field.APIName),
+				})
+			}
+		}
 	}
 
 	// Validate rules.
@@ -527,6 +539,16 @@ func ValidateBundleArtifact(
 	report.Counts.Tests = len(artifact.Tests)
 
 	return report, nil
+}
+
+func lookupReferenceTarget(field SnapshotField) string {
+	if field.FieldType != metadata.FieldTypeLookup && field.FieldType != metadata.FieldTypeMasterDetail {
+		return ""
+	}
+	if field.ReferenceTo == nil {
+		return ""
+	}
+	return strings.TrimSpace(*field.ReferenceTo)
 }
 
 // knownAutomationAPINames is the union of this bundle's automations and install
