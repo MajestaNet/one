@@ -123,6 +123,21 @@ func (p *Pool) Migrate(ctx context.Context, migrationsDir string) error {
 	if err := p.ensureMigrationsTable(ctx); err != nil {
 		return err
 	}
+
+	lockConn, err := p.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire kernel migrate lock: %w", err)
+	}
+	defer lockConn.Release()
+	// Session lock (not xact): Migrate uses multiple transactions. Objid 2 is
+	// distinct from the first-admin election lock (objid 1) in system_admin.go.
+	if _, err := lockConn.Exec(ctx, `SELECT pg_advisory_lock(1297040206, 2)`); err != nil {
+		return fmt.Errorf("kernel migrate lock: %w", err)
+	}
+	defer func() {
+		_, _ = lockConn.Exec(context.Background(), `SELECT pg_advisory_unlock(1297040206, 2)`)
+	}()
+
 	applied, err := p.appliedMigrations(ctx)
 	if err != nil {
 		return err

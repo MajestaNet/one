@@ -31,6 +31,7 @@ import {
 } from "../operate/recordClient";
 import { pinRecordToHomeGraph } from "./graph/pinRecord";
 import { buildBulkPatchRequests, summarizeCompositeResponse } from "../operate/bulkComposite";
+import { filterOperateCatalog, isCapabilityRequiredError, isKernelUserObject, canMountOperateUserCollection } from "./operateUserAccess";
 
 type Row = Record<string, unknown>;
 
@@ -255,6 +256,10 @@ export function RunObjectHomePanel({
         list = normalizeGlobalObjects(raw);
         describeCache.setGlobal(installId, list);
       }
+      list = filterOperateCatalog(list, {
+        systemPermissions: bridge.session?.systemPermissions,
+        isAdmin: bridge.session?.isAdmin,
+      });
       setObjects(list);
       if (list.length && !list.some((o) => o.apiName === objectName)) {
         setObjectName(list[0].apiName);
@@ -270,6 +275,22 @@ export function RunObjectHomePanel({
   const loadList = useCallback(
     async (apiName: string, filters: QueryFilter[] = activeFilters) => {
       if (!connected || !apiName) return;
+      if (
+        isKernelUserObject(apiName) &&
+        !canMountOperateUserCollection({
+          systemPermissions: bridge.session?.systemPermissions,
+          isAdmin: bridge.session?.isAdmin,
+        })
+      ) {
+        setBusy(null);
+        setErr("403 CAPABILITY_REQUIRED: capability identity.users required");
+        setRows([]);
+        setDesc(null);
+        setSelectedId(null);
+        setRecord(null);
+        setFormMode(null);
+        return;
+      }
       setBusy("list");
       setErr("");
       setSelectedId(null);
@@ -517,6 +538,8 @@ export function RunObjectHomePanel({
 
   const selectedLabel = objects.find((o) => o.apiName === objectName)?.label || objectName;
   const embedded = variant === "embedded";
+  const capabilityMiss = isCapabilityRequiredError(err);
+  const canCreate = Boolean(objectName && desc && !capabilityMiss);
 
   return (
     <ToolSurface className={`run-object-home-panel${embedded ? " is-embedded" : ""}`} testId="run-object-home-panel">
@@ -526,7 +549,7 @@ export function RunObjectHomePanel({
         subtitle="Client-backed list → record (FLS + sharing enforced on the install)"
         actions={
           <>
-            <Button variant="primary" disabled={!objectName || !desc} onClick={startCreate}>
+            <Button variant="primary" disabled={!canCreate} onClick={startCreate}>
               New {selectedLabel || "record"}
             </Button>
             <Button
@@ -579,7 +602,7 @@ export function RunObjectHomePanel({
         )}
         {embedded ? (
           <div className="run-object-home-toolbar-actions">
-            <Button variant="primary" disabled={!objectName || !desc} onClick={startCreate}>
+            <Button variant="primary" disabled={!canCreate} onClick={startCreate}>
               New {selectedLabel || "record"}
             </Button>
             <Button
@@ -844,24 +867,28 @@ export function RunObjectHomePanel({
               <EmptyState
                 icon={<IconRecords size={24} />}
                 title={
-                  activeFilters.length > 0
-                    ? `No matching ${selectedLabel || "object"} records`
-                    : `No ${selectedLabel || "object"} records yet`
+                  capabilityMiss
+                    ? `${selectedLabel || "Object"} is not available`
+                    : activeFilters.length > 0
+                      ? `No matching ${selectedLabel || "object"} records`
+                      : `No ${selectedLabel || "object"} records yet`
                 }
                 description={
-                  activeFilters.length > 0
-                    ? "No available records match the active filters. Clear them or try different values."
-                    : bridge.session?.isAdmin
-                      ? "This install has no records for this object. Product setup installs object definitions without sample customer data."
-                      : "No records are available to your account. Create one, or ask an administrator to share existing records."
+                  capabilityMiss
+                    ? "Your account is missing the identity.users capability required to list Users. This is not a sharing empty-state."
+                    : activeFilters.length > 0
+                      ? "No available records match the active filters. Clear them or try different values."
+                      : bridge.session?.isAdmin
+                        ? "This install has no records for this object. Product setup installs object definitions without sample customer data."
+                        : "No records are available to your account. Create one, or ask an administrator to share existing records."
                 }
                 action={
-                  activeFilters.length > 0 ? (
+                  capabilityMiss ? undefined : activeFilters.length > 0 ? (
                     <Button variant="secondary" onClick={clearFilters}>
                       Clear filters
                     </Button>
                   ) : (
-                    <Button variant="primary" disabled={!objectName || !desc} onClick={startCreate}>
+                    <Button variant="primary" disabled={!canCreate} onClick={startCreate} data-testid="run-object-home-create">
                       Create {selectedLabel || "record"}
                     </Button>
                   )

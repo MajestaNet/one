@@ -232,9 +232,8 @@ func cmdOrgDeploy(args []string) {
 		fmt.Fprintf(os.Stderr, "pack applied; suite %s failed: %v\n", suite, suiteErr)
 		os.Exit(1)
 	}
-	fmt.Fprintf(os.Stderr, "suite %s: %s\n", suite, truncate(string(suiteBody), 200))
-	if suiteStatus >= 300 {
-		fmt.Fprintf(os.Stderr, "pack applied; suite %s failed: HTTP %d\n", suite, suiteStatus)
+	if writeSuiteReport(os.Stderr, suite, suiteBody, suiteStatus) {
+		fmt.Fprintf(os.Stderr, "pack applied; suite %s failed\n", suite)
 		os.Exit(1)
 	}
 }

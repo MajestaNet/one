@@ -289,7 +289,7 @@ func executeStep(
 		return executeAutomationUnitPass(ctx, step, deps)
 
 	case "automationContract":
-		return executeAutomationContract(ctx, step, deps)
+		return executeAutomationContract(ctx, step, deps, vars)
 
 	default:
 		return nil, newValidationErrorf("Unsupported step type: %s", step.Type)

@@ -13,6 +13,11 @@ export default async function run(ctx: AutomationContext): Promise<AutomationRes
     objectApiName: "Opportunity",
     data: { Name: String(ctx.trigger.data?.Name ?? ""), Amount: ctx.trigger.data?.Amount },
   });
+  await ctx.updateRecord({
+    objectApiName: "Opportunity",
+    recordId: id,
+    data: { Description: "created by automation" },
+  });
   ctx.log("created", id);
   return { ok: true };
 }

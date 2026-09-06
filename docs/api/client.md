@@ -90,8 +90,8 @@ All of these require `client` plus an identity / AuthZ capability. They do not r
 | `POST` | `/client/v1/principals/{id}/credentials/{credId}/revoke` | `identity.users` | Revoke a credential |
 | `POST` | `/client/v1/principals/{id}/password` | `identity.users` | Admin password set |
 | `GET` `POST` `PATCH` `DELETE` | `/client/v1/roles` · `/{apiName}` | `authz.manage` | Role definitions (family scopes) |
-| `POST` | `/client/v1/roles/assign` · `/unassign` | `authz.manage` | Bind Role to principal |
-| `POST` | `/client/v1/permissions/assign` · `/unassign` | `authz.manage` | Bind permission set to user |
+| `POST` | `/client/v1/roles/assign` · `/unassign` | `authz.manage` | Bind Role to principal. JSON: `userId` (principal id) + `roleApiName` |
+| `POST` | `/client/v1/permissions/assign` · `/unassign` | `authz.manage` | Bind permission set to principal. JSON: `userId` + `permissionSetApiName` (or `permissionSetId`) |
 | `GET` `POST` `PATCH` `DELETE` | `/client/v1/data-roles` · `/{apiName}` | `authz.manage` | Sharing data-role hierarchy |
 | `GET` `POST` `PATCH` `DELETE` | `/client/v1/directory-tags` · `/{apiName}` | `identity.users` | Directory tags (SCIM groups-as-tags) |
 | `POST` | `/client/v1/directory-tags/assign` · `/unassign` | `identity.users` | Tag membership |

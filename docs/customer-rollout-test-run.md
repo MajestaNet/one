@@ -81,7 +81,7 @@ docker compose -f deploy/docker-compose.multi-env.yml down -v
 
 Two empty databases on one Postgres 16, unique `INSTALL_ID` / JWT key / claim token / `PORT` per process. Export `DENO_PATH` (or put Deno 2.9.3 on `PATH`) in **both** API and worker shells — suites run Deno in the API; async automations run Deno in the worker.
 
-Start **prod API first**, wait `/readyz`, then its worker; repeat for test. API and worker both call `EnsureKernel`; concurrent first-boot migrate is [#28](https://github.com/MajestaNet/one/issues/28).
+Start **prod API and worker together** (kernel migrate is serialized); repeat for test.
 
 ```bash
 # example — two DBs on 127.0.0.1:5432

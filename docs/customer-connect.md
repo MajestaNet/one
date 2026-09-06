@@ -48,19 +48,36 @@ Remainders: Slack exchange and optional ALB mTLS — [BP-013](../backlog/BP-013-
 ## Path B — Service accounts
 
 1. Create a service principal: `POST /client/v1/principals` with `principalType=service` (`identity.manage`).
-2. Assign ≥1 Role (scopes) and permission sets as needed.
-3. Issue a credential: `POST /client/v1/principals/{id}/credentials`.
-4. Mint a JWT:
+2. Assign ≥1 Role (scopes) and permission sets as needed:
+
+```http
+POST /client/v1/roles/assign
+Content-Type: application/json
+
+{"userId":"<principal_id>","roleApiName":"StandardUser"}
+```
+
+```http
+POST /client/v1/permissions/assign
+Content-Type: application/json
+
+{"userId":"<principal_id>","permissionSetApiName":"Operate"}
+```
+
+`userId` is the principal id from step 1 (not a credential id). Unassign uses the same bodies on `/roles/unassign` and `/permissions/unassign`.
+3. Issue a credential: `POST /client/v1/principals/{id}/credentials`. The JSON returns `id` (credential UUID) and `clientSecret`. Keep the secret; it is shown once.
+4. Mint a JWT. `client_id` is the **principal id** (the user/service/agent UUID), not the credential UUID. `client_secret` is `clientSecret` from the credentials POST:
 
 ```http
 POST /auth/v1/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=client_credentials
-&client_id=<principal_credential_id>
-&client_secret=<secret>
+&client_id=<principal_id>
+&client_secret=<clientSecret>
 ```
 
+JSON is also accepted: `{"grant_type":"client_credentials","client_id":"<principal_id>","client_secret":"<clientSecret>"}`. Using the credential `id` as `client_id` returns `401 INVALID_CLIENT`.
 5. Call `/client/v1`, `/metadata/v1`, `/deploy/v1`, and/or `/ops/v1` with the bearer token.
 
 **Connected Apps** (`/client/v1/integrations`) wrap OAuth client configs for confidential or public clients (including a linked service principal). Bootstrap `API_KEYS` remain break-glass only.
@@ -143,7 +160,7 @@ Mint `<one_jwt_or_api_key>` via Path B (`client_credentials`) for an `agent` pri
       "cwd": "/path/to/tools/one-mcp",
       "env": {
         "ONE_BASE_URL": "https://<install>",
-        "ONE_CLIENT_ID": "<credential_id>",
+        "ONE_CLIENT_ID": "<principal_id>",
         "ONE_CLIENT_SECRET": "<secret>",
         "ONE_PROXY_PRODUCT_TOOLS": "1"
       }
