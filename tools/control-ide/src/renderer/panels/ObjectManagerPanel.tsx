@@ -77,6 +77,8 @@ const emptyFieldForm = {
   label: "",
   fieldType: "text",
   required: false,
+  uniqueField: false,
+  indexed: false,
   referenceTo: "",
   relationshipName: "",
   picklistValues: "",
@@ -103,7 +105,9 @@ export function ObjectManagerPanel({
   const [showNewField, setShowNewField] = useState(false);
   const [objForm, setObjForm] = useState({ apiName: "", label: "", pluralLabel: "" });
   const [fieldForm, setFieldForm] = useState({ ...emptyFieldForm });
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [fieldTypes, setFieldTypes] = useState<FieldTypeInfo[]>(FALLBACK_FIELD_TYPES);
+  const [projMsg, setProjMsg] = useState("");
 
   const loadObjects = useCallback(async () => {
     if (!bridge.session?.token) {
@@ -152,7 +156,9 @@ export function ObjectManagerPanel({
     setSelected(null);
     setDetail(null);
     setShowNewField(false);
+    setEditingField(null);
     setWarn("");
+    setProjMsg("");
   };
 
   useEffect(() => {
@@ -238,6 +244,8 @@ export function ObjectManagerPanel({
         label: fieldForm.label.trim(),
         fieldType: fieldForm.fieldType,
         required: fieldForm.required,
+        uniqueField: fieldForm.uniqueField,
+        indexed: fieldForm.indexed,
         ownership: "custom",
       };
       if (fieldForm.referenceTo.trim()) body.referenceTo = fieldForm.referenceTo.trim();
@@ -271,6 +279,7 @@ export function ObjectManagerPanel({
       });
       if (mirrorWarn) setWarn(mirrorWarn);
       setShowNewField(false);
+      setEditingField(null);
       setFieldForm({ ...emptyFieldForm });
       await loadDetail(selected);
     } catch (e) {
@@ -278,6 +287,118 @@ export function ObjectManagerPanel({
     } finally {
       setBusy(false);
     }
+  };
+
+  const saveField = async () => {
+    if (!selected || !editingField) return;
+    setErr("");
+    setWarn("");
+    setBusy(true);
+    try {
+      const patched = (await bridge.fetch(
+        `/metadata/v1/fields/${encodeURIComponent(selected)}/${encodeURIComponent(editingField)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            label: fieldForm.label.trim(),
+            required: fieldForm.required,
+            uniqueField: fieldForm.uniqueField,
+            indexed: fieldForm.indexed,
+          }),
+        },
+      )) as MetaField;
+      const mirrorWarn = await mirrorFieldYaml(bridge.session?.repoPath, {
+        objectApiName: selected,
+        apiName: patched.apiName || editingField,
+        label: patched.label || fieldForm.label,
+        fieldType: patched.fieldType || fieldForm.fieldType,
+        required: patched.required ?? fieldForm.required,
+        uniqueField: patched.uniqueField ?? fieldForm.uniqueField,
+        indexed: patched.indexed ?? fieldForm.indexed,
+        ownership: patched.ownership || "custom",
+      });
+      if (mirrorWarn) setWarn(mirrorWarn);
+      setShowNewField(false);
+      setEditingField(null);
+      setFieldForm({ ...emptyFieldForm });
+      await loadDetail(selected);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteField = async (apiName: string) => {
+    if (!selected) return;
+    if (!confirm(`Delete field ${apiName}? Managed fields return 403.`)) return;
+    setErr("");
+    setBusy(true);
+    try {
+      await bridge.fetch(
+        `/metadata/v1/fields/${encodeURIComponent(selected)}/${encodeURIComponent(apiName)}`,
+        { method: "DELETE" },
+      );
+      await loadDetail(selected);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteObject = async () => {
+    if (!detail?.apiName) return;
+    if (!confirm(`Delete object ${detail.apiName}? Managed objects return 403.`)) return;
+    setErr("");
+    setBusy(true);
+    try {
+      await bridge.fetch(`/metadata/v1/objects/${encodeURIComponent(detail.apiName)}`, { method: "DELETE" });
+      backToList();
+      await loadObjects();
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const rebuildProjections = async () => {
+    if (!detail?.apiName) return;
+    setErr("");
+    setProjMsg("");
+    setBusy(true);
+    try {
+      await bridge.fetch(`/metadata/v1/projections/${encodeURIComponent(detail.apiName)}/build`, {
+        method: "POST",
+      });
+      const listed = (await bridge.fetch(
+        `/metadata/v1/projections/${encodeURIComponent(detail.apiName)}`,
+      )) as { projections?: unknown[] };
+      const n = listed.projections?.length ?? 0;
+      setProjMsg(`Projection rebuild accepted (${n} projection${n === 1 ? "" : "s"}).`);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const beginEditField = (f: MetaField) => {
+    setEditingField(f.apiName);
+    setShowNewField(true);
+    setFieldForm({
+      ...emptyFieldForm,
+      apiName: f.apiName,
+      label: f.label || "",
+      fieldType: f.fieldType || "text",
+      required: Boolean(f.required),
+      uniqueField: Boolean(f.uniqueField),
+      indexed: Boolean(f.indexed),
+      referenceTo: f.referenceTo || "",
+      relationshipName: f.relationshipName || "",
+      picklistValues: (f.picklistValues ?? []).join(", "),
+    });
   };
 
   const selectedTypeInfo = fieldTypes.find((t) => t.apiName === fieldForm.fieldType);
@@ -387,11 +508,32 @@ export function ObjectManagerPanel({
               ) : (
                 <p className="muted">Managed objects are read-only here.</p>
               )}
+              <Button variant="ghost" busy={busy} onClick={() => void rebuildProjections()} data-testid="om-rebuild-projections">
+                Rebuild projections
+              </Button>
+              {detail.ownership === "custom" ? (
+                <Button variant="ghost" busy={busy} onClick={() => void deleteObject()} data-testid="om-delete-object">
+                  Delete object
+                </Button>
+              ) : null}
             </div>
+            {projMsg ? <p className="muted" data-testid="om-proj-msg">{projMsg}</p> : null}
           </div>
           <div className="row" style={{ marginTop: "1rem" }}>
             <h4>Fields</h4>
-            <Button variant="primary" onClick={() => setShowNewField((v) => !v)}>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setShowNewField((v) => {
+                  const next = !v;
+                  if (!next) {
+                    setEditingField(null);
+                    setFieldForm({ ...emptyFieldForm });
+                  }
+                  return next;
+                });
+              }}
+            >
               {showNewField ? "Cancel" : "New field"}
             </Button>
           </div>
@@ -403,6 +545,7 @@ export function ObjectManagerPanel({
                   value={fieldForm.apiName}
                   onChange={(e) => setFieldForm((f) => ({ ...f, apiName: e.target.value }))}
                   placeholder="Region__c"
+                  disabled={Boolean(editingField)}
                 />
               </label>
               <label>
@@ -484,6 +627,24 @@ export function ObjectManagerPanel({
                 />
                 Required
               </label>
+              <label className="row">
+                <input
+                  type="checkbox"
+                  checked={fieldForm.uniqueField}
+                  onChange={(e) => setFieldForm((f) => ({ ...f, uniqueField: e.target.checked }))}
+                  data-testid="om-field-unique"
+                />
+                Unique
+              </label>
+              <label className="row">
+                <input
+                  type="checkbox"
+                  checked={fieldForm.indexed}
+                  onChange={(e) => setFieldForm((f) => ({ ...f, indexed: e.target.checked }))}
+                  data-testid="om-field-indexed"
+                />
+                Indexed
+              </label>
               <Button
                 variant="primary"
                 busy={busy}
@@ -492,9 +653,10 @@ export function ObjectManagerPanel({
                   !fieldForm.label.trim() ||
                   (Boolean(selectedTypeInfo?.requiresReferenceTo) && !fieldForm.referenceTo.trim())
                 }
-                onClick={() => void createField()}
+                onClick={() => void (editingField ? saveField() : createField())}
+                data-testid={editingField ? "om-save-field" : "om-create-field"}
               >
-                Create field
+                {editingField ? "Save field" : "Create field"}
               </Button>
             </div>
           ) : null}
@@ -506,7 +668,10 @@ export function ObjectManagerPanel({
                   <th>Label</th>
                   <th>Type</th>
                   <th>Required</th>
+                  <th>Unique</th>
+                  <th>Indexed</th>
                   <th>Ownership</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -516,7 +681,21 @@ export function ObjectManagerPanel({
                     <td>{f.label}</td>
                     <td>{f.fieldType}</td>
                     <td>{f.required ? "yes" : ""}</td>
+                    <td>{f.uniqueField ? "yes" : ""}</td>
+                    <td>{f.indexed ? "yes" : ""}</td>
                     <td>{f.ownership || "—"}</td>
+                    <td>
+                      {f.ownership === "custom" ? (
+                        <>
+                          <Button variant="ghost" onClick={() => beginEditField(f)} data-testid={`om-edit-field-${f.apiName}`}>
+                            Edit
+                          </Button>
+                          <Button variant="ghost" onClick={() => void deleteField(f.apiName)} data-testid={`om-delete-field-${f.apiName}`}>
+                            Delete
+                          </Button>
+                        </>
+                      ) : null}
+                    </td>
                   </tr>
                 ))}
               </tbody>

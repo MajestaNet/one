@@ -11,6 +11,7 @@ import type { BoardHandoff } from "../operate/types";
 import { IconSend } from "../icons/Icons";
 import { Spinner } from "../ui";
 import { useOneAgentRuntime } from "../agents/oneRuntime";
+import { isParkedRunStatus } from "../agents/runs";
 import { StreamMessageBubble } from "./StreamMessageBubble";
 import { plainTextFromMessageContent } from "./messageFallback";
 import type { AgentChat, StreamMessage, TileId } from "./types";
@@ -151,7 +152,10 @@ export function AgentChatPane({
   });
 
   const pendingApproval = chat.messages.find(
-    (m: StreamMessage) => m.role === "approval" && m.runStatus === "awaiting_approval" && m.runId,
+    (m: StreamMessage) =>
+      m.role === "approval" &&
+      Boolean(m.runId) &&
+      (isParkedRunStatus(m.runStatus) || Boolean(m.pendingToolApply)),
   );
 
   const handleDrop = useCallback(

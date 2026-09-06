@@ -34,7 +34,7 @@ const harnessCatalog = {
       version: "1",
       label: "Operate query",
       job: "Query / ask",
-      toolFloor: ["sobjects.read", "query"],
+      toolFloor: ["sobjects.read", "query", "search", "actions.invoke"],
       requireApprovalDefault: true,
     },
   ],
@@ -289,5 +289,24 @@ describe("AgentsPanel", () => {
       <AgentsPanel bridge={{ session: null, setSession: vi.fn(), fetch: vi.fn() }} />,
     );
     expect(screen.getByText(/Connect an environment/i)).toBeTruthy();
+  });
+
+  it("offers harness tool-floor tokens including search and actions.invoke", async () => {
+    const user = userEvent.setup();
+    const fetch = vi.fn().mockImplementation(async (path: string) => {
+      if (path === "/metadata/v1/agents/harnesses") return harnessCatalog;
+      return { playbooks: [] };
+    });
+    render(<AgentsPanel bridge={bridge(fetch)} />);
+    await screen.findByTestId("agents-list");
+    await user.click(screen.getByTestId("agents-new"));
+    await user.click(screen.getByTestId("agents-section-operate"));
+    await user.click(screen.getByTestId("agents-wizard-next"));
+    await user.click(screen.getByTestId("agents-wizard-next"));
+    await user.type(screen.getByTestId("agents-wizard-label"), "Query assistant");
+    await user.click(screen.getByTestId("agents-wizard-next"));
+    expect(await screen.findByTestId("agents-wizard-tool-options")).toBeTruthy();
+    expect(screen.getByTestId("agents-wizard-tool-search")).toBeTruthy();
+    expect(screen.getByTestId("agents-wizard-tool-actions.invoke")).toBeTruthy();
   });
 });

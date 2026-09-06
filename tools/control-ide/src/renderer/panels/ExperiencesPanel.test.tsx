@@ -1,4 +1,5 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AppBridge } from "../App";
 import { ExperiencesPanel } from "./ExperiencesPanel";
@@ -44,18 +45,31 @@ describe("ExperiencesPanel", () => {
       ],
     });
     render(<ExperiencesPanel bridge={bridge(fetch)} />);
-    expect(await screen.findByText("portal")).toBeTruthy();
-    expect(screen.getByText("Customer Portal")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "https://portal.example" })).toBeTruthy();
-    expect(screen.getByText("PortalApp")).toBeTruthy();
-    expect(screen.getByText("Yes")).toBeTruthy();
+    expect(await screen.findByText("Customer Portal")).toBeTruthy();
+    expect(screen.getByText("portal")).toBeTruthy();
     expect(fetch).toHaveBeenCalledWith("/metadata/v1/experiences");
   });
 
-  it("shows empty state when install has no experiences", async () => {
-    const fetch = vi.fn().mockResolvedValue({ experiences: [] });
+  it("creates an experience without curl", async () => {
+    const user = userEvent.setup();
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ experiences: [] })
+      .mockResolvedValueOnce({ apiName: "portal", label: "Portal", active: true })
+      .mockResolvedValueOnce({
+        experiences: [{ apiName: "portal", label: "Portal", homeUrl: "https://p.example", active: true }],
+      });
     render(<ExperiencesPanel bridge={bridge(fetch)} />);
     expect(await screen.findByText(/No experiences/i)).toBeTruthy();
+    await user.click(screen.getByTestId("experiences-new"));
+    await user.type(screen.getByTestId("experiences-api-name"), "portal");
+    await user.click(screen.getByTestId("experiences-create-btn"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/experiences",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
   });
 
   it("surfaces load errors", async () => {

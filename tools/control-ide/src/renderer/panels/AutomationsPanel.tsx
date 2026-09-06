@@ -3,6 +3,7 @@ import * as monaco from "monaco-editor";
 import type { AppBridge } from "../App";
 import { useTheme } from "../ThemeContext";
 import { monacoThemeFor } from "../theme";
+import { invokeAutomationRun } from "../run/automations";
 import { Button, EmptyState, PanelHeader, StatusBadge, ToolSurface } from "../ui";
 import { IconMetadata } from "../icons/Icons";
 
@@ -76,6 +77,7 @@ export function AutomationsPanel({
   });
   const [editorRel, setEditorRel] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [runMsg, setRunMsg] = useState("");
   const host = useRef<HTMLDivElement>(null);
   const editor = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
@@ -252,6 +254,39 @@ export function AutomationsPanel({
     }
   };
 
+  const selectedRow = list.find((a) => a.apiName === selected) ?? null;
+
+  const toggleActive = async (apiName: string, active: boolean) => {
+    setErr("");
+    setBusy(true);
+    try {
+      await bridge.fetch(`/metadata/v1/automations/${encodeURIComponent(apiName)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ active }),
+      });
+      await loadList();
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runNow = async (apiName: string) => {
+    setErr("");
+    setRunMsg("");
+    setBusy(true);
+    try {
+      const run = await invokeAutomationRun(bridge.fetch, apiName);
+      setRunMsg(run.lastError ? `${run.status}: ${run.lastError}` : `${run.status}${run.id ? ` · ${run.id}` : ""}`);
+      if (run.status === "failed") setErr(run.lastError || "Automation run failed");
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (!bridge.session?.token) {
     return (
       <ToolSurface testId="automations-panel">
@@ -385,19 +420,36 @@ export function AutomationsPanel({
               >
                 Open YAML
               </Button>
-              {list.find((a) => a.apiName === selected)?.entryFile ? (
+              {selectedRow?.entryFile ? (
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    const ef = list.find((a) => a.apiName === selected)?.entryFile;
-                    if (ef) void openLocalFile(ef);
+                    if (selectedRow.entryFile) void openLocalFile(selectedRow.entryFile);
                   }}
                 >
                   Open entry TS
                 </Button>
               ) : null}
+              <label className="row">
+                <input
+                  type="checkbox"
+                  checked={selectedRow?.active !== false}
+                  onChange={(e) => void toggleActive(selected, e.target.checked)}
+                  data-testid="automations-active"
+                />
+                Active
+              </label>
+              <Button
+                variant="primary"
+                busy={busy}
+                onClick={() => void runNow(selected)}
+                data-testid="automations-run"
+              >
+                Run now
+              </Button>
             </div>
           ) : null}
+          {runMsg ? <p className="muted" data-testid="automations-run-status">{runMsg}</p> : null}
         </div>
       </div>
     </ToolSurface>

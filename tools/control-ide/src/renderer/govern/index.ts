@@ -63,3 +63,14 @@ export {
   provisionCloudEnvironment,
   DO_CONSOLE_APPS,
 } from "./cloud";
+
+export type { SharingSettings, ObjectSharing, SharingRule } from "./sharing";
+export {
+  getSharingSettings,
+  enableSharing,
+  listSharingObjects,
+  patchSharingObject,
+  listSharingRules,
+  createSharingRule,
+  deleteSharingRule,
+} from "./sharing";

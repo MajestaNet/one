@@ -230,4 +230,96 @@ describe("ObjectManagerPanel", () => {
       ),
     );
   });
+
+  it("creates unique/indexed fields, patches, deletes, and rebuilds projections", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const fetch = vi.fn(async (path: string, init?: RequestInit) => {
+      if (path === "/metadata/v1/objects" && !init?.method) {
+        return { objects: [{ apiName: "Order__c", label: "Order", ownership: "custom" }] };
+      }
+      if (path === "/metadata/v1/field-types") {
+        return { fieldTypes: [{ apiName: "text", label: "Text" }] };
+      }
+      if (path === "/metadata/v1/objects/Order__c" && init?.method === "DELETE") {
+        return { ok: true };
+      }
+      if (path === "/metadata/v1/objects/Order__c") {
+        return {
+          apiName: "Order__c",
+          label: "Order",
+          ownership: "custom",
+          fields: [
+            { apiName: "Region__c", label: "Region", fieldType: "text", ownership: "custom", uniqueField: true, indexed: true },
+          ],
+        };
+      }
+      if (path === "/metadata/v1/fields" && init?.method === "POST") {
+        return { apiName: "Region__c", label: "Region", fieldType: "text", ownership: "custom", uniqueField: true, indexed: true };
+      }
+      if (path === "/metadata/v1/fields/Order__c/Region__c" && init?.method === "PATCH") {
+        return { apiName: "Region__c", label: "Region code", fieldType: "text", ownership: "custom" };
+      }
+      if (path === "/metadata/v1/fields/Order__c/Region__c" && init?.method === "DELETE") {
+        return { ok: true };
+      }
+      if (path === "/metadata/v1/projections/Order__c/build") {
+        return { job: { id: "j1", status: "queued" } };
+      }
+      if (path === "/metadata/v1/projections/Order__c") {
+        return { projections: [{ name: "Order__c_name" }] };
+      }
+      return {};
+    });
+    render(<ObjectManagerPanel bridge={bridge(fetch)} />);
+    await user.click(await screen.findByRole("button", { name: /Open Order/i }));
+    await screen.findByTestId("om-field-table");
+    await user.click(screen.getByRole("button", { name: /New field/i }));
+    const form = await screen.findByTestId("om-new-field");
+    const inputs = form.querySelectorAll("input");
+    await user.type(inputs[0], "Region__c");
+    await user.type(inputs[1], "Region");
+    await user.click(screen.getByTestId("om-field-unique"));
+    await user.click(screen.getByTestId("om-field-indexed"));
+    await user.click(screen.getByTestId("om-create-field"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/fields",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringMatching(/"uniqueField":true/),
+        }),
+      ),
+    );
+    await user.click(await screen.findByTestId("om-edit-field-Region__c"));
+    await user.click(screen.getByTestId("om-save-field"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/fields/Order__c/Region__c",
+        expect.objectContaining({ method: "PATCH" }),
+      ),
+    );
+    await user.click(screen.getByTestId("om-delete-field-Region__c"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/fields/Order__c/Region__c",
+        expect.objectContaining({ method: "DELETE" }),
+      ),
+    );
+    await user.click(screen.getByTestId("om-rebuild-projections"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/projections/Order__c/build",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    expect(await screen.findByTestId("om-proj-msg")).toBeTruthy();
+    await user.click(screen.getByTestId("om-delete-object"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/objects/Order__c",
+        expect.objectContaining({ method: "DELETE" }),
+      ),
+    );
+  });
 });

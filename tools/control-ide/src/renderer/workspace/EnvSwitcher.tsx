@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "../session";
 import { envDisplayName } from "../session";
+import { envKindFromLabels, envKindLabel } from "./envKind";
 
 export function EnvSwitcher({
   session,
@@ -54,6 +55,14 @@ export function EnvSwitcher({
         title={`${envDisplayName(active)} · ${active.baseUrl}`}
       >
         <span className="env-switcher-role">{envDisplayName(active)}</span>
+        {(() => {
+          const kind = envKindFromLabels(active.installRole, active.label);
+          return kind ? (
+            <span className={`env-kind-badge env-kind-${kind}`} data-testid="env-kind-badge">
+              {envKindLabel(kind)}
+            </span>
+          ) : null;
+        })()}
         {active.compatStatus && active.compatStatus !== "ok" ? (
           <span className="env-switcher-compat muted" data-testid="env-compat-badge">
             compat:{active.compatStatus}
@@ -86,7 +95,15 @@ export function EnvSwitcher({
                     setOpen(false);
                   }}
                 >
-                  <span className="env-switcher-item-role">{envDisplayName(env)}</span>
+                  <span className="env-switcher-item-role">
+                    {envDisplayName(env)}
+                    {(() => {
+                      const kind = envKindFromLabels(env.installRole, env.label);
+                      return kind ? (
+                        <span className={`env-kind-badge env-kind-${kind}`}>{envKindLabel(kind)}</span>
+                      ) : null;
+                    })()}
+                  </span>
                   <span className="env-switcher-item-meta muted">
                     {env.installId}
                     {!connected ? " · needs connect" : ""}
