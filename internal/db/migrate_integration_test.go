@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -204,5 +205,42 @@ SELECT api_key_name, email, display_name FROM users WHERE id=$1::uuid`, userID,
 	}
 	if strings.Contains(email, secret) || strings.Contains(display, secret) {
 		t.Fatalf("legacy secret remains in metadata: email=%q display=%q", email, display)
+	}
+}
+
+func TestEnsureKernelConcurrent(t *testing.T) {
+	url := os.Getenv("DATABASE_URL")
+	if url == "" {
+		t.Skip("DATABASE_URL not set; skipping integration test")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	const n = 2
+	pools := make([]*db.Pool, n)
+	for i := 0; i < n; i++ {
+		pool, err := db.Connect(ctx, url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer pool.Close()
+		pools[i] = pool
+	}
+
+	errs := make([]error, n)
+	var wg sync.WaitGroup
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		i := i
+		go func() {
+			defer wg.Done()
+			errs[i] = pools[i].EnsureKernel(ctx)
+		}()
+	}
+	wg.Wait()
+	for i, err := range errs {
+		if err != nil {
+			t.Errorf("EnsureKernel[%d]: %v", i, err)
+		}
 	}
 }

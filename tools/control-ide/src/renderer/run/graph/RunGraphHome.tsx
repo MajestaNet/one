@@ -51,6 +51,7 @@ import type { RunGraphNode } from "./types";
 import { publishRunGraphSubgraph } from "./publishSubgraph";
 import { tidyPositions } from "./layoutBands";
 import { mergeAccessibleObjectModel } from "./objectModel";
+import { filterOperateCatalog, pruneInaccessibleUserCollections } from "../operateUserAccess";
 import { orphanDerivedRecordIds, tidyAttentionDocument } from "./hygiene";
 import { runGraphEdgeLabel } from "./labels";
 
@@ -344,7 +345,10 @@ export function RunGraphHome({
         const list = cached ?? normalizeGlobalObjects(await fetchFn("/client/v1/describe"));
         if (!cached) describeCache.setGlobal(installId, list);
         if (!cancelled) {
-          setCatalog(list);
+          setCatalog(filterOperateCatalog(list, {
+            systemPermissions: bridge?.session?.systemPermissions,
+            isAdmin: bridge?.session?.isAdmin,
+          }));
         }
       } catch {
         if (!cancelled) setCatalog([]);
@@ -353,7 +357,7 @@ export function RunGraphHome({
     return () => {
       cancelled = true;
     };
-  }, [bridge?.session?.activeInstallId, fetchFn, graphLoaded, refreshKey]);
+  }, [bridge?.session?.activeInstallId, bridge?.session?.isAdmin, bridge?.session?.systemPermissions, fetchFn, graphLoaded, refreshKey]);
 
   const queueGraphWrite = useCallback((operation: () => Promise<void>) => {
     const queued = graphWriteQueue.current.then(operation, operation);
@@ -384,12 +388,17 @@ export function RunGraphHome({
       }));
       if (cancelled) return;
       const current = await getHomeRunGraph(fetchFn);
+      const sessionCaps = {
+        systemPermissions: bridge?.session?.systemPermissions,
+        isAdmin: bridge?.session?.isAdmin,
+      };
+      const pruned = pruneInaccessibleUserCollections(current.document, sessionCaps);
       const merged = mergeAccessibleObjectModel(
-        current.document,
+        pruned,
         catalog,
         new Map(describeEntries.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))),
       );
-      const saved = merged.changed
+      const saved = merged.changed || pruned !== current.document
         ? await putRunGraph(fetchFn, "home", merged.document, current.revision)
         : current;
       if (cancelled) return;

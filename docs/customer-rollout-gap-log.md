@@ -43,8 +43,8 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 
 | Beat | Class | GitHub issue | Status | Fix PR |
 |---|---|---|---|---|
-| G-MIGRATE-RACE | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | **open** (retested S-A-MIGRATE-RACE 2026-09-05; comment in [docs/campaign-2-findings/issue-28-comment.md](campaign-2-findings/issue-28-comment.md) — `gh issue comment` denied) | |
-| G-CLI-SUITE-TRUNC | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | **open** (retested S-C-CLI-TRUNC 2026-09-05; comment in [docs/campaign-2-findings/issue-29-comment.md](campaign-2-findings/issue-29-comment.md) — `gh issue comment` denied) | |
+| G-MIGRATE-RACE | product-bug | [#28](https://github.com/MajestaNet/one/issues/28) | **closed** | this PR |
+| G-CLI-SUITE-TRUNC | product-bug | [#29](https://github.com/MajestaNet/one/issues/29) | **closed** | this PR |
 | G-ENV-EXAMPLE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
 | G-DOCS-PROMOTE | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
 | G-JSONLOGIC-POLARITY | docs-drift | none (fixed in campaign PR) | closed | [#27](https://github.com/MajestaNet/one/pull/27) |
@@ -59,14 +59,14 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 | G-NO-SCRATCH-ORG | known-remainder | none | n/a — [BP-048](../backlog/BP-048-one-cli.md) Wave D | |
 | G-CROSS-INSTALL-SSO | by-design | none | n/a — [BP-037](../backlog/BP-037-install-claim-customer-sso.md) | |
 | G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | campaign 1 not-run; 2026-09-06 S-E-HONESTY clicked Validate vs org → honest Failed (repo path required); no lying green | |
-| G-IDE-USERDATA | missing-lab-packaging | none | campaign 1: Electron not launched; dual-IDE now blocked by [#39](https://github.com/MajestaNet/one/issues/39) | |
+| G-IDE-USERDATA | missing-lab-packaging | none | campaign 1: Electron not launched; dual-IDE lock scoped by `--user-data-dir` in this PR ([#39](https://github.com/MajestaNet/one/issues/39)) | |
 | G-COMPOSE-SINGLE | by-design | none | everyday Compose is one `dev` install; overlay is the two-install lab | |
-| S-B-LOOKUP-FAIL-WITHOUT-PKG | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | **open** | |
-| S-B-AUTHZ-STUBS | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | **open** | |
-| S-C-SUITE | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | **open** (retested S-D-DEPLOY-TEST / S-D-DEPLOY-PROD 2026-09-05; same AccountId contract fail; do not re-file) | |
-| S-C-NAMED | docs-drift | [#38](https://github.com/MajestaNet/one/issues/38) | **open** | |
-| S-E-SINGLE-INSTANCE | product-bug | [#39](https://github.com/MajestaNet/one/issues/39) | **open** | |
-| S-E-PERSONA-CASEY-USER | product-bug | [#40](https://github.com/MajestaNet/one/issues/40) | **open** | |
+| S-B-LOOKUP-FAIL-WITHOUT-PKG | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | **closed** | this PR |
+| S-B-AUTHZ-STUBS | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | **closed** | this PR |
+| S-C-SUITE | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | **closed** | this PR |
+| S-C-NAMED | docs-drift | [#38](https://github.com/MajestaNet/one/issues/38) | **closed** | this PR |
+| S-E-SINGLE-INSTANCE | product-bug | [#39](https://github.com/MajestaNet/one/issues/39) | **closed** | this PR |
+| S-E-PERSONA-CASEY-USER | product-bug | [#40](https://github.com/MajestaNet/one/issues/40) | **closed** | this PR |
 
 **Agent prompt (open rows):** open the GitHub issue, follow its **Fix-it** section, stay in the named packages, PR `Fixes #N`, then update this table.
 
