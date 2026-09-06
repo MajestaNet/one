@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppBridge } from "../App";
-import { createInferenceTestChat } from "../agents/runs";
+import { createInferenceTestChat, isParkedRunStatus } from "../agents/runs";
 import { EmptyState, PanelHeader, ToolSurface } from "../ui";
 import { IconSettings } from "../icons/Icons";
 
@@ -139,7 +139,7 @@ export function InferencePanel({ bridge }: { bridge: AppBridge }) {
     setTestReply("");
     try {
       let streamed = "";
-      await createInferenceTestChat(session.baseUrl, session.token, testPrompt, {
+      const run = await createInferenceTestChat(session.baseUrl, session.token, testPrompt, {
         onToken: ({ delta }) => {
           if (!delta) return;
           streamed += delta;
@@ -152,6 +152,12 @@ export function InferencePanel({ bridge }: { bridge: AppBridge }) {
           }
         },
       }, ac.signal);
+      if (isParkedRunStatus(run.status)) {
+        setTestErr(
+          `Test chat parked (${run.status}). This probe is generation-only (approved: true) and does not execute tools.`,
+        );
+        return;
+      }
       if (!streamed) {
         setTestReply("(model returned no tokens — check the provider URL and model id)");
       }

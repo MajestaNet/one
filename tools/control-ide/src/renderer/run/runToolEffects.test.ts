@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pendingToolActionsFromRun } from "./runToolEffects";
+import { localChromeActionsFromRun, pendingToolActionsFromRun } from "./runToolEffects";
 
 describe("pendingToolActionsFromRun", () => {
   it("lists graph and tool calls, not the playbook allowlist", () => {
@@ -49,5 +49,18 @@ describe("pendingToolActionsFromRun", () => {
         output: { summary: "Here is a pipeline tool." },
       }),
     ).toEqual(["tool.create"]);
+  });
+
+  it("excludes hosted MCP writes from local chrome apply", () => {
+    expect(
+      localChromeActionsFromRun({
+        id: "r5",
+        status: "completed",
+        output: {
+          graphCalls: [{ tool: "graph.pin" }],
+          toolCalls: [{ tool: "create_record" }, { tool: "tool.update" }],
+        },
+      }),
+    ).toEqual(["graph.pin", "tool.update"]);
   });
 });

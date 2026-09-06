@@ -44,6 +44,7 @@ import { Button, EmptyState, KeyValueList, PanelHeader, StatusBadge } from "../u
 import { IconConnect } from "../icons/Icons";
 import { envDisplayName } from "../session";
 import { revokeRefreshToken } from "../refreshSession";
+import { listDevices, revokeDevice, type DeviceRow } from "../account/self";
 
 type MePayload = Record<string, unknown>;
 
@@ -138,6 +139,8 @@ export function ConnectSection({
   const [compatBanner, setCompatBanner] = useState("");
   const [apiRevisionPin, setApiRevisionPin] = useState<number | undefined>(undefined);
   const [pinRange, setPinRange] = useState<{ minPin: number; maxPin: number } | null>(null);
+  const [devices, setDevices] = useState<DeviceRow[]>([]);
+  const [devicesErr, setDevicesErr] = useState("");
 
   const connected = Boolean(bridge.session?.baseUrl && bridge.session?.token);
   const knownEnvs = bridge.session?.environments ?? [];
@@ -215,6 +218,29 @@ export function ConnectSection({
       onFocusConnectConsumed?.();
     }
   }, [focusConnect, onFocusConnectConsumed]);
+
+  const loadDevices = async () => {
+    if (!connected) {
+      setDevices([]);
+      setDevicesErr("");
+      return;
+    }
+    try {
+      const rows = await listDevices((path, init) =>
+        bridge.fetch ? bridge.fetch(path, init) : Promise.reject(new Error("fetch unavailable")),
+      );
+      setDevices(rows);
+      setDevicesErr("");
+    } catch (e) {
+      setDevices([]);
+      setDevicesErr(String(e));
+    }
+  };
+
+  useEffect(() => {
+    void loadDevices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when session flips
+  }, [connected, bridge.session?.token]);
 
   const resolveCompatHandshake = async (
     url: string,
@@ -616,6 +642,7 @@ export function ConnectSection({
       } else {
         await bridge.setSession({ ...base, deviceId: id });
       }
+      await loadDevices();
     } catch (e) {
       setErr(formatError(e));
     } finally {
@@ -1006,6 +1033,43 @@ export function ConnectSection({
               <pre className="log">{JSON.stringify(me, null, 2)}</pre>
             </details>
           ) : null}
+          <div data-testid="connect-devices">
+            <p className="muted">Enrolled devices (GET /client/v1/devices)</p>
+            {devicesErr ? <p className="err">{devicesErr}</p> : null}
+            {devices.length === 0 && !devicesErr ? (
+              <p className="muted">No devices enrolled.</p>
+            ) : (
+              <ul className="govern-list">
+                {devices.map((d) => (
+                  <li key={d.deviceId} className="row" style={{ justifyContent: "space-between" }}>
+                    <span>
+                      {d.label || d.deviceId}
+                      {d.revokedAt ? <span className="muted"> · revoked</span> : null}
+                    </span>
+                    {!d.revokedAt ? (
+                      <Button
+                        variant="ghost"
+                        busy={busy}
+                        onClick={() => {
+                          void (async () => {
+                            try {
+                              await revokeDevice(bridge.fetch, d.deviceId);
+                              await loadDevices();
+                            } catch (e) {
+                              setDevicesErr(String(e));
+                            }
+                          })();
+                        }}
+                        data-testid={`connect-device-revoke-${d.deviceId}`}
+                      >
+                        Revoke
+                      </Button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
     </section>

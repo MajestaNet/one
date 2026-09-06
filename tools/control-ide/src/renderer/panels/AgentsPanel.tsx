@@ -33,6 +33,17 @@ export type AgentPlaybook = {
 
 const TOOL_OPTIONS = ["sobjects.read", "sobjects.write", "query"];
 
+export function toolOptionsFromHarnesses(harnesses: AgentHarness[]): string[] {
+  const set = new Set<string>(TOOL_OPTIONS);
+  for (const h of harnesses) {
+    for (const token of h.toolFloor ?? []) {
+      const t = token.trim();
+      if (t) set.add(t);
+    }
+  }
+  return [...set].sort();
+}
+
 type WizardStep = "section" | "harness" | "identity" | "behavior" | "review";
 
 const WIZARD_STEPS: WizardStep[] = ["section", "harness", "identity", "behavior", "review"];
@@ -165,6 +176,8 @@ export function AgentsPanel({
     if (!form.primarySection) return null;
     return harnesses.find((h) => h.section === form.primarySection) ?? null;
   }, [form.primarySection, harnesses]);
+
+  const toolOptions = useMemo(() => toolOptionsFromHarnesses(harnesses), [harnesses]);
 
   const stepIndex = WIZARD_STEPS.indexOf(wizardStep);
 
@@ -480,7 +493,7 @@ export function AgentsPanel({
               />
             </label>
             <label>
-              Allowed tools (comma-separated)
+              Allowed tools (comma-separated; harness floor plus extras)
               <input
                 value={(detail.allowedTools ?? []).join(", ")}
                 onChange={(e) =>
@@ -493,9 +506,28 @@ export function AgentsPanel({
                   })
                 }
                 disabled={detail.ownership !== "custom"}
-                placeholder={TOOL_OPTIONS.join(", ")}
+                placeholder={toolOptions.join(", ")}
               />
             </label>
+            <div className="ide-cap-list" data-testid="agents-tool-options">
+              {toolOptions.map((token) => (
+                <label key={token} className="ide-cap-item">
+                  <input
+                    type="checkbox"
+                    checked={(detail.allowedTools ?? []).includes(token)}
+                    disabled={detail.ownership !== "custom"}
+                    onChange={() => {
+                      const cur = new Set(detail.allowedTools ?? []);
+                      if (cur.has(token)) cur.delete(token);
+                      else cur.add(token);
+                      setDetail({ ...detail, allowedTools: [...cur] });
+                    }}
+                    data-testid={`agents-tool-${token}`}
+                  />
+                  <span>{token}</span>
+                </label>
+              ))}
+            </div>
             <label className="row">
               <input
                 type="checkbox"
@@ -721,6 +753,36 @@ export function AgentsPanel({
                       onChange={(e) => setForm((f) => ({ ...f, allowedTools: e.target.value }))}
                     />
                   </label>
+                  <div className="ide-cap-list" data-testid="agents-wizard-tool-options">
+                    {toolOptions.map((token) => {
+                      const selected = form.allowedTools
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean)
+                        .includes(token);
+                      return (
+                        <label key={token} className="ide-cap-item">
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => {
+                              const cur = new Set(
+                                form.allowedTools
+                                  .split(",")
+                                  .map((t) => t.trim())
+                                  .filter(Boolean),
+                              );
+                              if (cur.has(token)) cur.delete(token);
+                              else cur.add(token);
+                              setForm((f) => ({ ...f, allowedTools: [...cur].join(", ") }));
+                            }}
+                            data-testid={`agents-wizard-tool-${token}`}
+                          />
+                          <span>{token}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                   <label className="row">
                     <input
                       type="checkbox"

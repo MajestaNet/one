@@ -179,6 +179,23 @@ function mutationLabel(raw: unknown, index: number): string {
   return `${objectName} ${op}`.trim() || `mutation ${index + 1}`;
 }
 
+/** Hosted-loop writes — never apply locally via pendingToolApply. */
+const HOSTED_WRITE_TOOLS = new Set([
+  "create_record",
+  "update_record",
+  "delete_record",
+  "invoke_action",
+  "invoke_skill",
+  "sobjects.write",
+  "actions.invoke",
+  "skills.invoke",
+]);
+
+export function isLocalChromeToolName(name: string): boolean {
+  if (HOSTED_WRITE_TOOLS.has(name)) return false;
+  return name.startsWith("graph.") || name.startsWith("tool.");
+}
+
 /**
  * Tool / graph / record actions the IDE would apply from this run.
  * Does not include playbook allowlist `toolsPlanned`.
@@ -232,6 +249,14 @@ export function pendingToolActionsFromRun(
   }
 
   return names;
+}
+
+/** Graph.* / tool.* chrome only — hosted MCP writes stay on the install loop. */
+export function localChromeActionsFromRun(
+  run: AgentRun,
+  opts: { activeToolId?: string; activeToolBindings?: ToolQueryBinding[] } = {},
+): string[] {
+  return pendingToolActionsFromRun(run, opts).filter(isLocalChromeToolName);
 }
 
 function parseToolCallsFromOutput(output: Record<string, unknown> | null): unknown[] {

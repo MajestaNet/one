@@ -145,6 +145,24 @@ describe("HostingPanel", () => {
     expect(fetch).toHaveBeenCalledWith("/deploy/v1/environment");
   });
 
+  it("reads ops available upgrades and fail-closes on 503", async () => {
+    const fetch = vi.fn(async (path: string) => {
+      if (path === "/deploy/v1/environment") return { customerId: "acme", installId: "dev" };
+      if (path === "/ops/v1/upgrades/available") {
+        throw new Error("503 UNAVAILABLE: ops engine not configured");
+      }
+      return {};
+    });
+    render(
+      <HostingPanel
+        bridge={bridge(fetch, { baseUrl: "http://api", token: "jwt", scopes: ["ops"] })}
+      />,
+    );
+    expect(await screen.findByTestId("hosting-upgrades-empty")).toBeTruthy();
+    expect(screen.getByText(/not configured on this install/i)).toBeTruthy();
+    expect(fetch).toHaveBeenCalledWith("/ops/v1/upgrades/available");
+  });
+
   it("shows hosting scale actions when cloud capability is on", async () => {
     const user = userEvent.setup();
     const fetch = vi.fn(async (path: string, init?: RequestInit) => {
@@ -778,6 +796,55 @@ describe("PermissionsPanel", () => {
   it("prompts to connect when disconnected", () => {
     render(<PermissionsPanel bridge={bridge(undefined, null)} />);
     expect(screen.getByText(/Connect first/i)).toBeTruthy();
+  });
+
+  it("loads describe fields into the FLS matrix and dual-writes fieldPermissions", async () => {
+    const user = userEvent.setup();
+    const fetch = vi.fn(async (path: string, init?: RequestInit) => {
+      if (path === "/client/v1/roles") return { roles: [] };
+      if (path === "/metadata/v1/objects") {
+        return { objects: [{ apiName: "Account", ownership: "managed" }] };
+      }
+      if (path === "/metadata/v1/objects/Account") {
+        return { apiName: "Account", fields: [{ apiName: "Name" }, { apiName: "Industry" }] };
+      }
+      if (path === "/metadata/v1/permissions/sets" || path.startsWith("/metadata/v1/permissions/sets?")) {
+        if (init?.method === "POST") {
+          return { apiName: "FlsDemo", label: "FLS demo" };
+        }
+        return { permissionSets: [] };
+      }
+      return {};
+    });
+    render(<PermissionsPanel bridge={bridge(fetch)} />);
+    await user.click(await screen.findByRole("tab", { name: /Permission sets/i }));
+    await user.click(screen.getByRole("button", { name: /New permission set/i }));
+    await user.type(screen.getByTestId("ps-api-name"), "FlsDemo");
+    await user.type(screen.getByTestId("ps-label"), "FLS demo");
+    await user.click(screen.getByTestId("ps-wizard-next")); // caps
+    await user.click(screen.getByTestId("ps-wizard-next")); // tools
+    await user.click(screen.getByTestId("ps-wizard-next")); // data
+    await user.type(screen.getByTestId("ps-object-api-name"), "Account");
+    await user.click(screen.getByTestId("ps-object-add"));
+    expect(await screen.findByTestId("ps-fls-matrix")).toBeTruthy();
+    await waitFor(() => expect(screen.getByLabelText("Account.Name read")).toBeTruthy());
+    await user.click(screen.getByLabelText("Account.Name read"));
+    await user.click(screen.getByTestId("ps-wizard-next"));
+    await user.click(screen.getByTestId("ps-create-btn"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/permissions/sets",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    const createCall = fetch.mock.calls.find(
+      (c) => c[0] === "/metadata/v1/permissions/sets" && (c[1] as RequestInit)?.method === "POST",
+    );
+    const body = JSON.parse(String((createCall![1] as RequestInit).body));
+    expect(body.fieldPermissions).toEqual(
+      expect.arrayContaining([expect.objectContaining({ objectApiName: "Account", fieldApiName: "Name", canRead: true })]),
+    );
+    expect(body.dataAccess.fieldPermissions).toEqual(body.fieldPermissions);
   });
 });
 

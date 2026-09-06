@@ -32,6 +32,14 @@ type ObjectPermRow = {
   canDelete: boolean;
   viewAll: boolean;
   modifyAll: boolean;
+  ownership?: string;
+};
+
+type FieldPermRow = {
+  objectApiName: string;
+  fieldApiName: string;
+  canRead: boolean;
+  canEdit: boolean;
 };
 
 type PsWizardForm = {
@@ -42,6 +50,7 @@ type PsWizardForm = {
   allTools: boolean;
   tools: ToolAccessEntry[];
   objectPermissions: ObjectPermRow[];
+  fieldPermissions: FieldPermRow[];
 };
 
 function emptyWizardForm(): PsWizardForm {
@@ -53,6 +62,7 @@ function emptyWizardForm(): PsWizardForm {
     allTools: false,
     tools: [],
     objectPermissions: [],
+    fieldPermissions: [],
   };
 }
 
@@ -71,6 +81,8 @@ function formFromPermissionSet(pset: PermissionSet): PsWizardForm {
   const ta = pset.toolAccess;
   const objPerms = (pset.dataAccess?.objectPermissions ??
     (Array.isArray(pset.objectPermissions) ? pset.objectPermissions : [])) as ObjectPermRow[];
+  const fieldPerms = (pset.dataAccess?.fieldPermissions ??
+    (Array.isArray(pset.fieldPermissions) ? pset.fieldPermissions : [])) as FieldPermRow[];
   return {
     apiName: pset.apiName,
     label: pset.label ?? "",
@@ -95,6 +107,14 @@ function formFromPermissionSet(pset: PermissionSet): PsWizardForm {
           canDelete: Boolean(o.canDelete),
           viewAll: Boolean(o.viewAll),
           modifyAll: Boolean(o.modifyAll),
+        }))
+      : [],
+    fieldPermissions: Array.isArray(fieldPerms)
+      ? fieldPerms.map((f) => ({
+          objectApiName: String(f.objectApiName ?? ""),
+          fieldApiName: String(f.fieldApiName ?? ""),
+          canRead: Boolean(f.canRead),
+          canEdit: Boolean(f.canEdit),
         }))
       : [],
   };
@@ -152,25 +172,55 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
   const [psWizardStep, setPsWizardStep] = useState<PsWizardStep>("identity");
   const [psForm, setPsForm] = useState<PsWizardForm>(emptyWizardForm);
   const [newObjectApiName, setNewObjectApiName] = useState("");
+  const [catalogObjects, setCatalogObjects] = useState<{ apiName: string; ownership?: string }[]>([]);
+  const [describeFields, setDescribeFields] = useState<Record<string, { apiName: string }[]>>({});
 
   const role = roles.find((r) => r.apiName === selectedRole) ?? null;
   const pset = sets.find((s) => s.apiName === selectedSet) ?? null;
   const stepIndex = PS_WIZARD_STEPS.indexOf(psWizardStep);
+
+  const loadDescribeFields = useCallback(
+    async (apiName: string) => {
+      const name = apiName.trim();
+      if (!name) return;
+      try {
+        const desc = (await bridge.fetch(`/metadata/v1/objects/${encodeURIComponent(name)}`)) as {
+          fields?: { apiName?: string }[];
+        };
+        setDescribeFields((prev) => ({
+          ...prev,
+          [name]: (desc.fields ?? [])
+            .filter((f) => f.apiName)
+            .map((f) => ({ apiName: String(f.apiName) })),
+        }));
+      } catch {
+        /* describe optional */
+      }
+    },
+    [bridge.fetch],
+  );
 
   const load = useCallback(async () => {
     if (!connected) return;
     setErr("");
     setBusy(true);
     try {
-      const [r, s] = await Promise.all([
+      const [r, s, objs] = await Promise.all([
         listRoles(bridge.fetch).catch(() => [] as Role[]),
         listPermissionSets(bridge.fetch, {
           includeDataAccess: true,
           includeToolAccess: true,
         }).catch(() => [] as PermissionSet[]),
+        bridge.fetch("/metadata/v1/objects").catch(() => ({ objects: [] })),
       ]);
       setRoles(r);
       setSets(s);
+      const listed = (objs as { objects?: { apiName?: string; ownership?: string }[] }).objects ?? [];
+      setCatalogObjects(
+        listed
+          .filter((o) => o.apiName)
+          .map((o) => ({ apiName: String(o.apiName), ownership: o.ownership })),
+      );
     } catch (e) {
       setErr(String(e));
     } finally {
@@ -181,6 +231,14 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const objectNamesKey = psForm.objectPermissions.map((o) => o.objectApiName).join(",");
+  useEffect(() => {
+    if (!psWizardOpen) return;
+    for (const name of objectNamesKey.split(",").filter(Boolean)) {
+      void loadDescribeFields(name);
+    }
+  }, [psWizardOpen, objectNamesKey, loadDescribeFields]);
 
   useEffect(() => {
     if (role) {
@@ -313,6 +371,9 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
         tools: psForm.tools.filter((t) => t.apiName),
       };
       const objectPermissions = psForm.objectPermissions.filter((o) => o.objectApiName.trim());
+      const fieldPermissions = psForm.fieldPermissions.filter(
+        (f) => f.objectApiName.trim() && f.fieldApiName.trim(),
+      );
       const label = psForm.label.trim() || psForm.apiName.trim();
       const description = psForm.description.trim() || undefined;
       if (psWizardMode === "create") {
@@ -323,7 +384,8 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
           systemPermissions,
           toolAccess,
           objectPermissions,
-          dataAccess: { objectPermissions },
+          fieldPermissions,
+          dataAccess: { objectPermissions, fieldPermissions },
         });
         resetPsWizard();
         await load();
@@ -334,7 +396,7 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
           description,
           systemPermissions,
           toolAccess,
-          dataAccess: { objectPermissions },
+          dataAccess: { objectPermissions, fieldPermissions },
         });
         resetPsWizard();
         await load();
@@ -354,6 +416,7 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
       setNewObjectApiName("");
       return;
     }
+    const ownership = catalogObjects.find((o) => o.apiName === apiName)?.ownership;
     setPsForm((f) => ({
       ...f,
       objectPermissions: [
@@ -366,10 +429,35 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
           canDelete: false,
           viewAll: false,
           modifyAll: false,
+          ownership,
         },
       ],
     }));
     setNewObjectApiName("");
+    if (!describeFields[apiName]) void loadDescribeFields(apiName);
+  };
+
+  const upsertFieldPerm = (objectApiName: string, fieldApiName: string, patch: Partial<FieldPermRow>) => {
+    setPsForm((f) => {
+      const existing = f.fieldPermissions.find(
+        (row) => row.objectApiName === objectApiName && row.fieldApiName === fieldApiName,
+      );
+      if (!existing) {
+        return {
+          ...f,
+          fieldPermissions: [
+            ...f.fieldPermissions,
+            { objectApiName, fieldApiName, canRead: false, canEdit: false, ...patch },
+          ],
+        };
+      }
+      return {
+        ...f,
+        fieldPermissions: f.fieldPermissions.map((row) =>
+          row.objectApiName === objectApiName && row.fieldApiName === fieldApiName ? { ...row, ...patch } : row,
+        ),
+      };
+    });
   };
 
   if (!connected) {
@@ -687,9 +775,24 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
               {psWizardStep === "data" ? (
                 <div data-testid="ps-wizard-data">
                   <p className="muted">
-                    Object CRUD grants for this permission set. Field-level grants stay on the install catalog.
+                    Object CRUD and field-level grants. Managed vs custom objects are labeled from Metadata. FLS is stored on the install — the IDE does not enforce it.
                   </p>
                   <div className="row">
+                    <label>
+                      Packaged / custom object
+                      <select
+                        value={catalogObjects.some((o) => o.apiName === newObjectApiName) ? newObjectApiName : ""}
+                        onChange={(e) => setNewObjectApiName(e.target.value)}
+                        data-testid="ps-object-catalog"
+                      >
+                        <option value="">Select from catalog…</option>
+                        {catalogObjects.map((o) => (
+                          <option key={o.apiName} value={o.apiName}>
+                            {o.apiName} ({o.ownership || "—"})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <label>
                       Object API name
                       <input
@@ -727,7 +830,19 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
                       <tbody>
                         {psForm.objectPermissions.map((row) => (
                           <tr key={row.objectApiName}>
-                            <td className="mono">{row.objectApiName}</td>
+                            <td className="mono">
+                              {row.objectApiName}
+                              {row.ownership ||
+                              catalogObjects.find((o) => o.apiName === row.objectApiName)?.ownership ? (
+                                <span className="muted">
+                                  {" "}
+                                  (
+                                  {row.ownership ||
+                                    catalogObjects.find((o) => o.apiName === row.objectApiName)?.ownership}
+                                  )
+                                </span>
+                              ) : null}
+                            </td>
                             {(
                               [
                                 ["canCreate", "C"],
@@ -776,6 +891,75 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
                       </tbody>
                     </table>
                   )}
+                  {psForm.objectPermissions.length > 0 ? (
+                    <div data-testid="ps-fls-matrix">
+                      <h4>Field-level security</h4>
+                      {psForm.objectPermissions.map((obj) => {
+                        const fields = describeFields[obj.objectApiName] ?? [];
+                        const known = new Set(fields.map((f) => f.apiName));
+                        const extra = psForm.fieldPermissions
+                          .filter((f) => f.objectApiName === obj.objectApiName && !known.has(f.fieldApiName))
+                          .map((f) => ({ apiName: f.fieldApiName }));
+                        const rows = [...fields, ...extra];
+                        if (rows.length === 0) {
+                          return (
+                            <p key={obj.objectApiName} className="muted">
+                              No describe fields loaded for {obj.objectApiName} yet — grants still round-trip if present.
+                            </p>
+                          );
+                        }
+                        return (
+                          <table key={obj.objectApiName} className="data-table">
+                            <thead>
+                              <tr>
+                                <th>{obj.objectApiName} field</th>
+                                <th>Read</th>
+                                <th>Edit</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rows.map((field) => {
+                                const perm = psForm.fieldPermissions.find(
+                                  (f) =>
+                                    f.objectApiName === obj.objectApiName && f.fieldApiName === field.apiName,
+                                );
+                                return (
+                                  <tr key={`${obj.objectApiName}.${field.apiName}`}>
+                                    <td className="mono">{field.apiName}</td>
+                                    <td>
+                                      <input
+                                        type="checkbox"
+                                        aria-label={`${obj.objectApiName}.${field.apiName} read`}
+                                        checked={Boolean(perm?.canRead)}
+                                        onChange={() =>
+                                          upsertFieldPerm(obj.objectApiName, field.apiName, {
+                                            canRead: !perm?.canRead,
+                                          })
+                                        }
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="checkbox"
+                                        aria-label={`${obj.objectApiName}.${field.apiName} edit`}
+                                        checked={Boolean(perm?.canEdit)}
+                                        onChange={() =>
+                                          upsertFieldPerm(obj.objectApiName, field.apiName, {
+                                            canEdit: !perm?.canEdit,
+                                            canRead: !perm?.canEdit ? true : perm?.canRead,
+                                          })
+                                        }
+                                      />
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -802,6 +986,10 @@ export function PermissionsPanel({ bridge }: { bridge: AppBridge }) {
                     <li>
                       <strong>Object grants:</strong>{" "}
                       {psForm.objectPermissions.map((o) => o.objectApiName).join(", ") || "none"}
+                    </li>
+                    <li>
+                      <strong>FLS grants:</strong>{" "}
+                      {psForm.fieldPermissions.filter((f) => f.canRead || f.canEdit).length || "none"}
                     </li>
                   </ul>
                 </div>

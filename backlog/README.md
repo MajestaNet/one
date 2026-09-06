@@ -56,7 +56,7 @@ Each BP header includes an **`Area:`** field — preferred code scope. Resolve A
 | [BP-063](./BP-063-refresh-token-sessions.md) | High | Partially mitigated | Opaque refresh tokens |
 | [BP-064](./BP-064-install-agent-runtime.md) | High | Mitigated | Install as agent runtime |
 | [BP-065](./BP-065-ide-backend-coupling.md) | Medium | Partially mitigated | Neutralize Control IDE coupling on the Go install (Phase 1 AuthN landed; Phases 2–4 remain) |
-| [BP-066](./BP-066-ide-demo-client-fidelity.md) | Medium | Open | Control IDE as an honest JWT demo of shipped APIs |
+| [BP-066](./BP-066-ide-demo-client-fidelity.md) | Medium | Open (WS0–WS3/WS5 in IDE; WS4 remains) | Control IDE as an honest JWT demo of shipped APIs |
 | [BP-067](./BP-067-public-docs-site.md) | Medium | Open (CMS extracted; One source split landed) | Public docs site (`one.majesta.net`) — separate CMS aggregator; this repo does not implement |
 | [BP-068](./BP-068-ide-brand-visual.md) | Medium | Mitigated | Control IDE brand restyle (navy/gold tokens + logo; not chrome expansion) |
 

@@ -6,9 +6,11 @@ import {
   createAgentRun,
   createAgentRunStream,
   createInferenceTestChat,
+  isParkedRunStatus,
   isTerminalRunStatus,
   pollAgentRun,
   summarizeRunOutput,
+  toolsExecutedFromRun,
   type AgentRun,
 } from "./runs";
 
@@ -56,6 +58,17 @@ describe("agents/runs", () => {
     ).toBe("done");
     expect(summarizeRunOutput({ id: "1", status: "queued", goal: "hiu" })).toMatch(/still queued/i);
     expect(summarizeRunOutput({ id: "1", status: "queued", goal: "hiu" })).not.toMatch(/^Approved/);
+    expect(summarizeRunOutput({ id: "p1", status: "awaiting_tool_approval" })).toMatch(/tool-write approval/i);
+    expect(isParkedRunStatus("awaiting_tool_approval")).toBe(true);
+    expect(isParkedRunStatus("awaiting_approval")).toBe(true);
+    expect(isParkedRunStatus("completed")).toBe(false);
+    expect(
+      toolsExecutedFromRun({
+        id: "x",
+        status: "awaiting_tool_approval",
+        output: { toolCalls: [{ tool: "create_record" }], toolsExecuted: ["query"] },
+      }),
+    ).toEqual(["query", "create_record"]);
   });
 
   it("polls until terminal", async () => {
@@ -65,6 +78,16 @@ describe("agents/runs", () => {
       .mockResolvedValueOnce({ id: "r1", status: "completed", output: { summary: "ok" } } satisfies AgentRun);
     const run = await pollAgentRun(fetchFn, "r1", { intervalMs: 1, maxAttempts: 5 });
     expect(run.status).toBe("completed");
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("polls until write-park without treating it as a completed reply", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce({ id: "r1", status: "running" } satisfies AgentRun)
+      .mockResolvedValueOnce({ id: "r1", status: "awaiting_tool_approval" } satisfies AgentRun);
+    const run = await pollAgentRun(fetchFn, "r1", { intervalMs: 1, maxAttempts: 5 });
+    expect(run.status).toBe("awaiting_tool_approval");
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
@@ -97,135 +120,58 @@ describe("agents/runs", () => {
     vi.unstubAllGlobals();
   });
 
-  it("continues a parked stream create via SSE approve instead of treating it as a reply", async () => {
-    const encoder = new TextEncoder();
-    const sse = new ReadableStream({
-      start(controller) {
-        controller.enqueue(encoder.encode('event: run\ndata: {"id":"r3","status":"running"}\n\n'));
-        controller.enqueue(encoder.encode('event: token\ndata: {"delta":"hello"}\n\n'));
-        controller.enqueue(
-          encoder.encode(
-            'event: done\ndata: {"id":"r3","status":"completed","output":{"summary":"hello"}}\n\n',
-          ),
-        );
-        controller.close();
-      },
-    });
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: "r3", status: "awaiting_approval", goal: "hi" }), {
-          status: 202,
-          headers: { "Content-Type": "application/json" },
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(sse, { status: 200, headers: { "Content-Type": "text/event-stream" } }),
-      );
-    vi.stubGlobal("fetch", fetchMock);
-    const deltas: string[] = [];
-    const run = await createAgentRunStream("https://one.example", "token", { goal: "hi" }, {
-      onToken: ({ delta }) => {
-        if (delta) deltas.push(delta);
-      },
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
-      "https://one.example/client/v1/agents/runs/r3/approve",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({ Accept: "text/event-stream" }),
+  it("returns a parked JSON create so the chat can Approve instead of auto-continuing", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: "r3", status: "awaiting_approval", goal: "hi" }), {
+        status: 202,
+        headers: { "Content-Type": "application/json" },
       }),
     );
-    expect(deltas.join("")).toBe("hello");
-    expect(run).toMatchObject({ id: "r3", status: "completed" });
+    vi.stubGlobal("fetch", fetchMock);
+    const run = await createAgentRunStream("https://one.example", "token", { goal: "hi" }, {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(run).toMatchObject({ id: "r3", status: "awaiting_approval" });
     vi.unstubAllGlobals();
   });
 
-  it("throws when a stream create parks and approve also fails to stream", async () => {
+  it("returns write-park without retrying create as approved:true", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          id: "r-write",
+          status: "awaiting_tool_approval",
+          output: { toolCalls: [{ tool: "create_record", input: { object: "Account" } }] },
+        }),
+        { status: 202, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const run = await createAgentRunStream(
+      "https://one.example",
+      "token",
+      { goal: "create account", approved: false },
+      {},
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const sent = JSON.parse((fetchMock.mock.calls[0][1] as { body: string }).body) as { approved?: boolean };
+    expect(sent.approved).toBe(false);
+    expect(run.status).toBe("awaiting_tool_approval");
+    vi.unstubAllGlobals();
+  });
+
+  it("throws when a stream create returns an unexpected non-terminal JSON body", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: "r4", status: "awaiting_approval" }), {
-            status: 202,
-            headers: { "Content-Type": "application/json" },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: "r4", status: "queued" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: "r5", status: "awaiting_approval" }), {
-            status: 202,
-            headers: { "Content-Type": "application/json" },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: "r5", status: "queued" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
-        ),
-    );
-    await expect(
-      createAgentRunStream("https://one.example", "token", { goal: "hi" }, {}),
-    ).rejects.toThrow(/Settings → Inference/);
-    vi.unstubAllGlobals();
-  });
-
-  it("retries a parked stream as generation-only when SSE approve is unavailable", async () => {
-    const encoder = new TextEncoder();
-    const sse = new ReadableStream({
-      start(controller) {
-        controller.enqueue(encoder.encode('event: token\ndata: {"delta":"hey"}\n\n'));
-        controller.enqueue(
-          encoder.encode('event: done\ndata: {"id":"r6","status":"completed"}\n\n'),
-        );
-        controller.close();
-      },
-    });
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: "r4", status: "awaiting_approval" }), {
-          status: 202,
-          headers: { "Content-Type": "application/json" },
-        }),
-      )
-      .mockResolvedValueOnce(
+      vi.fn().mockResolvedValueOnce(
         new Response(JSON.stringify({ id: "r4", status: "queued" }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         }),
-      )
-      .mockResolvedValueOnce(
-        new Response(sse, { status: 200, headers: { "Content-Type": "text/event-stream" } }),
-      );
-    vi.stubGlobal("fetch", fetchMock);
-    const deltas: string[] = [];
-    const run = await createAgentRunStream(
-      "https://one.example",
-      "token",
-      { goal: "hi", approved: false },
-      {
-        onToken: ({ delta }) => {
-          if (delta) deltas.push(delta);
-        },
-      },
+      ),
     );
-    const retryBody = JSON.parse((fetchMock.mock.calls[2][1] as { body: string }).body) as {
-      approved?: boolean;
-      stream?: boolean;
-    };
-    expect(retryBody.approved).toBe(true);
-    expect(retryBody.stream).toBe(true);
-    expect(deltas.join("")).toBe("hey");
-    expect(run.status).toBe("completed");
+    await expect(
+      createAgentRunStream("https://one.example", "token", { goal: "hi" }, {}),
+    ).rejects.toThrow(/non-streaming run status/i);
     vi.unstubAllGlobals();
   });
 

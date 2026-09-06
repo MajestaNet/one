@@ -199,4 +199,31 @@ describe("scopes", () => {
       canOpenSettings(["client"], { systemPermissions: ["ide.govern.env"], isAdmin: false }),
     ).toBe(true);
   });
+
+  it("gates sharing and MCP catalog without new ide.* strings", () => {
+    expect(
+      toolsForMode("govern", ["client"], {
+        systemPermissions: ["ide.govern", "ide.govern.permissions", "authz.manage"],
+        isAdmin: false,
+      }),
+    ).toContain("sharing");
+    expect(
+      toolsForMode("govern", ["client"], {
+        systemPermissions: ["ide.govern", "ide.govern.users"],
+        isAdmin: false,
+      }),
+    ).not.toContain("sharing");
+    expect(
+      toolsForSettings(["client"], {
+        systemPermissions: ["ide.settings", "ide.settings.env"],
+        isAdmin: false,
+      }),
+    ).toContain("mcp");
+    expect(
+      toolsForSettings(["deploy"], {
+        systemPermissions: ["ide.settings", "ide.settings.env"],
+        isAdmin: false,
+      }),
+    ).not.toContain("mcp");
+  });
 });

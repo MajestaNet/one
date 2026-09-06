@@ -13,10 +13,10 @@ import {
 import {
   approveAgentRunStream,
   createAgentRunStream,
+  isParkedRunStatus,
   isTerminalRunStatus,
   listPlaybooks,
   pollAgentRun,
-  STREAM_PARKED_HINT,
   type AgentRun,
 } from "./agents/runs";
 import { modesFromPrimarySection } from "./agents/sections";
@@ -38,6 +38,8 @@ import { MetadataPanel } from "./panels/MetadataPanel";
 import { ObjectManagerPanel } from "./panels/ObjectManagerPanel";
 import { PackagesPanel } from "./panels/PackagesPanel";
 import { PermissionsPanel } from "./panels/PermissionsPanel";
+import { SharingPanel } from "./panels/SharingPanel";
+import { McpCatalogPanel } from "./panels/McpCatalogPanel";
 import { RepoPanel } from "./panels/RepoPanel";
 import { UsersPanel } from "./panels/UsersPanel";
 import { ExplorerPanel } from "./operate/ExplorerPanel";
@@ -51,7 +53,7 @@ import {
   stageProposalOnGraph,
 } from "./run/graph/proposalStaging";
 import { pinBoardHandoffToHomeGraph } from "./run/graph/pinRecord";
-import { processRunToolEffects, pendingToolActionsFromRun } from "./run/runToolEffects";
+import { processRunToolEffects, localChromeActionsFromRun } from "./run/runToolEffects";
 import { buildActiveToolContext } from "./run/activeToolContext";
 import {
   listSessionTools,
@@ -849,13 +851,17 @@ export function App() {
         experiences: "govern",
         installAuth: "govern",
         permissions: "govern",
+        sharing: "govern",
         govern: "govern",
       };
       let panelId: TileId = id;
       if (id === "govern") {
         panelId = "users";
       }
-      const nextSection: AppSection = id === "account" || id === "hosting" || id === "inference" ? "settings" : (modeFor[id] ?? section);
+      const nextSection: AppSection =
+        id === "account" || id === "hosting" || id === "inference" || id === "mcp"
+          ? "settings"
+          : (modeFor[id] ?? section);
       if (nextSection !== "settings") {
         setMode(nextSection as WorkspaceMode);
       }
@@ -1004,15 +1010,16 @@ export function App() {
         workspaceSection === "operate" ||
         ((chat?.modes as string[]).includes("run") && !chat?.modes.includes("operate"));
       const activeCtx = buildActiveToolContext(activeRunSessionToolId, toolStoreEpoch);
+      const parked = isParkedRunStatus(final.status);
       const pendingActions =
-        runEffects && final.status !== "awaiting_approval"
-          ? pendingToolActionsFromRun(final, {
+        runEffects && !parked
+          ? localChromeActionsFromRun(final, {
               activeToolId: activeCtx?.toolId,
               activeToolBindings: activeCtx?.dataBindings,
             })
           : [];
-      const applyEffects = opts.applyEffects ?? pendingActions.length === 0;
-      if (runEffects && final.status !== "awaiting_approval" && applyEffects) {
+      const applyEffects = opts.applyEffects ?? (!parked && pendingActions.length === 0);
+      if (runEffects && !parked && applyEffects) {
         const effects = await processRunToolEffects(final, {
           fetch: bridge.fetch,
           mode: "operate",
@@ -1226,11 +1233,8 @@ export function App() {
               },
             },
           );
-          if (final.status === "awaiting_approval") {
-            throw new Error(STREAM_PARKED_HINT);
-          }
           const replies = await finalizeAgentRun(final, chat, section);
-          if (final.id && replies.some((m) => m.pendingToolApply)) {
+          if (final.id && (isParkedRunStatus(final.status) || replies.some((m) => m.pendingToolApply))) {
             pendingToolRunsRef.current[final.id] = final;
           }
           if (conversationId) {
@@ -1334,8 +1338,11 @@ export function App() {
       if (!connected || !session) return;
       const chat = agentCatalogRef.current.find((c) => c.id === chatId);
       const pendingRun = pendingToolRunsRef.current[runId];
+      const parkedOnInstall = isParkedRunStatus(pendingRun?.status);
       const pendingLocal = Boolean(
-        pendingRun && chat?.messages.some((m) => m.runId === runId && m.pendingToolApply),
+        pendingRun &&
+          !parkedOnInstall &&
+          chat?.messages.some((m) => m.runId === runId && m.pendingToolApply),
       );
 
       setApproveBusy(true);
@@ -1444,8 +1451,11 @@ export function App() {
             onDone: ({ id, status }) =>
               updateStreamMessage({ runId: id ?? runId, runStatus: status ?? "completed" }),
           });
-          if (!isTerminalRunStatus(final.status) && final.status !== "awaiting_approval") {
+          if (!isTerminalRunStatus(final.status) && !isParkedRunStatus(final.status)) {
             final = await pollAgentRun(bridge.fetch, runId, { intervalMs: 600, maxAttempts: 30 });
+          }
+          if (isParkedRunStatus(final.status)) {
+            pendingToolRunsRef.current[runId] = final;
           }
           const replies = await finalizeAgentRun(final, chat, section);
           setAgentCatalog((prev) =>
@@ -1531,6 +1541,8 @@ export function App() {
         return <InstallAuthPanel bridge={bridge} />;
       case "permissions":
         return <PermissionsPanel bridge={bridge} />;
+      case "sharing":
+        return <SharingPanel bridge={bridge} />;
       case "govern":
         return <UsersPanel bridge={bridge} />;
       case "repo":
@@ -1680,6 +1692,8 @@ export function App() {
         return <HostingPanel bridge={bridge} />;
       case "inference":
         return <InferencePanel bridge={bridge} />;
+      case "mcp":
+        return <McpCatalogPanel bridge={bridge} />;
       default:
         return null;
     }

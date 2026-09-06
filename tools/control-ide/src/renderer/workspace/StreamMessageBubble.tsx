@@ -6,6 +6,7 @@ import { ChatHandoffBlock } from "../operate/chatBlocks/ChatHandoffBlock";
 import { ChatContextExcerptBlock } from "../run/chatBlocks/ChatContextExcerptBlock";
 import { ChatToolRefBlock } from "../run/chatBlocks/ChatToolRefBlock";
 import { Button } from "../ui";
+import { isParkedRunStatus } from "../agents/runs";
 import { formatMessageTime, roleLabel } from "./messageModel";
 import type { StreamMessage, TileId } from "./types";
 
@@ -88,7 +89,7 @@ export const StreamMessageBubble = memo(function StreamMessageBubble({
     message.role === "approval" &&
     Boolean(message.runId) &&
     Boolean(onApprove) &&
-    (message.runStatus === "awaiting_approval" || Boolean(message.pendingToolApply));
+    (isParkedRunStatus(message.runStatus) || Boolean(message.pendingToolApply));
   // Bound 1:1 chats already show the agent in the pane header; human msgs are right-aligned.
   const showRoleChip = message.role === "system" || message.role === "tool";
   const hasMetaRight = Boolean(message.runStatus || time);
