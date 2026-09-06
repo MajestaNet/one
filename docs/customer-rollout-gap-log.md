@@ -58,13 +58,15 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 | G-HOSTED-LOOP-SHIP | by-design | none | n/a (MCP ships; hosted loop does not) | |
 | G-NO-SCRATCH-ORG | known-remainder | none | n/a — [BP-048](../backlog/BP-048-one-cli.md) Wave D | |
 | G-CROSS-INSTALL-SSO | by-design | none | n/a — [BP-037](../backlog/BP-037-install-claim-customer-sso.md) | |
-| G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | campaign 1 not-run; campaign 2 S-E-HONESTY scored Idle-state only (Pack/Validate/Deploy not clicked) — [BP-066](../backlog/BP-066-ide-demo-client-fidelity.md) WS-0 | |
-| G-IDE-USERDATA | missing-lab-packaging | none | campaign 1: Electron not launched; campaign 2 S-E used `--user-data-dir=…-sim-a` | |
+| G-IDE-DEPLOY-GREEN | frozen-chrome-honesty | none | campaign 1 not-run; 2026-09-06 S-E-HONESTY clicked Validate vs org → honest Failed (repo path required); no lying green | |
+| G-IDE-USERDATA | missing-lab-packaging | none | campaign 1: Electron not launched; dual-IDE now blocked by [#39](https://github.com/MajestaNet/one/issues/39) | |
 | G-COMPOSE-SINGLE | by-design | none | everyday Compose is one `dev` install; overlay is the two-install lab | |
 | S-B-LOOKUP-FAIL-WITHOUT-PKG | product-bug | [#34](https://github.com/MajestaNet/one/issues/34) | **open** | |
 | S-B-AUTHZ-STUBS | docs-drift | [#35](https://github.com/MajestaNet/one/issues/35) | **open** | |
 | S-C-SUITE | docs-drift | [#37](https://github.com/MajestaNet/one/issues/37) | **open** (retested S-D-DEPLOY-TEST / S-D-DEPLOY-PROD 2026-09-05; same AccountId contract fail; do not re-file) | |
 | S-C-NAMED | docs-drift | [#38](https://github.com/MajestaNet/one/issues/38) | **open** | |
+| S-E-SINGLE-INSTANCE | product-bug | [#39](https://github.com/MajestaNet/one/issues/39) | **open** | |
+| S-E-PERSONA-CASEY-USER | product-bug | [#40](https://github.com/MajestaNet/one/issues/40) | **open** | |
 
 **Agent prompt (open rows):** open the GitHub issue, follow its **Fix-it** section, stay in the named packages, PR `Fixes #N`, then update this table.
 
@@ -125,7 +127,7 @@ Open defects from this run: **#28**, **#29**.
 
 Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Lab: [docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml). Fixtures: `scripts/customer-install-sim-generate.sh`.
 
-**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). **S-C recorded 2026-09-05** (same lab; named+48 stubs org-deployed to **dev only**; suite contract failed AccountId; #29 still truncates). **S-D recorded 2026-09-05** (same SHA `5732d48` repo→org on test then prod; SiteVisit__c describes on prod; business rows did not copy; suite still #37). **S-E recorded 2026-09-05** (Electron on `DISPLAY=:1`; all 16 beats have rows — see S-E table below). Re-test #28 / #29; do not re-file.
+**S-A recorded 2026-09-05** (native three-DB; Compose not run — no Docker). **S-B recorded 2026-09-05** (same lab; packs on all three; SiteVisit__c org-deployed to **dev** only; suite deferred to S-C). **S-C recorded 2026-09-05** (same lab; named+48 stubs org-deployed to **dev only**; suite contract failed AccountId; #29 still truncates). **S-D recorded 2026-09-05** (same SHA `5732d48` repo→org on test then prod; SiteVisit__c describes on prod; business rows did not copy; suite still #37). **S-E recorded 2026-09-05** (Electron on `DISPLAY=:1`; all 16 beats have rows — see S-E table below). **S-E persona retest 2026-09-06** (native three-DB; Pat / Riley / Sam / Jordan / Casey in Control IDE; new [#39](https://github.com/MajestaNet/one/issues/39) / [#40](https://github.com/MajestaNet/one/issues/40)). Re-test #28 / #29; do not re-file.
 
 ### Beat catalog (record each)
 
@@ -136,6 +138,7 @@ Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation
 | S-C automations at scale | `S-C-NAMED` · `S-C-IMPORT-BAN` · `S-C-STUBS` · `S-C-PACK-TIME` · `S-C-WORKER-FANOUT` · `S-C-SUITE` · `S-C-CLI-TRUNC` |
 | S-D same SHA | `S-D-DEPLOY-TEST` · `S-D-DEPLOY-PROD` · `S-D-NO-ROW-COPY` · `S-D-PKG-DRIFT` |
 | S-E Control IDE | `S-E-SIGNIN` · `S-E-ENV-SWITCH` · `S-E-OPERATE` · `S-E-BUILD-OBJECTS` · `S-E-BUILD-PACKAGES` · `S-E-BUILD-AUTOMATIONS` · `S-E-BUILD-AGENTS` · `S-E-BUILD-TOOLS` · `S-E-BUILD-REPO` · `S-E-BUILD-DEPLOY` · `S-E-BUILD-INSPECT` · `S-E-GOVERN` · `S-E-SETTINGS` · `S-E-THEME` · `S-E-HONESTY` · `S-E-FROZEN` |
+| S-E personas | `S-E-PERSONA-RILEY` · `S-E-PERSONA-SAM` · `S-E-PERSONA-JORDAN` · `S-E-PERSONA-CASEY` · `S-E-SINGLE-INSTANCE` · `S-E-PERSONA-CASEY-USER` |
 
 ### Run results
 
@@ -226,4 +229,46 @@ Lab: Same native three-DB as S-A–S-D; DISPLAY=:1 set; Electron launched with i
 **Second userData process:** NO (optional; single process sufficient to demonstrate env switching).
 
 **Coordinator note:** all 16 S-E ids have rows. Several actuals are **panel-presence**, not a full click-through: Deploy Pack/Validate/Deploy was not run (Idle only — BP-066 lying-green after HTTP 200 still unproven); Govern subpanels (Users / Integrations / Permissions) were not opened; Repo “Choose folder…” was not confirmed against `.customer-sandbox/one-acme-sim`; Object Manager did not create a throwaway field to prove dual-write. Outcomes left as the executor scored them. No second `--user-data-dir` process.
+
+The 2026-09-06 persona retest (table below) clicked Validate, opened Govern subpanels, chose the sandbox folder, and walked four non-admin JWTs. Dual-process `--user-data-dir` is **fail** ([#39](https://github.com/MajestaNet/one/issues/39)).
+
+---
+
+## 2026-09-06 — Campaign 2 S-E user-group personas (Control IDE)
+
+Lab: native three-DB (`one_sim_prod/test/dev` on `:5432`); APIs `:8080/:8081/:8082`; DISPLAY=:1; Electron `--user-data-dir=…-sim-{pat,riley,sam,jordan,casey}` (one process at a time). Personas on **dev**: Pat claim admin, Riley Builder (`client+metadata+deploy`), Sam Sales (`client` + Operate + SalesData), Jordan Govern (`client` + ManageUsers/Integrations/Permissions), Casey Restricted (`client` + Operate deny stubs). Raw notes: [campaign-2-findings/S-E-PERSONA-RUN.md](campaign-2-findings/S-E-PERSONA-RUN.md).
+
+| Date | Beat | Card | Outcome | DX | Class | Issue | Actual (one line) |
+|---|---|---|---|---|---|---|---|
+| 2026-09-06 | S-E-SIGNIN | S-E | pass | 5 | — | none | JWT paste Advanced; `:8082`; 2×2 launcher Operate/Build/Govern/Settings; Dev Admin / acme-dev |
+| 2026-09-06 | S-E-ENV-SWITCH | S-E | pass | 4 | — | none | Settings → Environments added test `:8081` + prod `:8080`; top-bar switcher updates account chip; Known environments lists all three |
+| 2026-09-06 | S-E-OPERATE | S-E | pass | 5 | — | none | Sam: graph 6 objects; Ctrl+K Acc → Accounts; List View North Plant / Acme North Plant; ToolSpecs on rail; no Deploy chrome |
+| 2026-09-06 | S-E-BUILD-OBJECTS | S-E | pass | 5 | — | none | SiteVisit__c detail; New field UI; dual-write notice is local repo `metadata/`, not `.one/baseline` |
+| 2026-09-06 | S-E-BUILD-PACKAGES | S-E | pass | 5 | — | none | Enabled `notes` on dev; switched to test → still Available/Enable |
+| 2026-09-06 | S-E-BUILD-AUTOMATIONS | S-E | pass | 5 | — | none | Named automations + Monaco; Save file present |
+| 2026-09-06 | S-E-BUILD-AGENTS | S-E | pass | 5 | — | none | 5 AgentSpecs listed; New agent; declarative harness |
+| 2026-09-06 | S-E-BUILD-TOOLS | S-E | pass | 5 | — | none | 3 ToolSpecs + starter packs |
+| 2026-09-06 | S-E-BUILD-REPO | S-E | pass | 5 | — | none | Choose folder opened `/workspace/.customer-sandbox/one-acme-sim` including `metadata/` |
+| 2026-09-06 | S-E-BUILD-DEPLOY | S-E | pass | 4 | — | none | Validate vs org clicked; Pack/Validate Failed (repo path); Deploy disabled until green |
+| 2026-09-06 | S-E-BUILD-INSPECT | S-E | pass-with-workaround | 3 | by-design | none | Query/Monitor/Explorer are last on Build hover rail (`MODE_WORKSPACE_TOOLS`); not found on first pass (quiet scroll) |
+| 2026-09-06 | S-E-GOVERN | S-E | pass | 5 | — | none | Admin + Jordan opened Users / Integrations / Permissions; Roles vs permission sets are separate tabs |
+| 2026-09-06 | S-E-SETTINGS | S-E | pass-with-workaround | 3 | by-design | none | Account/Hosting/Inference/Environments present; return home is centered Mode title (findability, documented in customer-ide-ux.md) |
+| 2026-09-06 | S-E-THEME | S-E | pass | 5 | — | none | Moon/sun toggle light↔dark navy; persists in session |
+| 2026-09-06 | S-E-HONESTY | S-E | pass | 5 | — | none | Validate Failed / Needs review / Validation blocked; Deploy not lying-green; Casey 403 is honest but Users CTA is not (see S-E-PERSONA-CASEY-USER) |
+| 2026-09-06 | S-E-FROZEN | S-E | pass | 5 | — | none | Did not file license/CDN/Operate-as-CRM/BoardHandoff/peer promote/DO console |
+| 2026-09-06 | S-E-PERSONA-RILEY | S-E | pass | 5 | — | none | Builder JWT: launcher **Build + Settings only**; no Operate/Govern tiles |
+| 2026-09-06 | S-E-PERSONA-SAM | S-E | pass | 5 | — | none | Sales JWT: launcher **Operate only**; graph/search/List View; no Build/Govern |
+| 2026-09-06 | S-E-PERSONA-JORDAN | S-E | pass | 5 | — | none | Govern JWT: launcher **Govern + Settings**; Users lists all personas; no Build |
+| 2026-09-06 | S-E-PERSONA-CASEY | S-E | pass-with-workaround | 3 | product-bug | [#40](https://github.com/MajestaNet/one/issues/40) | Operate only; Opportunity absent; Users collection still mounted then List View 403 `identity.users` with Create User CTA |
+| 2026-09-06 | S-E-SINGLE-INSTANCE | S-E | fail | 2 | product-bug | [#39](https://github.com/MajestaNet/one/issues/39) | `requestSingleInstanceLock` ignores `--user-data-dir`; second process quits and focuses the first |
+| 2026-09-06 | S-E-PERSONA-CASEY-USER | S-E | fail | 2 | product-bug | [#40](https://github.com/MajestaNet/one/issues/40) | Graph advertises Users as accessible; List View 403 + Create User empty-state |
+
+| Count | Outcome |
+|---|---|
+| 16 | pass |
+| 3 | pass-with-workaround |
+| 2 | fail |
+| 0 | not-run |
+
+Open defects from this card: **#39** (single-instance lock), **#40** (Operate Users without `identity.users`). Do not re-file **#28** / **#29** / **#34** / **#35** / **#37** / **#38**.
 
