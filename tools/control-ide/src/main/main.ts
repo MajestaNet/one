@@ -20,7 +20,16 @@ import {
   writeTextUnderRoot,
 } from "./paths.js";
 import { createTrustedHandle } from "./ipcTrust.js";
-import { extractProtocolUrl, isAppProtocolUrl } from "./protocol.js";
+import { openInOsBrowser } from "./openExternalBrowser.js";
+import { startOAuthLoopback, type OAuthLoopbackServer } from "./oauthLoopback.js";
+import {
+  CUSTOM_PROTOCOL_REDIRECT_URI,
+  PROTOCOL,
+  extractProtocolUrl,
+  isAppProtocolUrl,
+  protocolClientLaunch,
+  shouldRegisterProtocolClient,
+} from "./protocol.js";
 import { parseUserDataDirFlag, shouldTakeSingleInstanceLock } from "./userDataDir.js";
 import {
   GIT_CLONE_SAFE_CONFIG,
@@ -142,7 +151,7 @@ function saveSession(s: Session | null): WriteSessionResult {
 function hardenWebContents(win: BrowserWindow) {
   win.webContents.setWindowOpenHandler(({ url }) => {
     const decision = decideWindowOpen(url);
-    if (decision.openExternally) void shell.openExternal(decision.openExternally);
+    if (decision.openExternally) void openVettedExternal(decision.openExternally);
     return { action: decision.action };
   });
 
@@ -150,7 +159,7 @@ function hardenWebContents(win: BrowserWindow) {
     const decision = decideNavigation(url, frameTrust);
     if (decision.prevent) {
       event.preventDefault();
-      if (decision.openExternally) void shell.openExternal(decision.openExternally);
+      if (decision.openExternally) void openVettedExternal(decision.openExternally);
     }
   });
 
@@ -213,6 +222,9 @@ function createWindow() {
 
   applyContentSecurityPolicy(next);
   hardenWebContents(next);
+  next.webContents.once("did-finish-load", () => {
+    flushPendingOAuth();
+  });
 
   if (process.env.VITE_DEV_SERVER_URL) {
     void next.loadURL(process.env.VITE_DEV_SERVER_URL);
@@ -287,13 +299,73 @@ async function trySpawnEditor(bin: string, repoPath: string): Promise<boolean> {
   }
 }
 
-const PROTOCOL = "one-control";
+let pendingOAuthUrl: string | undefined;
+let oauthLoopback: OAuthLoopbackServer | undefined;
+let oauthLoopbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+async function openVettedExternal(url: string): Promise<void> {
+  if (!isSafeExternalUrl(url)) return;
+  await openInOsBrowser(url, {
+    platform: process.platform,
+    openExternal: (u) => shell.openExternal(u),
+    openWithSystemOpener: async (u) => {
+      await execFileAsync("/usr/bin/open", [u]);
+    },
+  });
+}
 
 function broadcastOAuthCallback(url: string) {
   for (const win of BrowserWindow.getAllWindows()) {
     win.webContents.send("oauth:callback", url);
     if (win.isMinimized()) win.restore();
     win.focus();
+  }
+}
+
+function deliverOAuthUrl(url: string) {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    pendingOAuthUrl = url;
+    return;
+  }
+  broadcastOAuthCallback(url);
+}
+
+function flushPendingOAuth() {
+  if (!pendingOAuthUrl) return;
+  const url = pendingOAuthUrl;
+  pendingOAuthUrl = undefined;
+  broadcastOAuthCallback(url);
+}
+
+async function stopOAuthLoopback() {
+  if (oauthLoopbackTimer) {
+    clearTimeout(oauthLoopbackTimer);
+    oauthLoopbackTimer = undefined;
+  }
+  if (!oauthLoopback) return;
+  const server = oauthLoopback;
+  oauthLoopback = undefined;
+  try {
+    await server.close();
+  } catch {
+    /* already closed */
+  }
+}
+
+async function prepareOAuthRedirect(): Promise<{ ok: true; redirectUri: string }> {
+  await stopOAuthLoopback();
+  try {
+    oauthLoopback = await startOAuthLoopback((url) => {
+      deliverOAuthUrl(url);
+      void stopOAuthLoopback();
+    });
+    oauthLoopbackTimer = setTimeout(() => {
+      void stopOAuthLoopback();
+    }, 5 * 60 * 1000);
+    return { ok: true, redirectUri: oauthLoopback.redirectUri };
+  } catch {
+    // Port 5173 busy (Vite) or bind failed — packaged Mac still has one-control:// in Info.plist.
+    return { ok: true, redirectUri: CUSTOM_PROTOCOL_REDIRECT_URI };
   }
 }
 
@@ -309,7 +381,7 @@ if (!gotLock) {
 } else if (takeSingleInstanceLock) {
   app.on("second-instance", (_event, argv) => {
     const url = extractProtocolUrl(argv, PROTOCOL);
-    if (url) broadcastOAuthCallback(url);
+    if (url) deliverOAuthUrl(url);
     const win = BrowserWindow.getAllWindows()[0];
     if (win) {
       if (win.isMinimized()) win.restore();
@@ -318,19 +390,29 @@ if (!gotLock) {
   });
 }
 
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])]);
+const protocolCtx = {
+  packaged: app.isPackaged,
+  defaultApp: Boolean(process.defaultApp),
+  platform: process.platform,
+};
+if (shouldRegisterProtocolClient(protocolCtx)) {
+  const launch = protocolClientLaunch({
+    ...protocolCtx,
+    execPath: process.execPath,
+    argv: process.argv,
+  });
+  if (launch.execPath && launch.args?.length) {
+    app.setAsDefaultProtocolClient(PROTOCOL, launch.execPath, launch.args.map((a) => path.resolve(a)));
+  } else {
+    app.setAsDefaultProtocolClient(PROTOCOL);
   }
-} else {
-  app.setAsDefaultProtocolClient(PROTOCOL);
 }
 
-app.on("open-url", (event, url) => {
-  event.preventDefault();
-  if (isAppProtocolUrl(url, PROTOCOL)) {
-    broadcastOAuthCallback(url);
-  }
+app.on("will-finish-launching", () => {
+  app.on("open-url", (event, url) => {
+    event.preventDefault();
+    if (isAppProtocolUrl(url, PROTOCOL)) deliverOAuthUrl(url);
+  });
 });
 
 /** Register an IPC handler that validates its sender before doing any work (CIDE-06). */
@@ -427,12 +509,14 @@ app.whenReady().then(() => {
       return { ok: false, error: "Refused to open a non-https (or non-loopback) URL" };
     }
     try {
-      await shell.openExternal(url);
+      await openVettedExternal(url);
       return { ok: true };
     } catch (err) {
       return failed(err);
     }
   });
+
+  handle("oauth:prepareRedirect", async (): Promise<{ ok: true; redirectUri: string }> => prepareOAuthRedirect());
 
   handle("git:status", async (_e, repoPath: string) => {
     try {
@@ -760,12 +844,9 @@ app.whenReady().then(() => {
   });
 
   wireUpdates();
-  createWindow();
   const coldStartUrl = extractProtocolUrl(process.argv, PROTOCOL);
-  if (coldStartUrl) {
-    // Defer until the renderer has subscribed.
-    setTimeout(() => broadcastOAuthCallback(coldStartUrl), 500);
-  }
+  if (coldStartUrl) pendingOAuthUrl = coldStartUrl;
+  createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

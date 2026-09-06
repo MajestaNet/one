@@ -60,7 +60,7 @@ Important `.env` values for local IDE work:
 | `PORT` | `8080` | IDE Connect default |
 | `HOST` | `0.0.0.0` | Dual-stack bind (`:8080`); `http://localhost` works from Control IDE |
 
-For local Google-style sign-in you do **not** need Google Cloud credentials. In development the API enables a built-in `dev` login provider when `AUTH_LOGIN_PROVIDERS` is unset. Control IDE **Sign in** opens `/auth/v1/login`; choose **Continue with Google** (local stand-in) and the IDE receives a Majesta One JWT via `one-control://oauth/callback`.
+For local Google-style sign-in you do **not** need Google Cloud credentials. In development the API enables a built-in `dev` login provider when `AUTH_LOGIN_PROVIDERS` is unset. Control IDE **Sign in** opens `/auth/v1/login` in the system browser. Choose **Continue with Google** (local stand-in); the browser returns to `http://127.0.0.1:5173/oauth/callback` and the running IDE stores the Majesta One JWT. Packaged Mac builds also declare `one-control://oauth/callback` in Info.plist.
 
 To use real Google later, set `AUTH_LOGIN_PROVIDERS=google` plus `AUTH_GOOGLE_CLIENT_ID` / `AUTH_GOOGLE_CLIENT_SECRET`, and register redirect `http://localhost:8080/auth/v1/callback/google`.
 

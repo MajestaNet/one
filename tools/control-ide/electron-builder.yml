@@ -5,6 +5,10 @@ productName: Majesta One Control
 # path-safe binary name so packaging stays independent of the npm scope.
 executableName: one-control
 copyright: Copyright Majesta One
+protocols:
+  name: Majesta One Control
+  schemes:
+    - one-control
 directories:
   output: release
 files:

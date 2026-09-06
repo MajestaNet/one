@@ -33,6 +33,7 @@ import {
   loadPendingPkce,
   parseOAuthCallbackUrl,
   randomOAuthState,
+  resolvePkceRedirectUri,
   statesMatch,
   storePendingPkce,
   takePendingPkce,
@@ -538,7 +539,7 @@ export function ConnectSection({
       const { verifier, challenge } = await createPkcePair();
       setPkceVerifier(verifier);
       const state = randomOAuthState();
-      const redirectUri = DEFAULT_REDIRECT_URI;
+      const redirectUri = await resolvePkceRedirectUri();
       storePendingPkce({
         verifier,
         state,

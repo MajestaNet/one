@@ -48,6 +48,7 @@ export type OneAPI = {
   /** Pick any usable folder (empty OK). Does not require .git / one.yaml. */
   chooseLocalFolder?: () => Promise<{ ok: boolean; path?: string; canceled?: boolean; error?: string }>;
   openExternal?: (url: string) => Promise<{ ok: boolean; error?: string }>;
+  prepareOAuthRedirect?: () => Promise<{ ok: boolean; redirectUri?: string; error?: string }>;
   gitStatus: (repoPath: string) => Promise<{ ok: boolean; branch?: string; status?: string; error?: string }>;
   exportRepoZip?: (
     repoPath: string,
