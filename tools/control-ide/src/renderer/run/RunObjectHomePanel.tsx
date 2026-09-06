@@ -549,9 +549,11 @@ export function RunObjectHomePanel({
         subtitle="Client-backed list → record (FLS + sharing enforced on the install)"
         actions={
           <>
+            {capabilityMiss ? null : (
             <Button variant="primary" disabled={!canCreate} onClick={startCreate}>
               New {selectedLabel || "record"}
             </Button>
+            )}
             <Button
               variant="secondary"
               disabled={selectedRowIds.size === 0 || !excerptBridge}
@@ -602,9 +604,11 @@ export function RunObjectHomePanel({
         )}
         {embedded ? (
           <div className="run-object-home-toolbar-actions">
+            {capabilityMiss ? null : (
             <Button variant="primary" disabled={!canCreate} onClick={startCreate}>
               New {selectedLabel || "record"}
             </Button>
+            )}
             <Button
               variant="secondary"
               busy={busy === "catalog" || busy === "list"}
