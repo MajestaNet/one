@@ -232,7 +232,12 @@ func cmdOrgDeploy(args []string) {
 		fmt.Fprintf(os.Stderr, "pack applied; suite %s failed: %v\n", suite, suiteErr)
 		os.Exit(1)
 	}
-	if writeSuiteReport(os.Stderr, suite, suiteBody, suiteStatus) {
+	suiteFailed, suiteWriteErr := writeSuiteReport(os.Stderr, suite, suiteBody, suiteStatus)
+	if suiteWriteErr != nil {
+		fmt.Fprintf(os.Stderr, "pack applied; suite %s failed: %v\n", suite, suiteWriteErr)
+		os.Exit(1)
+	}
+	if suiteFailed {
 		fmt.Fprintf(os.Stderr, "pack applied; suite %s failed\n", suite)
 		os.Exit(1)
 	}
