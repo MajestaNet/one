@@ -44,7 +44,7 @@ import { Button, EmptyState, KeyValueList, PanelHeader, StatusBadge } from "../u
 import { IconConnect } from "../icons/Icons";
 import { envDisplayName } from "../session";
 import { revokeRefreshToken } from "../refreshSession";
-import { listDevices, revokeDevice, type DeviceRow } from "../account/self";
+import { listDevices, type DeviceRow } from "../account/self";
 
 type MePayload = Record<string, unknown>;
 
@@ -219,29 +219,6 @@ export function ConnectSection({
     }
   }, [focusConnect, onFocusConnectConsumed]);
 
-  const loadDevices = async () => {
-    if (!connected) {
-      setDevices([]);
-      setDevicesErr("");
-      return;
-    }
-    try {
-      const rows = await listDevices((path, init) =>
-        bridge.fetch ? bridge.fetch(path, init) : Promise.reject(new Error("fetch unavailable")),
-      );
-      setDevices(rows);
-      setDevicesErr("");
-    } catch (e) {
-      setDevices([]);
-      setDevicesErr(String(e));
-    }
-  };
-
-  useEffect(() => {
-    void loadDevices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when session flips
-  }, [connected, bridge.session?.token]);
-
   const resolveCompatHandshake = async (
     url: string,
     actor: MePayload,
@@ -354,6 +331,22 @@ export function ConnectSection({
       );
     }
     return verdict.url;
+  };
+
+  const loadDevices = async () => {
+    setDevicesErr("");
+    try {
+      const url = resolveTargetBaseUrl();
+      const jwt = token.trim() || bridge.session?.token;
+      if (!jwt) throw new Error("Connect first, then list devices");
+      const rows = await listDevices((path, init) =>
+        apiFetch(url, jwt, path, init ?? {}, { allowInsecureHttp, apiRevisionPin: activeConn?.apiRevisionPin }),
+      );
+      setDevices(rows);
+    } catch (e) {
+      setDevices([]);
+      setDevicesErr(formatError(e));
+    }
   };
 
   const save = async () => {
@@ -1035,9 +1028,12 @@ export function ConnectSection({
           ) : null}
           <div data-testid="connect-devices">
             <p className="muted">Enrolled devices (GET /client/v1/devices)</p>
+            <Button variant="secondary" busy={busy} onClick={() => void loadDevices()} data-testid="connect-devices-refresh">
+              List devices
+            </Button>
             {devicesErr ? <p className="err">{devicesErr}</p> : null}
             {devices.length === 0 && !devicesErr ? (
-              <p className="muted">No devices enrolled.</p>
+              <p className="muted">No devices listed yet — enroll above, then List devices.</p>
             ) : (
               <ul className="govern-list">
                 {devices.map((d) => (
@@ -1053,10 +1049,19 @@ export function ConnectSection({
                         onClick={() => {
                           void (async () => {
                             try {
-                              await revokeDevice(bridge.fetch, d.deviceId);
+                              const url = resolveTargetBaseUrl();
+                              const jwt = token.trim() || bridge.session?.token;
+                              if (!jwt) throw new Error("Connect first");
+                              await apiFetch(
+                                url,
+                                jwt,
+                                `/client/v1/devices/${encodeURIComponent(d.deviceId)}/revoke`,
+                                { method: "POST" },
+                                { allowInsecureHttp, apiRevisionPin: activeConn?.apiRevisionPin },
+                              );
                               await loadDevices();
                             } catch (e) {
-                              setDevicesErr(String(e));
+                              setDevicesErr(formatError(e));
                             }
                           })();
                         }}
