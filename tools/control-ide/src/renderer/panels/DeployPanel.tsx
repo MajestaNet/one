@@ -4,7 +4,7 @@ import { envDisplayName } from "../session";
 import { loadRepoEnvironments, orderStagesByRepoEnv } from "../repoEnvironments";
 import type { ChangeStatus, CheckItem } from "../workspace/types";
 import { Button, FileDrop, PanelHeader, StatusBadge, ToolSurface } from "../ui";
-import { resolveCustomerTestRun } from "./deployTestRun";
+import { resolveCustomerTestRun, testRunPollPath } from "./deployTestRun";
 
 type StepState = "idle" | "running" | "passed" | "failed";
 
@@ -347,6 +347,20 @@ export function DeployPanel({
         body: JSON.stringify({ bundleId, dryRun: false }),
       });
       append(JSON.stringify(promo, null, 2));
+      const resolved = await resolveCustomerTestRun(bridge.fetch, promo, {
+        intervalMs: 400,
+        maxAttempts: 45,
+      });
+      if (resolved.verdict === "failed") {
+        setDeployState("failed");
+        setErr("Promotion finished with a failed work status — not treated as Passed.");
+        return;
+      }
+      if (resolved.verdict === "pending" && testRunPollPath(promo)) {
+        setDeployState("failed");
+        setErr("Promotion work did not report a terminal result — not treated as Passed.");
+        return;
+      }
       setDeployState("passed");
     } catch (e) {
       setErr(String(e));

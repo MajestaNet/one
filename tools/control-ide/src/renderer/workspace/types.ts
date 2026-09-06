@@ -28,6 +28,8 @@ export type TileId =
   | "experiences"
   | "installAuth"
   | "permissions"
+  | "sharing"
+  | "mcp"
   | "govern"
   | "account"
   | "hosting"
@@ -68,8 +70,9 @@ export type StreamMessage = {
   /** Selection / table rows attached as chat context (Agentic Run uplift). */
   contextExcerpts?: import("./contextExcerpt").ContextExcerpt[];
   /**
-   * When true, Approve applies IDE tool/graph effects for an already-completed
-   * LLM run (does not POST /agents/runs/{id}/approve).
+   * When true, Approve applies IDE-local graph.* / tool.* chrome for an
+   * already-completed LLM run (the hosted loop never executes those).
+   * Hosted writes park as awaiting_tool_approval and must POST .../approve.
    */
   pendingToolApply?: boolean;
 };
@@ -299,6 +302,11 @@ export const TILE_META: Record<
     modes: ["govern"],
     summary: "Roles, permission sets, and IDE capabilities.",
   },
+  sharing: {
+    label: "Sharing",
+    modes: ["govern"],
+    summary: "Record sharing OWD and rules on the active install.",
+  },
   /** @deprecated Split into users / integrations / permissions. */
   govern: {
     label: "Users & integrations",
@@ -321,6 +329,11 @@ export const TILE_META: Record<
     modes: [],
     summary: "BYO model providers and Native DigitalOcean Inference.",
   },
+  mcp: {
+    label: "Builder connect",
+    modes: [],
+    summary: "Copy the install MCP URL and browse GET /mcp/tools.",
+  },
 };
 
 /** Soft palette of workspace tools per mode (left hover tool rail). */
@@ -329,11 +342,11 @@ export const MODE_WORKSPACE_TOOLS: Record<WorkspaceMode, TileId[]> = {
   operate: ["runGraph", "objectHome"],
   /** Metadata + deploy + inspect (former Build + Ship + Operate inspect). */
   build: ["objects", "packages", "agentSpecs", "tools", "automations", "repo", "deploy", "query", "monitor", "explorer"],
-  govern: ["users", "integrations", "experiences", "installAuth", "permissions"],
+  govern: ["users", "integrations", "experiences", "installAuth", "permissions", "sharing"],
 };
 
 /** Settings section tools (launcher Settings tile). */
-export const SETTINGS_WORKSPACE_TOOLS: TileId[] = ["account", "hosting", "inference", "env"];
+export const SETTINGS_WORKSPACE_TOOLS: TileId[] = ["account", "hosting", "inference", "env", "mcp"];
 
 /** Max vertical slices in the shared workspace board (all modes): 1 tool + 1 agent. */
 export const MAX_WORKSPACE_TILES = 2;
@@ -345,7 +358,14 @@ export const MAX_WORKSPACE_TOOLS = 1;
 export const MAX_WORKSPACE_AGENTS = 1;
 
 /** Govern config panels (open as workspace slices; metadata is deep-link only elsewhere). */
-export const GOVERN_CONFIG_PANELS: TileId[] = ["users", "integrations", "experiences", "installAuth", "permissions"];
+export const GOVERN_CONFIG_PANELS: TileId[] = [
+  "users",
+  "integrations",
+  "experiences",
+  "installAuth",
+  "permissions",
+  "sharing",
+];
 
 /** Build config panels (open as workspace slices; metadata YAML remains deep-link only). */
 export const BUILD_CONFIG_PANELS: TileId[] = [

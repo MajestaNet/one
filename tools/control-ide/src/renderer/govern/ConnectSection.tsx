@@ -44,6 +44,7 @@ import { Button, EmptyState, KeyValueList, PanelHeader, StatusBadge } from "../u
 import { IconConnect } from "../icons/Icons";
 import { envDisplayName } from "../session";
 import { revokeRefreshToken } from "../refreshSession";
+import { listDevices, type DeviceRow } from "../account/self";
 
 type MePayload = Record<string, unknown>;
 
@@ -138,6 +139,8 @@ export function ConnectSection({
   const [compatBanner, setCompatBanner] = useState("");
   const [apiRevisionPin, setApiRevisionPin] = useState<number | undefined>(undefined);
   const [pinRange, setPinRange] = useState<{ minPin: number; maxPin: number } | null>(null);
+  const [devices, setDevices] = useState<DeviceRow[]>([]);
+  const [devicesErr, setDevicesErr] = useState("");
 
   const connected = Boolean(bridge.session?.baseUrl && bridge.session?.token);
   const knownEnvs = bridge.session?.environments ?? [];
@@ -328,6 +331,22 @@ export function ConnectSection({
       );
     }
     return verdict.url;
+  };
+
+  const loadDevices = async () => {
+    setDevicesErr("");
+    try {
+      const url = resolveTargetBaseUrl();
+      const jwt = token.trim() || bridge.session?.token;
+      if (!jwt) throw new Error("Connect first, then list devices");
+      const rows = await listDevices((path, init) =>
+        apiFetch(url, jwt, path, init ?? {}, { allowInsecureHttp, apiRevisionPin: activeConn?.apiRevisionPin }),
+      );
+      setDevices(rows);
+    } catch (e) {
+      setDevices([]);
+      setDevicesErr(formatError(e));
+    }
   };
 
   const save = async () => {
@@ -616,6 +635,7 @@ export function ConnectSection({
       } else {
         await bridge.setSession({ ...base, deviceId: id });
       }
+      await loadDevices();
     } catch (e) {
       setErr(formatError(e));
     } finally {
@@ -1006,6 +1026,55 @@ export function ConnectSection({
               <pre className="log">{JSON.stringify(me, null, 2)}</pre>
             </details>
           ) : null}
+          <div data-testid="connect-devices">
+            <p className="muted">Enrolled devices (GET /client/v1/devices)</p>
+            <Button variant="secondary" busy={busy} onClick={() => void loadDevices()} data-testid="connect-devices-refresh">
+              List devices
+            </Button>
+            {devicesErr ? <p className="err">{devicesErr}</p> : null}
+            {devices.length === 0 && !devicesErr ? (
+              <p className="muted">No devices listed yet — enroll above, then List devices.</p>
+            ) : (
+              <ul className="govern-list">
+                {devices.map((d) => (
+                  <li key={d.deviceId} className="row" style={{ justifyContent: "space-between" }}>
+                    <span>
+                      {d.label || d.deviceId}
+                      {d.revokedAt ? <span className="muted"> · revoked</span> : null}
+                    </span>
+                    {!d.revokedAt ? (
+                      <Button
+                        variant="ghost"
+                        busy={busy}
+                        onClick={() => {
+                          void (async () => {
+                            try {
+                              const url = resolveTargetBaseUrl();
+                              const jwt = token.trim() || bridge.session?.token;
+                              if (!jwt) throw new Error("Connect first");
+                              await apiFetch(
+                                url,
+                                jwt,
+                                `/client/v1/devices/${encodeURIComponent(d.deviceId)}/revoke`,
+                                { method: "POST" },
+                                { allowInsecureHttp, apiRevisionPin: activeConn?.apiRevisionPin },
+                              );
+                              await loadDevices();
+                            } catch (e) {
+                              setDevicesErr(formatError(e));
+                            }
+                          })();
+                        }}
+                        data-testid={`connect-device-revoke-${d.deviceId}`}
+                      >
+                        Revoke
+                      </Button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
     </section>

@@ -3,6 +3,7 @@
 export type AgentRunStatus =
   | "queued"
   | "awaiting_approval"
+  | "awaiting_tool_approval"
   | "running"
   | "completed"
   | "dry_run_complete"
@@ -43,9 +44,18 @@ export type StreamHandlers = {
   onError?: (payload: { code?: string; error?: string }) => void;
 };
 
-/** Shown when a stream create/approve still returns JSON park/queue instead of SSE tokens. */
+/** Pre-LLM park (legacy / requireApproval playbooks). Distinct from write-park. */
+export const PRE_LLM_PARK_STATUS = "awaiting_approval";
+/** Hosted MCP write-park (BP-006 / BP-066 WS1). */
+export const WRITE_PARK_STATUS = "awaiting_tool_approval";
+
+export function isParkedRunStatus(status: string | undefined): boolean {
+  return status === PRE_LLM_PARK_STATUS || status === WRITE_PARK_STATUS;
+}
+
+/** Shown when a stream create/approve returns an unexpected non-terminal JSON body. */
 export const STREAM_PARKED_HINT =
-  "This install parked the run for approval instead of streaming a reply. Open Settings → Inference and use Test chat to validate the model. If Test chat streams, restart the Majesta One API (`make api`) so Operate chat skips pre-LLM approval.";
+  "This install returned a non-streaming run status instead of SSE tokens. Approve the run in chat if it is parked (awaiting_approval or awaiting_tool_approval). Settings → Inference Test chat is generation-only (approved: true) and does not execute tools.";
 
 function agentStreamHeaders(token: string): HeadersInit {
   return {
@@ -55,21 +65,17 @@ function agentStreamHeaders(token: string): HeadersInit {
   };
 }
 
-async function consumeAgentRunResponse(
-  res: Response,
-  handlers: StreamHandlers,
-  onParked?: (run: AgentRun) => Promise<AgentRun>,
-): Promise<AgentRun> {
+async function consumeAgentRunResponse(res: Response, handlers: StreamHandlers): Promise<AgentRun> {
   const contentType = res.headers.get("content-type") ?? "";
   if (contentType.includes("text/event-stream")) {
     return readAgentRunSSE(res, handlers);
   }
   const run = (await res.json()) as AgentRun;
-  if (run.status === "awaiting_approval" && run.id && onParked) {
-    return onParked(run);
+  handlers.onRun?.({ id: run.id, status: run.status });
+  if (isParkedRunStatus(run.status)) {
+    return run;
   }
   if (isTerminalRunStatus(run.status)) {
-    handlers.onRun?.({ id: run.id, status: run.status });
     handlers.onDone?.({ id: run.id, status: run.status, output: run.output });
     return run;
   }
@@ -138,17 +144,6 @@ export async function createAgentRunStream(
   handlers: StreamHandlers,
   signal?: AbortSignal,
 ): Promise<AgentRun> {
-  return postAgentRunStream(baseUrl, token, body, handlers, signal, false);
-}
-
-async function postAgentRunStream(
-  baseUrl: string,
-  token: string,
-  body: CreateAgentRunBody,
-  handlers: StreamHandlers,
-  signal: AbortSignal | undefined,
-  generationRetry: boolean,
-): Promise<AgentRun> {
   const url = `${baseUrl.replace(/\/$/, "")}/client/v1/agents/runs`;
   const res = await fetch(url, {
     method: "POST",
@@ -160,23 +155,7 @@ async function postAgentRunStream(
     const text = await res.text().catch(() => "");
     throw new Error(text || `stream failed HTTP ${res.status}`);
   }
-  return consumeAgentRunResponse(res, handlers, async (parked) => {
-    try {
-      return await approveAgentRunStream(baseUrl, token, parked.id, handlers, signal);
-    } catch (err) {
-      // Older APIs park stream+approved:false before the LLM. Retry once as generation-only.
-      // Hosted MCP tool loop is shipped (BP-006). Distinct write-park is awaiting_tool_approval (WS1).
-      if (generationRetry || body.approved) throw err;
-      return postAgentRunStream(
-        baseUrl,
-        token,
-        { ...body, approved: true },
-        handlers,
-        signal,
-        true,
-      );
-    }
-  });
+  return consumeAgentRunResponse(res, handlers);
 }
 
 /** Settings → Inference probe: stream a goal-only run (approved so older APIs still generate). */
@@ -249,7 +228,7 @@ export function isTerminalRunStatus(status: string): boolean {
   return TERMINAL.has(status);
 }
 
-/** Poll until terminal or awaiting_approval (caller may approve). Throws if still queued/running. */
+/** Poll until terminal or a park status (caller may approve). Throws if still queued/running. */
 export async function pollAgentRun(
   fetchFn: FetchFn,
   id: string,
@@ -261,7 +240,7 @@ export async function pollAgentRun(
   for (let i = 0; i < maxAttempts; i++) {
     if (opts.signal?.aborted) throw new Error("poll aborted");
     last = await getAgentRun(fetchFn, id);
-    if (isTerminalRunStatus(last.status) || last.status === "awaiting_approval") return last;
+    if (isTerminalRunStatus(last.status) || isParkedRunStatus(last.status)) return last;
     await new Promise((r) => setTimeout(r, intervalMs));
   }
   throw new Error(
@@ -269,10 +248,41 @@ export async function pollAgentRun(
   );
 }
 
+function stringListFromOutput(out: Record<string, unknown>, key: string): string[] {
+  const raw = out[key];
+  if (!Array.isArray(raw)) return [];
+  return raw.map((t) => String(t)).filter(Boolean);
+}
+
+/** MCP tool names the hosted loop executed (not only the playbook allowlist). */
+export function toolsExecutedFromRun(run: AgentRun): string[] {
+  const out = run.output;
+  if (!out || typeof out !== "object") return [];
+  const row = out as Record<string, unknown>;
+  const named = [
+    ...stringListFromOutput(row, "toolsExecuted"),
+    ...stringListFromOutput(row, "executedTools"),
+  ];
+  const calls = row.toolCalls ?? row.toolResults ?? row.tools;
+  if (Array.isArray(calls)) {
+    for (const item of calls) {
+      if (!item || typeof item !== "object") continue;
+      const tool = (item as { tool?: unknown; name?: unknown }).tool ?? (item as { name?: unknown }).name;
+      if (typeof tool === "string" && tool.trim()) named.push(tool.trim());
+    }
+  }
+  return [...new Set(named)];
+}
+
 export function summarizeRunOutput(run: AgentRun): string {
   if (run.error) return `Failed: ${run.error}`;
-  if (run.status === "awaiting_approval") {
-    return `Run ${run.id} awaits approval before tools execute.`;
+  if (run.status === WRITE_PARK_STATUS) {
+    const executed = toolsExecutedFromRun(run);
+    const suffix = executed.length ? ` · tools: ${executed.join(", ")}` : "";
+    return `Run ${run.id} parked for tool-write approval${suffix}. Approve to let the install execute writes.`;
+  }
+  if (run.status === PRE_LLM_PARK_STATUS) {
+    return `Run ${run.id} awaits approval before generation. Approve to continue.`;
   }
   if (run.status === "queued" || run.status === "running") {
     return `Agent run still ${run.status}${run.goal ? ` · ${run.goal}` : ""}`;

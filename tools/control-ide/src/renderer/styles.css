@@ -441,6 +441,29 @@ html[data-theme="light"] body {
   white-space: nowrap;
 }
 
+.env-kind-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.08rem 0.35rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.env-kind-demo {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+
+.env-kind-mock {
+  border-color: color-mix(in srgb, #c9a227 55%, var(--line));
+}
+
+.env-kind-prod {
+  border-color: color-mix(in srgb, #c45c4a 55%, var(--line));
+}
+
 .env-switcher-id {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -461,6 +484,12 @@ html[data-theme="light"] body {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 24px color-mix(in srgb, #000 35%, transparent);
+}
+
+.env-switcher-item-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .env-switcher-item {

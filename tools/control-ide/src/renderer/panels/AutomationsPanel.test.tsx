@@ -85,4 +85,58 @@ describe("AutomationsPanel", () => {
       ),
     );
   });
+
+  it("runs a callable automation and patches active", async () => {
+    const user = userEvent.setup();
+    const fetch = vi.fn(async (path: string, init?: RequestInit) => {
+      if (path === "/metadata/v1/automations" && !init?.method) {
+        return {
+          automations: [
+            {
+              apiName: "CreateAccount_From_Contact",
+              label: "Create Account from Contact",
+              objectApiName: "Contact",
+              triggerEvent: "create",
+              runtime: "code",
+              active: true,
+              entryFile: "src/automations/create_account_from_contact.ts",
+            },
+          ],
+        };
+      }
+      if (path === "/metadata/v1/automations/CreateAccount_From_Contact" && init?.method === "PATCH") {
+        return { apiName: "CreateAccount_From_Contact", active: false };
+      }
+      if (path === "/client/v1/automations/CreateAccount_From_Contact/runs") {
+        return { id: "run-1", status: "completed", automationApiName: "CreateAccount_From_Contact" };
+      }
+      return {};
+    });
+    render(
+      <AutomationsPanel
+        bridge={{ session: { baseUrl: "http://x", token: "t" }, setSession: vi.fn(), fetch }}
+      />,
+    );
+    await waitFor(() => expect(screen.getByTestId("automations-list")).toBeTruthy());
+    await user.click(screen.getByTestId("automation-CreateAccount_From_Contact"));
+    expect(await screen.findByTestId("automations-run")).toBeTruthy();
+    await user.click(screen.getByTestId("automations-run"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/client/v1/automations/CreateAccount_From_Contact/runs",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    expect(await screen.findByTestId("automations-run-status")).toBeTruthy();
+    await user.click(screen.getByTestId("automations-active"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/automations/CreateAccount_From_Contact",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ active: false }),
+        }),
+      ),
+    );
+  });
 });

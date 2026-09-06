@@ -96,9 +96,11 @@ export const TOOL_IDE_CAP: Partial<Record<TileId, string>> = {
   experiences: "ide.govern.experiences",
   installAuth: "ide.govern.installAuth",
   permissions: "ide.govern.permissions",
+  sharing: "ide.govern.permissions",
   account: "ide.settings.account",
   hosting: "ide.settings.hosting",
   inference: "ide.settings.inference",
+  mcp: "ide.settings.env",
 };
 
 /** Settings section capability (launcher Settings tile). */
@@ -210,6 +212,16 @@ export function toolsForSettings(
       }
       return hasScope(scopes, "deploy") || hasScope(scopes, "client");
     }
+    if (id === "mcp") {
+      if (
+        capsKnown &&
+        !hasCapability(caps, "ide.settings.env", { isAdmin, failClosed: true }) &&
+        !hasCapability(caps, SETTINGS_IDE_CAP, { isAdmin, failClosed: true })
+      ) {
+        return false;
+      }
+      return hasScope(scopes, "client") || hasScope(scopes, "metadata") || hasScope(scopes, "admin");
+    }
     return true;
   });
 }
@@ -294,6 +306,7 @@ export function toolsForMode(
       case "experiences":
       case "installAuth":
       case "permissions":
+      case "sharing":
         familyOk = hasScope(scopes, "client") || hasScope(scopes, "metadata") || hasScope(scopes, "admin");
         break;
       default:
@@ -314,6 +327,12 @@ export function toolsForMode(
     }
     if (id === "automations" && capsKnown) {
       return hasCapability(caps, "metadata.build", { isAdmin, failClosed: true });
+    }
+    if (id === "sharing" && capsKnown) {
+      return (
+        hasCapability(caps, "authz.manage", { isAdmin, failClosed: true }) ||
+        hasCapability(caps, "ide.govern.permissions", { isAdmin, failClosed: true })
+      );
     }
     return true;
   });
