@@ -1,4 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AppBridge } from "../App";
 import { AccountSettingsPanel } from "./AccountSettingsPanel";
@@ -40,5 +41,37 @@ describe("AccountSettingsPanel", () => {
     expect(screen.getByText("Session active")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "production" })).toBeTruthy();
     expect(screen.getByText("https://api.example")).toBeTruthy();
+    expect(screen.getByTestId("account-caps").textContent).toContain("ide.settings.account");
+    expect(screen.getByTestId("account-password")).toBeTruthy();
+  });
+
+  it("changes password and lists devices from Client APIs", async () => {
+    const user = userEvent.setup();
+    const fetch = vi.fn(async (path: string, _init?: RequestInit) => {
+      if (path === "/client/v1/devices") {
+        return { devices: [{ deviceId: "dev-1", label: "Laptop" }] };
+      }
+      if (path === "/client/v1/me/password") return {};
+      if (String(path).includes("/revoke")) return {};
+      return {};
+    });
+    const b = bridge();
+    b.fetch = fetch;
+    render(<AccountSettingsPanel bridge={b} />);
+    expect(await screen.findByTestId("account-devices")).toBeTruthy();
+    expect(screen.getByText("Laptop")).toBeTruthy();
+    await user.type(screen.getByTestId("account-password-current"), "old");
+    await user.type(screen.getByTestId("account-password-new"), "newpw");
+    await user.click(screen.getByTestId("account-password-save"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/client/v1/me/password",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+    await user.click(screen.getByTestId("account-device-revoke-dev-1"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith("/client/v1/devices/dev-1/revoke", { method: "POST" }),
+    );
   });
 });

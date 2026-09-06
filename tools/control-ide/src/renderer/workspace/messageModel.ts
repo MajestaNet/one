@@ -1,5 +1,10 @@
 import type { AgentRun } from "../agents/runs";
-import { summarizeRunOutput } from "../agents/runs";
+import {
+  isParkedRunStatus,
+  PRE_LLM_PARK_STATUS,
+  summarizeRunOutput,
+  toolsExecutedFromRun,
+} from "../agents/runs";
 import { boardHandoffFromRun } from "../operate/handoff";
 import type { BoardHandoff } from "../operate/types";
 import { toolHandoffFromRun } from "../run/toolHandoff";
@@ -32,8 +37,14 @@ export function toolsPlannedFromRun(run: AgentRun): string[] {
   const out = run.output;
   if (!out || typeof out !== "object") return [];
   const tools = (out as { toolsPlanned?: unknown }).toolsPlanned;
-  if (!Array.isArray(tools)) return [];
-  return tools.map((t) => String(t)).filter(Boolean);
+  const planned = Array.isArray(tools) ? tools.map((t) => String(t)).filter(Boolean) : [];
+  const executed = toolsExecutedFromRun(run);
+  return [...new Set([...planned, ...executed])];
+}
+
+/** Client-local chrome the hosted loop will never execute (graph.* / tool.*). */
+export function isLocalChromeTool(name: string): boolean {
+  return name.startsWith("graph.") || name.startsWith("tool.");
 }
 
 export function defaultTileForMode(mode: AppSection): { tileAction: TileId; tileActionLabel: string } {
@@ -65,8 +76,11 @@ export function messagesFromRun(run: AgentRun, opts: RunMessageOpts): StreamMess
   const tools = pendingActions.length ? pendingActions : toolsPlannedFromRun(run);
   const handoff: BoardHandoff | null = opts.mode === "build" ? boardHandoffFromRun(run) : null;
   const toolHandoff: ToolHandoff | null = opts.mode === "operate" ? toolHandoffFromRun(run) : null;
-  const pendingToolApply = pendingActions.length > 0 && run.status !== "awaiting_approval";
-  const needsApproval = run.status === "awaiting_approval" || pendingToolApply;
+  const parked = isParkedRunStatus(run.status);
+  const localChrome = pendingActions.filter(isLocalChromeTool);
+  const pendingToolApply = !parked && localChrome.length > 0;
+  const needsApproval = parked || pendingToolApply;
+  const displayStatus = parked ? run.status : needsApproval ? PRE_LLM_PARK_STATUS : run.status;
   const out: StreamMessage[] = [];
 
   if (tools.length) {
@@ -77,7 +91,7 @@ export function messagesFromRun(run: AgentRun, opts: RunMessageOpts): StreamMess
         ? "Tools planned — awaiting approval before execution."
         : "Tools used in this run.",
       runId: run.id,
-      runStatus: needsApproval ? "awaiting_approval" : run.status,
+      runStatus: displayStatus,
       toolsPlanned: tools,
       steps: tools.map((label, i) => ({
         id: `step-${i}`,
@@ -106,7 +120,7 @@ export function messagesFromRun(run: AgentRun, opts: RunMessageOpts): StreamMess
     role: needsApproval ? "approval" : "agent",
     body: summarizeRunOutput(run),
     runId: run.id,
-    runStatus: needsApproval ? "awaiting_approval" : run.status,
+    runStatus: displayStatus,
     toolsPlanned: tools.length ? tools : undefined,
     createdAt: run.completedAt ?? run.createdAt ?? new Date(now).toISOString(),
     agentLabel: opts.agentLabel,

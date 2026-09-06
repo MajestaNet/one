@@ -63,36 +63,16 @@ describe("InferencePanel", () => {
     const user = userEvent.setup();
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: "parked", status: "awaiting_approval" }), {
-            status: 202,
-            headers: { "Content-Type": "application/json" },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: "parked", status: "queued" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: "parked2", status: "awaiting_approval" }), {
-            status: 202,
-            headers: { "Content-Type": "application/json" },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: "parked2", status: "queued" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
-        ),
+      vi.fn().mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: "parked", status: "awaiting_approval" }), {
+          status: 202,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
     );
     render(<InferencePanel bridge={bridge()} />);
     await user.click(await screen.findByTestId("inference-test-send"));
     const err = await screen.findByTestId("inference-test-error");
-    expect(err.textContent).toMatch(/Settings → Inference|parked/i);
+    expect(err.textContent).toMatch(/generation-only|parked/i);
   });
 });

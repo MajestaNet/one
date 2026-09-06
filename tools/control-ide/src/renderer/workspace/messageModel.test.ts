@@ -69,7 +69,7 @@ describe("messageModel", () => {
     expect(defaultTileForMode("build").tileAction).toBe("objects");
   });
 
-  it("parks completed runs with pending tool actions for approval", () => {
+  it("parks completed runs with local graph.* chrome for approval", () => {
     const msgs = messagesFromRun(
       {
         id: "r-fx",
@@ -82,6 +82,21 @@ describe("messageModel", () => {
     expect(msgs.find((m) => m.role === "approval")?.pendingToolApply).toBe(true);
     expect(msgs.find((m) => m.role === "approval")?.runStatus).toBe("awaiting_approval");
     expect(msgs.find((m) => m.role === "tool")?.steps?.map((s) => s.label)).toEqual(["graph.pin"]);
+  });
+
+  it("keeps write-park status distinct from pre-LLM park", () => {
+    const msgs = messagesFromRun(
+      {
+        id: "r-write",
+        status: "awaiting_tool_approval",
+        output: { toolCalls: [{ tool: "create_record" }] },
+      },
+      { mode: "operate", now: 5 },
+    );
+    expect(msgs.some((m) => m.role === "approval")).toBe(true);
+    expect(msgs.find((m) => m.role === "approval")?.runStatus).toBe("awaiting_tool_approval");
+    expect(msgs.find((m) => m.role === "approval")?.pendingToolApply).toBeFalsy();
+    expect(msgs.find((m) => m.role === "tool")?.toolsPlanned).toContain("create_record");
   });
 
   it("builds tool handoff bubbles in Operate mode", () => {

@@ -1,7 +1,7 @@
 # BP-066: Control IDE demo-client fidelity (honest JWT client)
 
 - **Severity:** Medium
-- **Status:** Open (plan landed; implementation not started)
+- **Status:** Open (WS0–WS3 and WS5 landed in Control IDE; WS4 Client ingest/actions/upsert demo remains)
 - **Track:** Finish — **explicit unfreeze of demo-client honesty**, not frozen Electron product chrome
 - **Area:** `tools/control-ide/**` (primary); `internal/httpapi` only for documented API gaps in the plan
 - **Design:** [ide-demo-client-uplift-build-plan.md](../docs/architecture/ide-demo-client-uplift-build-plan.md)

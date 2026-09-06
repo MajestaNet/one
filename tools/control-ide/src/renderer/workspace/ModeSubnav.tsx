@@ -38,6 +38,7 @@ function tileIcon(id: TileId) {
     case "deploy":
       return <IconDeploy size={14} />;
     case "connect":
+    case "mcp":
       return <IconConnect size={14} />;
     case "env":
       return <IconEnv size={14} />;
@@ -46,6 +47,7 @@ function tileIcon(id: TileId) {
     case "experiences":
     case "installAuth":
     case "permissions":
+    case "sharing":
     case "govern":
       return <IconGovern size={14} />;
   }

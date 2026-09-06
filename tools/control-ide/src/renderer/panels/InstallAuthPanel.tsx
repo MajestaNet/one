@@ -135,7 +135,7 @@ export function InstallAuthPanel({ bridge }: { bridge: AppBridge }) {
     <section className="govern-section tool-surface" data-testid="install-auth-panel" data-tool-surface="true">
       <PanelHeader
         title="Install auth / SSO"
-        subtitle="Configure the customer IdP, JIT provisioning, optional Google/Apple, and password login."
+        subtitle="Point this customer install at a real or lab OIDC issuer (issuer, JWKS, client id/secret). This is not an in-IDE fake IdP."
         actions={
           <StatusBadge tone={meta?.ssoConfigured ? "success" : "neutral"}>
             {meta?.ssoConfigured ? "SSO configured" : "SSO not set"}
@@ -147,6 +147,11 @@ export function InstallAuthPanel({ bridge }: { bridge: AppBridge }) {
 
       <div className="env-card">
         <h3>SSO (OIDC)</h3>
+        <p className="muted" data-testid="install-auth-mock-hint">
+          Lab / mock IdP: paste a loopback or public-dev issuer (for example <code>http://127.0.0.1:8081/realms/demo</code>),
+          matching JWKS, and a confidential client. JIT role should be a Role that already exists on this install.
+          Social Google/Apple flags still need deploy-time secrets.
+        </p>
         <div className="row">
           <label>
             Display name

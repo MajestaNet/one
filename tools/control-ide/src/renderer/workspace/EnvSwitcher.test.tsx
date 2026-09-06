@@ -67,4 +67,17 @@ describe("EnvSwitcher", () => {
     fireEvent.mouseDown(screen.getByRole("button", { name: /outside/i }));
     expect(screen.queryByTestId("env-switcher-menu")).toBeNull();
   });
+
+  it("badges demo/prod install roles without a topology API", () => {
+    const demo: Session = {
+      activeInstallId: "lab",
+      environments: [
+        { installId: "lab", installRole: "demo", label: "Lab", baseUrl: "http://lab", token: "t" },
+      ],
+      baseUrl: "http://lab",
+      token: "t",
+    };
+    render(<EnvSwitcher session={demo} onSwitch={vi.fn()} onAddEnvironment={vi.fn()} />);
+    expect(screen.getByTestId("env-kind-badge").textContent).toBe("Demo");
+  });
 });
