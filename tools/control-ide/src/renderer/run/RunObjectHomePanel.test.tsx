@@ -373,4 +373,87 @@ describe("RunObjectHomePanel", () => {
     expect(fetchFn).toHaveBeenCalledWith("/client/v1/principals?principalType=user");
     expect(fetchFn.mock.calls.some(([path]) => path === "/client/v1/query")).toBe(false);
   });
+
+  it("omits User from Operate catalog without identity.users", async () => {
+    const fetchFn = vi.fn(async (path: string) => {
+      if (path === "/client/v1/describe") {
+        return {
+          sobjects: [
+            { name: "Account", label: "Account", labelPlural: "Accounts" },
+            { name: "User", label: "User", labelPlural: "Users", storageMode: "kernel" },
+          ],
+        };
+      }
+      if (path === "/client/v1/describe/Account") {
+        return {
+          apiName: "Account",
+          label: "Account",
+          fields: [{ apiName: "Name", label: "Name", fieldType: "text" }],
+        };
+      }
+      if (path === "/client/v1/query") return { records: [] };
+      throw new Error(`unexpected ${path}`);
+    });
+
+    render(
+      <RunObjectHomePanel
+        bridge={{
+          session: {
+            baseUrl: "http://localhost:8080",
+            token: "t",
+            scopes: ["client"],
+            isAdmin: false,
+            systemPermissions: ["ide.operate"],
+            activeInstallId: "inst-casey",
+          },
+          setSession: async () => undefined,
+          fetch: fetchFn,
+        }}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId("run-object-home-picker")).toBeTruthy());
+    const picker = screen.getByTestId("run-object-home-picker") as HTMLSelectElement;
+    expect([...picker.options].map((o) => o.value)).toEqual(["Account"]);
+    expect(fetchFn.mock.calls.some(([path]) => String(path).includes("/principals"))).toBe(false);
+  });
+
+  it("does not offer Create User after a capability 403", async () => {
+    const fetchFn = vi.fn(async (path: string) => {
+      if (path === "/client/v1/describe") {
+        return { sobjects: [{ name: "User", label: "User", labelPlural: "Users", storageMode: "kernel" }] };
+      }
+      if (path === "/client/v1/describe/User") {
+        return { apiName: "User", storageMode: "kernel", fields: [{ apiName: "DisplayName", label: "Display Name", fieldType: "text" }] };
+      }
+      if (path === "/client/v1/principals?principalType=user") {
+        throw new Error("403 /client/v1/principals?principalType=user: CAPABILITY_REQUIRED capability identity.users required");
+      }
+      throw new Error(`unexpected ${path}`);
+    });
+
+    render(
+      <RunObjectHomePanel
+        bridge={{
+          session: {
+            baseUrl: "http://localhost:8080",
+            token: "t",
+            scopes: ["client"],
+            isAdmin: false,
+            systemPermissions: ["ide.operate"],
+            activeInstallId: "inst-casey",
+          },
+          setSession: async () => undefined,
+          fetch: fetchFn,
+        }}
+        initialObjectApiName="User"
+        lockObject
+      />,
+    );
+
+    expect(await screen.findByText(/identity.users capability/i)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Create User/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /New User/i })).toBeNull();
+    expect(screen.queryByText(/Create one, or ask an administrator/i)).toBeNull();
+  });
 });

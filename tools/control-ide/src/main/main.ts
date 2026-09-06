@@ -21,6 +21,7 @@ import {
 } from "./paths.js";
 import { createTrustedHandle } from "./ipcTrust.js";
 import { extractProtocolUrl, isAppProtocolUrl } from "./protocol.js";
+import { parseUserDataDirFlag, shouldTakeSingleInstanceLock } from "./userDataDir.js";
 import {
   GIT_CLONE_SAFE_CONFIG,
   GIT_CLONE_SAFE_ENV,
@@ -296,10 +297,16 @@ function broadcastOAuthCallback(url: string) {
   }
 }
 
-const gotLock = app.requestSingleInstanceLock();
+const explicitUserDataDir = parseUserDataDirFlag(process.argv);
+if (explicitUserDataDir) {
+  app.setPath("userData", path.resolve(explicitUserDataDir));
+}
+
+const takeSingleInstanceLock = shouldTakeSingleInstanceLock(process.argv);
+const gotLock = takeSingleInstanceLock ? app.requestSingleInstanceLock() : true;
 if (!gotLock) {
   app.quit();
-} else {
+} else if (takeSingleInstanceLock) {
   app.on("second-instance", (_event, argv) => {
     const url = extractProtocolUrl(argv, PROTOCOL);
     if (url) broadcastOAuthCallback(url);

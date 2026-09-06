@@ -79,6 +79,8 @@ services:
       postgres:
         condition: service_healthy
       api:
+        # Concurrent EnsureKernel is serialized in Postgres; healthchecking
+        # /readyz is optional (distroless image has no wget/curl).
         condition: service_started
 
 volumes:

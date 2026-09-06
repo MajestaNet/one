@@ -5,10 +5,25 @@
 -- 4. Align HV btree indexes; drop redundant jobs/outbox indexes
 
 -- ---------------------------------------------------------------------------
--- Hard-delete: purge soft-deleted rows, drop column from both stores
+-- Hard-delete: purge soft-deleted rows, drop column from both stores.
+-- Guard the DELETE so a concurrent/retried apply does not reference a
+-- column the sibling process already dropped (#28).
 -- ---------------------------------------------------------------------------
-DELETE FROM records WHERE deleted_at IS NOT NULL;
-DELETE FROM records_hv WHERE deleted_at IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'records' AND column_name = 'deleted_at'
+  ) THEN
+    DELETE FROM records WHERE deleted_at IS NOT NULL;
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'records_hv' AND column_name = 'deleted_at'
+  ) THEN
+    DELETE FROM records_hv WHERE deleted_at IS NOT NULL;
+  END IF;
+END $$;
 
 DROP INDEX IF EXISTS records_object_owner_live_idx;
 DROP INDEX IF EXISTS records_object_created_id_live_idx;

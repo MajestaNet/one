@@ -12,7 +12,7 @@ Connect recipes: [customer-connect.md](../customer-connect.md) · [builder-conne
 
 | Method | Path | Auth | What it does | What it does not |
 |---|---|---|---|---|
-| `POST` | `/auth/v1/token` | client credentials, authorization code, password, or `refresh_token` | Issue a Majesta One access JWT (`token_type=Bearer`) | Bypass Role scopes encoded on the principal |
+| `POST` | `/auth/v1/token` | client credentials, authorization code, password, or `refresh_token` | Issue a Majesta One access JWT (`token_type=Bearer`). For `grant_type=client_credentials`, `client_id` is the **principal id** and `client_secret` is the secret from `POST /client/v1/principals/{id}/credentials` | Bypass Role scopes encoded on the principal |
 | `POST` | `/auth/v1/token/exchange` | configured IdP assertion | Exchange an external token for a Majesta One JWT | Become a multi-tenant SaaS IdP |
 | `POST` | `/auth/v1/revoke` | refresh token | Revoke an opaque refresh token | Revoke every credential on the principal (use Client credentials revoke) |
 | `GET` | `/auth/v1/.well-known/openid-configuration` | public | OIDC discovery for this install | |

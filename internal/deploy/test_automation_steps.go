@@ -45,7 +45,7 @@ func executeAutomationUnitPass(ctx context.Context, step *TestStep, deps testRun
 	return map[string]any{"ok": res.OK, "testFile": testFile, "automationApiName": autoName}, nil
 }
 
-func executeAutomationContract(ctx context.Context, step *TestStep, deps testRunDeps) (map[string]any, error) {
+func executeAutomationContract(ctx context.Context, step *TestStep, deps testRunDeps, vars map[string]any) (map[string]any, error) {
 	if deps.data == nil {
 		return nil, newValidationError("DataEngine required for automationContract steps")
 	}
@@ -67,10 +67,7 @@ func executeAutomationContract(ctx context.Context, step *TestStep, deps testRun
 	if triggerObject == "" {
 		return nil, newValidationError("automationContract requires objectApiName")
 	}
-	payload := map[string]any{}
-	for k, v := range step.Data {
-		payload[k] = v
-	}
+	payload := resolveVars(step.Data, vars)
 	// Avoid double-fire: create fixture with the automation inactive, then invoke explicitly.
 	_, _ = deps.pool.Exec(ctx, `UPDATE metadata_automations SET active=false WHERE api_name=$1`, autoName)
 	defer func() {

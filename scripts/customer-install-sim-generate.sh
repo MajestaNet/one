@@ -203,7 +203,7 @@ export default async function run(ctx: AutomationContext): Promise<AutomationRes
   }
   await ctx.updateRecord({
     objectApiName: "Account",
-    id: String(accountId),
+    recordId: String(accountId),
     data: { LastSiteVisitId__c: ctx.trigger.recordId },
   });
   return { ok: true };
@@ -301,7 +301,7 @@ export default async function run(ctx: AutomationContext): Promise<AutomationRes
     if (!id) continue;
     await ctx.updateRecord({
       objectApiName: "SiteVisit__c",
-      id,
+      recordId: id,
       data: { Status: "Cancelled" },
     });
   }
@@ -437,6 +437,30 @@ export default async function run(ctx: AutomationUnitContext) {
 }
 """)
 
+write("tests/automations/stamp_account_last_visit_test.ts", """
+import type { AutomationUnitContext } from "one:automation";
+
+export default async function run(ctx: AutomationUnitContext) {
+  await ctx.clearCalls();
+  await ctx.runUnderTest({
+    trigger: {
+      action: "create",
+      objectApiName: "SiteVisit__c",
+      recordId: "00000000-0000-4000-8000-0000000000sv",
+      data: { AccountId: "00000000-0000-4000-8000-0000000000ac" },
+    },
+  });
+  const { calls } = await ctx.getCalls({ method: "updateRecord" });
+  if (!calls || calls.length !== 1) {
+    throw new Error(`expected 1 updateRecord, got ${calls?.length ?? 0}`);
+  }
+  if (calls[0].recordId !== "00000000-0000-4000-8000-0000000000ac") {
+    throw new Error("updateRecord must use recordId (not id)");
+  }
+  return { ok: true };
+}
+""")
+
 write("tests/SiteVisitFromOpportunity.yaml", """
 apiName: SiteVisitFromOpportunity
 label: Site Visit from Opportunity gate
@@ -464,6 +488,14 @@ steps:
   - type: automationUnitPass
     automationApiName: Fanout_TimeEntries
     testFile: tests/automations/fanout_time_entries_test.ts
+  - type: automationUnitPass
+    automationApiName: StampAccount_LastVisit
+    testFile: tests/automations/stamp_account_last_visit_test.ts
+  - type: createRecord
+    objectApiName: Account
+    storeAs: accountId
+    data:
+      Name: Simulation Account
   - type: automationContract
     automationApiName: CreateSiteVisit_From_Opportunity
     objectApiName: Opportunity
@@ -471,6 +503,7 @@ steps:
       Name: Simulation Opp
       StageName: Prospecting
       CloseDate: "2099-12-31"
+      AccountId: $accountId
     expectObjectApiName: SiteVisit__c
     expectMinRows: 1
     filters:

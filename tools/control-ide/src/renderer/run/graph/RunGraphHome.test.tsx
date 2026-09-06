@@ -159,6 +159,58 @@ describe("RunGraphHome", () => {
     expect(await screen.findByTestId("run-graph-collection-focus")).toBeTruthy();
   });
 
+  it("does not mount Users on Operate without identity.users", async () => {
+    let document: RunGraphDocument = { ...empty, nodes: [], edges: [] };
+    let revision = 1;
+    const fetchFn = vi.fn(async (path: string, init?: RequestInit) => {
+      if (path === "/client/v1/describe") {
+        return {
+          objects: [
+            { apiName: "Account", label: "Account", pluralLabel: "Accounts" },
+            { apiName: "User", label: "User", pluralLabel: "Users", storageMode: "kernel" },
+          ],
+        };
+      }
+      if (path === "/client/v1/describe/Account") {
+        return { apiName: "Account", fields: [{ apiName: "Name" }] };
+      }
+      if (path === "/client/v1/describe/User") {
+        return { apiName: "User", fields: [{ apiName: "DisplayName" }] };
+      }
+      if (path !== "/client/v1/run-graphs/home") throw new Error(`unexpected ${init?.method ?? "GET"} ${path}`);
+      if (init?.method === "PUT") {
+        document = JSON.parse(String(init.body)) as RunGraphDocument;
+        revision += 1;
+      }
+      return envelope(document, revision);
+    });
+
+    render(
+      <RunGraphHome
+        fetchFn={fetchFn}
+        bridge={{
+          session: {
+            baseUrl: "http://localhost:8080",
+            token: "t",
+            scopes: ["client"],
+            isAdmin: false,
+            systemPermissions: ["ide.operate"],
+            activeInstallId: "inst-casey",
+          },
+          setSession: async () => undefined,
+          fetch: fetchFn,
+        }}
+      />,
+    );
+
+    await screen.findByText("Graph ready with 1 accessible object.");
+    expect(document.nodes.some((node) => node.ref?.objectApiName === "User")).toBe(false);
+    expect(document.nodes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "collection", ref: { objectApiName: "Account" } }),
+    ]));
+    expect(fetchFn.mock.calls.some(([path]) => path === "/client/v1/describe/User")).toBe(false);
+  });
+
   it("lands a search hit in its collection without pinning another record", async () => {
     let document: RunGraphDocument = { ...empty, nodes: [], edges: [] };
     let revision = 1;
