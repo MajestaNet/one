@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -78,15 +79,41 @@ func ConnectWithOptions(ctx context.Context, databaseURL string, opts PoolOption
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("connect: %w", err)
+		return nil, wrapConnectError("connect", err)
 	}
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	if err := pool.Ping(pingCtx); err != nil {
 		pool.Close()
-		return nil, fmt.Errorf("ping: %w", err)
+		return nil, wrapConnectError("ping", err)
 	}
 	return &Pool{Pool: pool}, nil
+}
+
+func wrapConnectError(op string, err error) error {
+	if hint := LocalUnreachableHint(err); hint != "" {
+		return fmt.Errorf("%s: %w (%s)", op, err, hint)
+	}
+	return fmt.Errorf("%s: %w", op, err)
+}
+
+// LocalUnreachableHint explains how to start Compose Postgres when a connect
+// error is a loopback connection refused. Empty if the error is not that case.
+func LocalUnreachableHint(err error) string {
+	if err == nil {
+		return ""
+	}
+	msg := strings.ToLower(err.Error())
+	local := strings.Contains(msg, "localhost") ||
+		strings.Contains(msg, "127.0.0.1") ||
+		strings.Contains(msg, "[::1]")
+	if !local {
+		return ""
+	}
+	if !strings.Contains(msg, "connection refused") {
+		return ""
+	}
+	return "nothing is listening on local Postgres; start it with `make postgres` (Docker Desktop + compose) then retry"
 }
 
 // Close closes the pool.

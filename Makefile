@@ -1,4 +1,6 @@
-.PHONY: test test-race test-ide test-ide-integration cover lint api worker migrate build boundary image-contents ide-artifacts ci
+.PHONY: test test-race test-ide test-ide-integration cover lint postgres api worker migrate dev build boundary image-contents ide-artifacts ci
+
+COMPOSE_FILE := deploy/docker-compose.yml
 
 GO ?= go
 export PATH := /usr/local/go/bin:$(HOME)/go/bin:$(PATH)
@@ -37,6 +39,20 @@ image-contents:
 ide-artifacts:
 	bash ./scripts/assert-ide-artifacts.sh
 
+# Local Postgres for DATABASE_URL=postgres://one:one@localhost:5432/one
+# (requires Docker Desktop / docker compose). make api does not start it.
+postgres:
+	@command -v docker >/dev/null 2>&1 || { echo >&2 "Docker is required for local Postgres. Start Docker Desktop, or set DATABASE_URL to an existing Postgres 16+ instance."; exit 1; }
+	docker compose -f $(COMPOSE_FILE) up -d postgres
+	@echo "waiting for postgres on localhost:5432..."
+	@i=0; \
+	until docker compose -f $(COMPOSE_FILE) exec -T postgres pg_isready -U one -d one >/dev/null 2>&1; do \
+		i=$$((i+1)); \
+		if [ $$i -ge 30 ]; then echo >&2 "postgres did not become ready on localhost:5432"; exit 1; fi; \
+		sleep 1; \
+	done
+	@echo "postgres is ready (postgres://one:one@localhost:5432/one)"
+
 api:
 	$(GO) run ./cmd/api
 
@@ -46,6 +62,10 @@ worker:
 # Direct go.mod requires (including cmd/one's go-keyring) are fetched by `go run`.
 migrate:
 	$(GO) run ./cmd/migrate
+
+# One-shot local API: Compose Postgres, then go run (kernel migrate + seed on boot).
+dev: postgres
+	$(GO) run ./cmd/api
 
 build:
 	CGO_ENABLED=0 $(GO) build -o bin/one-api ./cmd/api

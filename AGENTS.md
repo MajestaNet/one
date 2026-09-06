@@ -72,8 +72,10 @@ make test-ide      # Control IDE Vitest (under tools/control-ide)
 | `make cover` | Coverage profile summary |
 | `make lint` | golangci-lint |
 | `make ci` | lint + race tests with coverage + build (product / Go; one test pass) |
-| `make api` / `go run ./cmd/api` | API server |
+| `make postgres` | Local Compose Postgres (`localhost:5432`) — required before `make api` |
+| `make api` / `go run ./cmd/api` | API server (`DATABASE_URL` must reach Postgres) |
 | `make worker` / `go run ./cmd/worker` | Worker |
+| `make dev` | `make postgres` then `make api` |
 | `make migrate` / `go run ./cmd/migrate` | Kernel SQL migrate |
 | `make build` | Static binaries under `bin/` |
 

@@ -52,9 +52,11 @@ cp .env.example .env
 
 ### Database
 
+`make api` needs Postgres on `DATABASE_URL` (default `postgres://one:one@localhost:5432/one`). Start it before the API:
+
 ```bash
-docker compose -f deploy/docker-compose.yml up -d postgres
-make migrate   # go run ./cmd/migrate
+make postgres  # docker compose -f deploy/docker-compose.yml up -d postgres
+make migrate   # go run ./cmd/migrate (optional; API boot also migrates)
 ```
 
 API boot also applies kernel migrations and optional core package seed (`AUTO_SEED=1`).
@@ -70,8 +72,10 @@ Production installs: [docs/self-host.md](docs/self-host.md).
 ### Run API / worker
 
 ```bash
+make postgres  # local Compose Postgres (Docker Desktop must be running)
 make api       # go run ./cmd/api (auto-loads .env)
 make worker    # go run ./cmd/worker
+# or: make dev   # postgres + api
 ```
 
 Health: `GET http://localhost:8080/healthz` (up after `one-api listening`; `/readyz` waits for seed)

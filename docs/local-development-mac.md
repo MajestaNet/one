@@ -66,8 +66,10 @@ To use real Google later, set `AUTH_LOGIN_PROVIDERS=google` plus `AUTH_GOOGLE_CL
 
 ## 2. Postgres
 
+Open Docker Desktop, then:
+
 ```bash
-docker compose -f deploy/docker-compose.yml up -d postgres
+make postgres  # docker compose -f deploy/docker-compose.yml up -d postgres
 make migrate
 ```
 
@@ -233,7 +235,7 @@ See [AGENTS.md](../AGENTS.md) and [architecture/agent-routing.md](./architecture
 | Only `kernel migrations applied`, then IDE auth fails | Wait for `one-api listening` — `/healthz` should work immediately after that line. `/auth/v1` returns `STARTING` until `bootstrap/seed complete` |
 | Connection refused to `http://localhost:8080` | API not bound yet, or an old process used IPv4-only `0.0.0.0:8080`. Restart on this branch (`addr` should be `:8080`). Try `curl -s http://127.0.0.1:8080/healthz` |
 | `DB_UNAVAILABLE` / social login | API started without `DATABASE_URL` — confirm `.env` exists in the repo root; restart `make api`; logs should show migrations/seed |
-| `DATABASE_URL` connection refused | Docker Desktop running; Compose Postgres up; port 5432 free |
+| `DATABASE_URL` connection refused | Nothing is listening on `localhost:5432`. Open Docker Desktop, run `make postgres`, then retry `make api` (or `make dev`). Port 5432 must be free. |
 | `/auth/v1/token` 503 / disabled | `AUTH_JWT_SIGNING_KEY` non-empty; restart `make api` |
 | Google `PROVIDER_DISABLED` / unavailable | `AUTH_LOGIN_PROVIDERS=google` + client id/secret in the same shell as `make api` |
 | `one org deploy --suite` / live automation: `deno binary not found` | Deno 2.9.3 on `PATH` or `DENO_PATH` in **both** API and worker shells; product images already set `DENO_PATH` |
