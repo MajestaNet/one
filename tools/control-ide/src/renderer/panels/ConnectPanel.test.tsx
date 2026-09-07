@@ -264,6 +264,10 @@ describe("ConnectPanel", () => {
     const user = userEvent.setup();
     const open = vi.fn();
     const openExternal = vi.fn().mockResolvedValue({ ok: true });
+    const prepareOAuthRedirect = vi.fn().mockResolvedValue({
+      ok: true,
+      redirectUri: "http://127.0.0.1:5173/oauth/callback",
+    });
     vi.stubGlobal("open", open);
     vi.stubGlobal("sessionStorage", {
       store: {} as Record<string, string>,
@@ -277,7 +281,7 @@ describe("ConnectPanel", () => {
         delete this.store[k];
       },
     });
-    (window as unknown as { one: unknown }).one = { openExternal };
+    (window as unknown as { one: unknown }).one = { openExternal, prepareOAuthRedirect };
 
     try {
       render(<ConnectPanel bridge={bridge()} />);
@@ -285,6 +289,9 @@ describe("ConnectPanel", () => {
 
       await waitFor(() => expect(openExternal).toHaveBeenCalled());
       expect(String(openExternal.mock.calls[0][0])).toContain("/auth/v1/login?");
+      expect(String(openExternal.mock.calls[0][0])).toContain(
+        encodeURIComponent("http://127.0.0.1:5173/oauth/callback"),
+      );
       // A renderer-created window would inherit the preload bridge (CIDE-01).
       expect(open).not.toHaveBeenCalled();
     } finally {

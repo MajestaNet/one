@@ -1,6 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Majesta.Net">
-  <rect width="1024" height="1024" rx="196" fill="#1B2E46"/>
-  <g transform="translate(512 512) scale(8.4) translate(-528.9025 -287.6315)">
+  <!-- Apple macOS 11 icon grid: 824pt squircle in a 1024pt canvas (100pt / ~10% margin).
+       A full-bleed navy tile reads larger than neighboring Dock icons. -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#1B2E46"/>
+  <g transform="translate(512 512) scale(6.8) translate(-528.9025 -287.6315)">
     
   <g class="symbol" stroke="#F6CF55" fill="none" stroke-linecap="round" stroke-linejoin="round">
     <path d="M 513.343 263.467 C 500.894 262.52 495.743 272.822 497.245 285.271 C 498.748 300.724 509.05 312.743 520.425 313.172" stroke-width="0.6868"/>
