@@ -1,0 +1,20 @@
+{
+  "name": "Majesta One",
+  "install": "bash ./.cursor/install.sh",
+  "start": "bash ./.cursor/start.sh",
+  "terminals": [
+    {
+      "name": "one-api",
+      "command": "cd /workspace && export PATH=/usr/local/go/bin:$HOME/go/bin:$PATH && go run ./cmd/api",
+      "description": "Platform API on :8080 (loads .env, applies migrations, seeds core packages)"
+    },
+    {
+      "name": "one-worker",
+      "command": "cd /workspace && export PATH=/usr/local/go/bin:$HOME/go/bin:$PATH && go run ./cmd/worker",
+      "description": "Background worker: automations, outbox/webhooks, projections"
+    }
+  ],
+  "ports": [
+    { "name": "api", "port": 8080 }
+  ]
+}
