@@ -6,6 +6,7 @@ describe("oneApi", () => {
     const channels = listedInvokeChannels();
     expect(channels).toContain("session:get");
     expect(channels).toContain("shell:openExternal");
+    expect(channels).toContain("oauth:prepareRedirect");
     expect(channels).toContain("fs:readText");
     expect(channels).toContain("git:clone");
     expect(channels).toContain("git:pull");
@@ -28,6 +29,7 @@ describe("oneApi", () => {
     await api.chooseRepoRoot();
     await api.chooseLocalFolder();
     await api.openExternal("https://example.com");
+    await api.prepareOAuthRedirect();
     await api.gitStatus("/tmp/repo");
     await api.gitClone("https://example.com/r.git", "/tmp/dest");
     await api.gitPull("/tmp/repo");
