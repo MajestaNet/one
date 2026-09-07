@@ -5,13 +5,13 @@
   "terminals": [
     {
       "name": "one-api",
-      "command": "cd /workspace && export PATH=/usr/local/go/bin:$HOME/go/bin:$PATH && go run ./cmd/api",
-      "description": "Platform API on :8080 (loads .env, applies migrations, seeds core packages)"
+      "command": "cd /workspace && bash ./.cursor/start.sh && export PATH=/usr/local/go/bin:$HOME/go/bin:$PATH && go run ./cmd/api",
+      "description": "Ensures Postgres is up, then runs the Platform API on :8080 (loads .env, applies migrations, seeds core packages)"
     },
     {
       "name": "one-worker",
-      "command": "cd /workspace && export PATH=/usr/local/go/bin:$HOME/go/bin:$PATH && go run ./cmd/worker",
-      "description": "Background worker: automations, outbox/webhooks, projections"
+      "command": "cd /workspace && until sudo -u postgres pg_isready -q; do sleep 1; done && export PATH=/usr/local/go/bin:$HOME/go/bin:$PATH && go run ./cmd/worker",
+      "description": "Waits for Postgres, then runs the background worker: automations, outbox/webhooks, projections"
     }
   ],
   "ports": [
