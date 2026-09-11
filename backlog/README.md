@@ -59,7 +59,7 @@ Each BP header includes an **`Area:`** field — preferred code scope. Resolve A
 | [BP-066](./BP-066-ide-demo-client-fidelity.md) | Medium | Open (WS0–WS3/WS5 in IDE; WS4 remains) | Control IDE as an honest JWT demo of shipped APIs |
 | [BP-067](./BP-067-public-docs-site.md) | Medium | Open (CMS extracted; One source split landed) | Public docs site (`one.majesta.net`) — separate CMS aggregator; this repo does not implement |
 | [BP-068](./BP-068-ide-brand-visual.md) | Medium | Mitigated | Control IDE brand restyle (navy/gold tokens + logo; not chrome expansion) |
-| [BP-069](./BP-069-managed-package-automations.md) | Medium | Open | Managed package automations — enable default-on, Metadata `active` toggle, persisted description, IDE consume |
+| [BP-069](./BP-069-managed-package-automations.md) | Medium | Open (Phases 0–5, 7 landed; IDE consume remaining) | Managed package automations — enable default-on, Metadata `active` toggle, persisted description, IDE consume |
 
 Severity guide: **High** = likely to block real customer load, security, or the install agent-runtime / Ship path; **Medium** = will hurt before GA if ignored. Control IDE commercial delivery is **not** a High driver while chrome is frozen ([ADR-030](../docs/adr/030-install-agent-runtime.md)).
 

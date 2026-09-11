@@ -35,9 +35,9 @@ Admin enable via Metadata API (or Control IDE Modules).
 | [`address`](./address.md) | Admin enable | Address (multi-address rows) |
 | [`notes`](./notes.md) | Admin enable | Note |
 | [`activities`](./activities.md) | Admin enable | Task, Appointment, PhoneCall, Email (`flexible` work items; Activity Feed) |
-| [`lead_marketing`](./lead-marketing.md) | Admin enable | Lead, Campaign, MarketingList, MarketingListMember; platform action `lead.convert` |
+| [`lead_marketing`](./lead-marketing.md) | Admin enable | Lead, Campaign, MarketingList, MarketingListMember; platform action `lead.convert`; automation `Lead_ConvertOnConvertedStatus` |
 | [`catalog`](./catalog.md) | Admin enable | Product, PriceList, PriceListEntry, Unit, UnitGroup |
-| [`sales`](./sales.md) | Admin enable (requires `catalog`) | Opportunity, OpportunityContactRole, Quote, QuoteLine, Competitor |
+| [`sales`](./sales.md) | Admin enable (requires `catalog`) | Opportunity, OpportunityContactRole, Quote, QuoteLine, Competitor; automation `Quote_AcceptOnStatusAccepted` |
 | [`service`](./service.md) | Admin enable (requires `catalog`) | Case, CaseComment, Asset, Entitlement, ServiceContract, ContractLineItem, WorkOrder |
 | [`crm_bridge`](./crm-bridge.md) | **Auto-enabled** when `sales` + `service` are both on | Cross-cloud fields only (`Case.OpportunityId`) |
 | [`billing`](./billing.md) | Admin enable (requires `catalog` + `sales`) | Order, OrderLine; FieldExtension `Quote.OrderId`; `quote.accept` `createOrder` |
