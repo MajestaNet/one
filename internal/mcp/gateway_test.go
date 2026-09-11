@@ -45,6 +45,7 @@ func TestListToolsIncludesDescribeAndCreate(t *testing.T) {
 	for _, name := range []string{
 		"describe_object", "create_record", "get_object_metadata", "list_agent_specs", "search",
 		"invoke_action", "invoke_skill", "list_objects_metadata", "upsert_object", "upsert_field",
+		"patch_automation",
 		"org_validate", "org_deploy", "pack", "org_retrieve", "install_version",
 	} {
 		if !seen[name] {

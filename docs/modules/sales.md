@@ -11,7 +11,7 @@ Quote-centric: **QuoteLine** is the commercial source of truth. No Lead inside t
 
 ## Version
 
-`2.2.0` (`SalesPackageVersion` in `internal/seed`). Adds Quote address/amount snapshot fields, QuoteLine.UnitId, and platform action `quote.accept`.
+`2.3.0` (`SalesPackageVersion` in `internal/seed`). Adds managed automation `Quote_AcceptOnStatusAccepted` (process wrap around `quote.accept`).
 
 ## Objects
 
@@ -43,9 +43,9 @@ Flexible `records` storage; `ownership=managed`, `package_name=sales`.
 |---|---|---|---|---|
 | `quote.accept` | `sales`, `catalog` | `billing` (`createOrder`) | yes | Client `POST /client/v1/actions/quote.accept`; guest `ctx.invokeAction`. Do not add `POST /acceptQuote`. |
 
-## Package automations (planned — [ADR-033](../adr/033-managed-package-automations.md) / [BP-069](../../backlog/BP-069-managed-package-automations.md))
+## Package automations (shipped — [ADR-033](../adr/033-managed-package-automations.md))
 
-Not seeded until BP-069 Phase 4. After enable they default **on**; disable with `PATCH /metadata/v1/automations/{apiName}` `{ "active": false }`.
+Seeded on enable as `ownership=managed`, default **on**. Disable with `PATCH /metadata/v1/automations/{apiName}` `{ "active": false }` (`metadata.build` + admin). Soft-disable of this pack skips dispatch even if `active` is still true.
 
 | apiName | Trigger | Execution | Description |
 |---|---|---|---|
