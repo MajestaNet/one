@@ -111,7 +111,7 @@ YAML maps to Deploy snapshot JSON fields (`internal/deploy` types). Every custom
 | `metadata/objects/<apiName>.yaml` | `apiName`, `label`, `pluralLabel`, `storageMode`, `features` | |
 | `metadata/fields/<object>/<apiName>.yaml` | `objectApiName`, `apiName`, `label`, `fieldType`, … | |
 | `metadata/validation-rules/<object>/<apiName>.yaml` | `objectApiName`, `apiName`, `expression`, … | JSONLogic **error** expression: `true` means the record is invalid. Name-required is `"!": { var: Name }`, not `"!!"`. |
-| `metadata/automations/<apiName>.yaml` | `apiName`, `objectApiName`, `triggerEvent`, `execution`, `entryFile`, … | Code automations: pair with `src/automations/` ([ADR-014](./adr/014-customer-code-automations.md)) |
+| `metadata/automations/<apiName>.yaml` | `apiName`, `objectApiName`, `triggerEvent`, `execution`, `entryFile`, `description`, … | Code automations: pair with `src/automations/` ([ADR-014](./adr/014-customer-code-automations.md)). `description` ≤500 chars. Do **not** pack `ownership=managed` package automations ([ADR-033](./adr/033-managed-package-automations.md)). |
 | `src/automations/<name>.ts` | `export default async function run(ctx)` | No third-party imports; Deno guest only |
 | `tests/automations/<name>_test.ts` | Unit tests against mock `ctx` | Pack / Deploy gate |
 | `metadata/permission-sets/<apiName>.yaml` | `apiName`, `label`, object/field/system permissions | Definitions only; assignments stay Client |

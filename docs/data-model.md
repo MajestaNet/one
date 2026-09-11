@@ -114,7 +114,7 @@ Shared-heap risks at high cardinality and the Postgres-only ladder for ~100M-row
 
 Once `core` ships to customer installs:
 
-- Metadata API **cannot** mutate managed object/field definitions.
+- Metadata API **cannot** mutate managed object/field definitions. Managed **package automations** allow PATCH `{ "active" }` only ([ADR-033](./adr/033-managed-package-automations.md)).
 - Deploy API **rejects** managed package artifacts in customer bundles.
 - Only product image upgrade + additive seed migrate can change managed defs.
 - Additive migrate inserts missing managed fields and syncs product-owned attributes; it refuses to overwrite customer-owned apiNames.

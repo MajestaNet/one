@@ -220,6 +220,7 @@ Phase 1 authz-security
 
 - [ADR-014](../adr/014-customer-code-automations.md)
 - [ADR-029](../adr/029-platform-actions.md) · [platform-actions-build-plan.md](./platform-actions-build-plan.md) — product verbs customers call via `invokeAction`
+- [ADR-033](../adr/033-managed-package-automations.md) · [package-automations-build-plan.md](./package-automations-build-plan.md) — managed process wraps; not a substitute for this customer-repo plan
 - [customer-customizations.md](../customer-customizations.md)
 - [customer-repo.md](../customer-repo.md)
 - [ci-customer-tests.md](../ci-customer-tests.md)

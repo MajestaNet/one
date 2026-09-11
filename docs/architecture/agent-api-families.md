@@ -55,6 +55,13 @@ Flat `/v1` remains a compatibility alias during transition — prefer family pat
 3. Do **not** add a per-verb route (`/convertLead`) or a Metadata definition for product verbs.
 4. Guest `invokeAction` is ADR-014 SDK, not a second HTTP client from Deno.
 
+### B3. Managed package automations (BP-069)
+
+1. **Definitions / toggle** → Metadata `GET/PATCH /metadata/v1/automations/{apiName}`. Managed rows allow PATCH `{ "active" }` only ([package-automations-build-plan.md](./package-automations-build-plan.md) / [ADR-033](../adr/033-managed-package-automations.md)).
+2. Seed on package enable (`SyncAutomationManaged`); not Deploy-promoted.
+3. Do **not** add `/automations/{apiName}/enable` or a Packages-nested mux.
+4. Control IDE consumes these routes; do not add Electron-only APIs.
+
 ### C. Cross-family consistency
 
 1. Ownership: Metadata writes tag `ownership=custom` for customer artifacts; managed stays seed/migrate.

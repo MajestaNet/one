@@ -92,6 +92,7 @@ The first targeted managed path is DigitalOcean. Other providers should arrive l
 - [Run graph interactions build plan](./adr/024-run-graph-interactions.md)
 - [Client Experience build plan](./architecture/client-experience-build-plan.md)
 - [Customer automations build plan](./architecture/customer-automations-build.md)
+- [Package automations build plan](./architecture/package-automations-build-plan.md)
 - [Platform actions build plan](./architecture/platform-actions-build-plan.md)
 - [Billing module build plan](./architecture/billing-module-build-plan.md)
 - [Customer agents](./customer-agents.md)
@@ -116,3 +117,4 @@ The first targeted managed path is DigitalOcean. Other providers should arrive l
 - [ADR-003: SQL query engine](./adr/003-sql-query-engine.md)
 - [ADR-004: Three API families](./adr/004-three-api-families.md)
 - [ADR-030: Install as agent runtime](./adr/030-install-agent-runtime.md)
+- [ADR-033: Managed package automations](./adr/033-managed-package-automations.md)

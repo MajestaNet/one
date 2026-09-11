@@ -43,6 +43,14 @@ Flexible `records` storage; `ownership=managed`, `package_name=sales`.
 |---|---|---|---|---|
 | `quote.accept` | `sales`, `catalog` | `billing` (`createOrder`) | yes | Client `POST /client/v1/actions/quote.accept`; guest `ctx.invokeAction`. Do not add `POST /acceptQuote`. |
 
+## Package automations (planned — [ADR-033](../adr/033-managed-package-automations.md) / [BP-069](../../backlog/BP-069-managed-package-automations.md))
+
+Not seeded until BP-069 Phase 4. After enable they default **on**; disable with `PATCH /metadata/v1/automations/{apiName}` `{ "active": false }`.
+
+| apiName | Trigger | Execution | Description |
+|---|---|---|---|
+| `Quote_AcceptOnStatusAccepted` | Quote update | sync | When Quote.Status becomes Accepted, runs `quote.accept` in the same transaction. Does not copy customer custom fields. |
+
 ## Relationships
 
 ```text

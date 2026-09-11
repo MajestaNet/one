@@ -90,6 +90,8 @@ Default API base URL in UI: `http://localhost:8080`. Every Majesta One call send
 4. New or migrated **tools** (every left-rail panel except Operate graph) must use `ToolSurface` + `ToolToolbar` / `SearchField` in `tools/control-ide/src/renderer/workspace/`. Agent chats use `AgentChatPane` only (composer pinned at the tile bottom).
 5. Add or update Vitest component tests next to the module.
 
+**Managed package automations ([BP-069](../../backlog/BP-069-managed-package-automations.md) Phase 6):** uplift existing Automations + Packages panels only — description, ownership badge, PATCH `{active}` on managed rows, read-only source. No new tile or mode ([ADR-030](../adr/030-install-agent-runtime.md)). Backend must exist first ([package-automations-build-plan.md](./package-automations-build-plan.md)).
+
 ### B. IPC / filesystem / git
 
 1. Stay path-safe (`src/main/paths.ts`); never allow escape outside the chosen repo root.
