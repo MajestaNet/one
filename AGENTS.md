@@ -25,6 +25,7 @@ Do not invent a parallel stack. If a library choice conflicts with `docs/tech-st
 | JWT, keys, Roles, scopes, principals | [agent-authz.md](docs/architecture/agent-authz.md) ([refresh tokens](docs/architecture/refresh-token-session-build-plan.md), [BP-063](backlog/BP-063-refresh-token-sessions.md)) | `authz-security` |
 | HTTP routes / API family ownership | [agent-api-families.md](docs/architecture/agent-api-families.md) | `api-families` |
 | Platform actions / Lead convert | [platform-actions-build-plan.md](docs/architecture/platform-actions-build-plan.md) (+ api-families + data) | `api-families` then `db-backend-perf` |
+| Managed package automations (enable default-on, Metadata toggle, description, IDE consume) | [package-automations-build-plan.md](docs/architecture/package-automations-build-plan.md) (+ api-families + data; IDE Phase 6) | `api-families` then `db-backend-perf`; `control-ide` after HTTP |
 | Promote, peers, Ops rolls, packaging | [agent-deploy.md](docs/architecture/agent-deploy.md) | `deploy-ops` |
 | Jobs, outbox, worker concurrency | [agent-worker.md](docs/architecture/agent-worker.md) | `worker-jobs` |
 | Agent runtime (harness, MCP catalog, builder DX) | [agent-runtime-build-plan.md](docs/architecture/agent-runtime-build-plan.md) (+ api-families + worker) | `api-families` then `worker-jobs` (not `control-ide`) |

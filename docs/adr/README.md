@@ -36,5 +36,6 @@ Index of accepted ADRs. Open the ADR that locks the decision for your change; do
 | [030](./030-install-agent-runtime.md) | Install as agent runtime | Go install is the agent runtime; Control IDE optional (refactor for install cleanup — [BP-065](../../backlog/BP-065-ide-backend-coupling.md)); MCP + `one` are builders ([BP-064](../../backlog/BP-064-install-agent-runtime.md)) |
 | [031](./031-billing-managed-module.md) | Billing managed module | Optional `billing` Order/OrderLine; `quote.accept` ([BP-044](../../backlog/BP-044-billing-module-order-from-quote.md)) |
 | [032](./032-retire-messages-polymorphic-lookup.md) | Retire Messages + polymorphic lookup | Drop `messages` module and `polymorphic_lookup`; agent audit stays on conversations / `agent_runs` |
+| [033](./033-managed-package-automations.md) | Managed package automations | Product process wraps on managed packs; install `active` toggle; persisted description ([BP-069](../../backlog/BP-069-managed-package-automations.md)) |
 
 Agent entry: [architecture README](../architecture/README.md) · [module map](../architecture/module-map.md) · [agent routing](../architecture/agent-routing.md).
