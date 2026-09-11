@@ -533,12 +533,19 @@ func (s *Server) handlePatchAutomation(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusNotFound, "NOT_FOUND", "Automation not found: "+apiName)
 		return
 	}
+	var body map[string]any
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	if body == nil {
+		body = map[string]any{}
+	}
+	if ownership == "managed" {
+		s.patchManagedAutomationActive(w, r, pool, apiName, body)
+		return
+	}
 	if err := metadata.AssertCustomerMutable(ownership, apiName, "automation"); err != nil {
 		writeAPIError(w, err)
 		return
 	}
-	var body map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&body)
 	sets := []string{"updated_at=now()"}
 	args := []any{apiName}
 	add := func(col string, v any) {
@@ -625,6 +632,38 @@ func (s *Server) handlePatchAutomation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, err = pool.Exec(r.Context(), `UPDATE metadata_automations SET `+strings.Join(sets, ",")+` WHERE api_name=$1`, args...)
+	if err != nil {
+		writeAPIError(w, err)
+		return
+	}
+	updated, err := loadAutomationJSON(r.Context(), pool, apiName)
+	if err != nil {
+		writeAPIError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
+}
+
+func (s *Server) patchManagedAutomationActive(w http.ResponseWriter, r *http.Request, pool *db.Pool, apiName string, body map[string]any) {
+	actor := ActorFromContext(r.Context())
+	if actor == nil || !authz.HasAdminPrivilege(actor) {
+		writeErr(w, http.StatusForbidden, "FORBIDDEN", "Admin required to toggle managed automation active")
+		return
+	}
+	for k := range body {
+		if k != "active" {
+			writeErr(w, http.StatusForbidden, "FORBIDDEN", "managed automations only allow PATCH {\"active\"}")
+			return
+		}
+	}
+	active, ok := body["active"].(bool)
+	if !ok {
+		writeErr(w, http.StatusBadRequest, "VALIDATION_ERROR", "active must be a boolean")
+		return
+	}
+	_, err := pool.Exec(r.Context(), `
+UPDATE metadata_automations SET active=$2, updated_at=now()
+WHERE api_name=$1 AND ownership='managed'`, apiName, active)
 	if err != nil {
 		writeAPIError(w, err)
 		return
