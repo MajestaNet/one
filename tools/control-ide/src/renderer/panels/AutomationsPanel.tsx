@@ -333,9 +333,10 @@ export function AutomationsPanel({
     }
   };
 
-  const selectedRow = (selected && (managedDetail?.apiName === selected ? managedDetail : null))
-    ?? list.find((a) => a.apiName === selected)
-    ?? null;
+  const selectedRow: AutomationRow | null =
+    selected && managedDetail?.apiName === selected
+      ? managedDetail
+      : (list.find((a) => a.apiName === selected) ?? null);
   const selectedManaged = isManaged(selectedRow);
 
   const toggleActive = async (apiName: string, active: boolean) => {
