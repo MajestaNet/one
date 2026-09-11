@@ -25,6 +25,7 @@ runtime: code
 execution: async
 entryFile: src/automations/create_opp_on_account.ts
 ownership: custom
+description: Creates an Opportunity when an Account is created.
 actions: []
 `)
 	mustWrite(t, filepath.Join(root, "src", "automations", "create_opp_on_account.ts"), `
@@ -56,6 +57,9 @@ export default async function run(ctx) {
 	}
 	if a.Source == nil || !strings.Contains(*a.Source, "return { ok: true }") {
 		t.Fatalf("expected embedded source, got %v", a.Source)
+	}
+	if a.Description != "Creates an Opportunity when an Account is created." {
+		t.Fatalf("description=%q", a.Description)
 	}
 	if art.Sources["src/automations/create_opp_on_account.ts"] == "" {
 		t.Fatal("missing sources map entry")
