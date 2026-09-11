@@ -83,6 +83,34 @@ export default async function run(ctx) {
 	}
 }
 
+func TestPackRejectsManagedAutomationPackageName(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "one.yaml"), `
+customerId: acme
+packageName: customer.default
+repoFormat: one/v1
+`)
+	mustWrite(t, filepath.Join(root, "metadata", "automations", "Lead_ConvertOnConvertedStatus.yaml"), `
+apiName: Lead_ConvertOnConvertedStatus
+label: Convert Lead on Converted status
+objectApiName: Lead
+triggerEvent: update
+active: true
+runtime: code
+execution: sync
+ownership: managed
+packageName: core
+actions: []
+`)
+	_, _, err := customerrepo.PackFromDir(root, customerrepo.PackOptions{})
+	if err == nil {
+		t.Fatal("expected pack to reject managed packageName on automation")
+	}
+	if !strings.Contains(err.Error(), "managed packageName") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestPackRejectsNpmImport(t *testing.T) {
 	root := t.TempDir()
 	mustWrite(t, filepath.Join(root, "one.yaml"), `
