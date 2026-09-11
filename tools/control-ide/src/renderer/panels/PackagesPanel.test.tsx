@@ -51,6 +51,16 @@ const CATALOG = {
       enabled: false,
       dependsOn: ["core", "catalog"],
       objectApiNames: ["Opportunity", "Quote"],
+      automationApiNames: ["Quote_AcceptOnStatusAccepted"],
+      automations: [
+        {
+          apiName: "Quote_AcceptOnStatusAccepted",
+          label: "Accept quote on Accepted",
+          description: "When Quote.Status becomes Accepted, runs quote.accept.",
+          active: true,
+          installed: true,
+        },
+      ],
     },
     {
       name: "catalog",
@@ -115,5 +125,35 @@ describe("PackagesPanel", () => {
       <PackagesPanel bridge={{ session: null, setSession: vi.fn(), fetch: vi.fn() }} />,
     );
     expect(screen.getByText(/Connect an environment/i)).toBeTruthy();
+  });
+
+  it("lists declared automations on an expanded pack and PATCHes active", async () => {
+    const user = userEvent.setup();
+    const fetch = vi.fn(async (path: string, init?: RequestInit) => {
+      if (path === "/metadata/v1/packages" && !init?.method) {
+        return CATALOG;
+      }
+      if (path === "/metadata/v1/automations/Quote_AcceptOnStatusAccepted" && init?.method === "PATCH") {
+        return { apiName: "Quote_AcceptOnStatusAccepted", active: false };
+      }
+      return {};
+    });
+    render(<PackagesPanel bridge={bridge(fetch)} />);
+    await screen.findByTestId("pkg-row-sales");
+    await user.click(within(screen.getByTestId("pkg-row-sales")).getByRole("button"));
+    expect(await screen.findByTestId("pkg-autos-sales")).toBeTruthy();
+    expect(screen.getByTestId("pkg-auto-Quote_AcceptOnStatusAccepted").textContent).toMatch(
+      /quote\.accept/i,
+    );
+    await user.click(screen.getByTestId("pkg-auto-active-Quote_AcceptOnStatusAccepted"));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        "/metadata/v1/automations/Quote_AcceptOnStatusAccepted",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ active: false }),
+        }),
+      ),
+    );
   });
 });
