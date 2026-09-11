@@ -4,7 +4,7 @@ import (
 	"github.com/MajestaNet/ide/internal/packages"
 )
 
-const LeadMarketingPackageVersion = "1.2.0"
+const LeadMarketingPackageVersion = "1.3.0"
 
 func registerLeadMarketingModule() {
 	packages.Register(packages.Module{
@@ -17,6 +17,9 @@ func registerLeadMarketingModule() {
 		DocumentationPath: "docs/modules/lead-marketing.md",
 		Actions: []packages.ActionDef{
 			leadConvertActionDef(),
+		},
+		Automations: []packages.AutomationDef{
+			leadConvertOnConvertedStatusDef(),
 		},
 		Objects: []packages.ObjectDef{
 			{
@@ -69,6 +72,20 @@ func registerLeadMarketingModule() {
 			},
 		},
 	})
+}
+
+func leadConvertOnConvertedStatusDef() packages.AutomationDef {
+	return packages.AutomationDef{
+		APIName:       "Lead_ConvertOnConvertedStatus",
+		Label:         "Convert Lead on Converted status",
+		Description:   "When Lead.Status becomes Converted, runs lead.convert in the same transaction. Does not copy customer custom fields.",
+		ObjectAPIName: "Lead",
+		TriggerEvent:  "update",
+		Runtime:       "code",
+		Execution:     "sync",
+		EntryFile:     "seed/automations/Lead_ConvertOnConvertedStatus.ts",
+		Source:        leadConvertOnConvertedStatusSrc,
+	}
 }
 
 func leadConvertActionDef() packages.ActionDef {
