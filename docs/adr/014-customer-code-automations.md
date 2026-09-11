@@ -89,8 +89,12 @@ Sync forbids outbound HTTP/email/connectors (non-rollbackable). Nested sync dept
 - Python guest runtime
 - Declarative field-map DSL as primary authoring (may appear later as a compile aid only)
 
+## Amendment — managed package automations (ADR-033)
+
+Customer automations stay `ownership=custom` in the customer repo. Product may also seed **managed** automations on a package (`ownership=managed`) that use this same Deno guest and `ctx.invokeAction`. Installs toggle those with `PATCH` `{ "active" }` only; they do not edit product source. Descriptions persist on both managed and custom rows. See [ADR-033](./033-managed-package-automations.md).
+
 ## Related
 
 - Build plan: [customer-automations-build.md](../architecture/customer-automations-build.md)
-- [ADR-004](./004-three-api-families.md) · [ADR-005](./005-go-runtime.md) · [ADR-010](./010-customer-agentic-platform.md) · [ADR-012](./012-customer-repo-and-control-ide.md) · [ADR-029](./029-platform-actions.md)
-- [BP-009](../../backlog/BP-009-no-in-kernel-language.md) · [BP-006](../../backlog/BP-006-agent-guardrails.md) · [BP-014](../../backlog/BP-014-agent-outbound-integrations.md) · [BP-061](../../backlog/BP-061-platform-actions.md)
+- [ADR-004](./004-three-api-families.md) · [ADR-005](./005-go-runtime.md) · [ADR-010](./010-customer-agentic-platform.md) · [ADR-012](./012-customer-repo-and-control-ide.md) · [ADR-029](./029-platform-actions.md) · [ADR-033](./033-managed-package-automations.md)
+- [BP-009](../../backlog/BP-009-no-in-kernel-language.md) · [BP-006](../../backlog/BP-006-agent-guardrails.md) · [BP-014](../../backlog/BP-014-agent-outbound-integrations.md) · [BP-061](../../backlog/BP-061-platform-actions.md) · [BP-069](../../backlog/BP-069-managed-package-automations.md)

@@ -64,6 +64,11 @@ API **and** worker still call `EnsureKernel` on boot (`cmd/api`, `cmd/worker`). 
 2. Sync guests may call only `syncSafe` actions (share the write tx). Do not let Deno call Client HTTP.
 3. Do not add per-verb `ctx` methods.
 
+### G. Managed package automations (BP-069)
+
+1. Follow [package-automations-build-plan.md](./package-automations-build-plan.md) Phase 4 — dispatch skips `!active` and skip when the owning pack is soft-disabled.
+2. Proving wraps are `execution: sync` and call `invokeAction` only.
+
 ## Explicit non-goals (until docs say otherwise)
 
 - External queue products as the default (SQS/etc.) without an ADR

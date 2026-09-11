@@ -22,6 +22,7 @@ For agents changing Majesta One’s data model, storage, seed packages, or query
 | Cross-object search | [`cross-object-search-build-plan.md`](./cross-object-search-build-plan.md), [`BP-043`](../../backlog/BP-043-cross-object-search-api.md) + [`BP-020`](../../backlog/BP-043-cross-object-search-api.md) |
 | Package versioning | [`BP-007`](../adr/020-cdm-managed-packages.md) |
 | Platform actions / Lead convert / Quote accept | [`platform-actions-build-plan.md`](./platform-actions-build-plan.md), [`ADR-029`](../adr/029-platform-actions.md), [`BP-061`](../../backlog/BP-061-platform-actions.md); billing: [`billing-module-build-plan.md`](./billing-module-build-plan.md) |
+| Managed package automations | [`package-automations-build-plan.md`](./package-automations-build-plan.md), [`ADR-033`](../adr/033-managed-package-automations.md), [`BP-069`](../../backlog/BP-069-managed-package-automations.md); `SyncAutomationManaged` (planned) |
 
 ## What ships today
 
