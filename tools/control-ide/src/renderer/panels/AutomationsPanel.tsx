@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as monaco from "monaco-editor";
 import type { AppBridge } from "../App";
 import { useTheme } from "../ThemeContext";
@@ -17,7 +17,12 @@ type AutomationRow = {
   execution?: string;
   entryFile?: string;
   ownership?: string;
+  packageName?: string;
+  description?: string;
+  source?: string;
 };
+
+type OwnershipFilter = "all" | "package" | "custom";
 
 const STARTER_TS = `import type { AutomationContext, AutomationResult } from "one:automation";
 
@@ -28,27 +33,51 @@ export default async function run(ctx: AutomationContext): Promise<AutomationRes
 }
 `;
 
+function yamlScalar(value: unknown): string {
+  if (value == null) return "null";
+  if (typeof value === "boolean" || typeof value === "number") return String(value);
+  const s = String(value);
+  if (s === "" || /[:#\n'"{}[\],&*?|<>=!%@`]/.test(s) || /^\s|\s$/.test(s)) {
+    return JSON.stringify(s);
+  }
+  return s;
+}
+
+function isManaged(row: AutomationRow | null | undefined): boolean {
+  return row?.ownership === "managed";
+}
+
 function yamlForAutomation(a: {
   apiName: string;
   label: string;
   objectApiName: string;
   triggerEvent: string;
   entryFile: string;
+  description: string;
 }): string {
   return [
-    `apiName: ${a.apiName}`,
-    `label: ${a.label}`,
-    `objectApiName: ${a.objectApiName}`,
-    `triggerEvent: ${a.triggerEvent}`,
+    `apiName: ${yamlScalar(a.apiName)}`,
+    `label: ${yamlScalar(a.label)}`,
+    `objectApiName: ${yamlScalar(a.objectApiName)}`,
+    `triggerEvent: ${yamlScalar(a.triggerEvent)}`,
+    `description: ${yamlScalar(a.description)}`,
     `active: true`,
     `runtime: code`,
     `execution: async`,
-    `entryFile: ${a.entryFile}`,
+    `entryFile: ${yamlScalar(a.entryFile)}`,
     `ownership: custom`,
     `packageName: customer.default`,
     `actions: []`,
     "",
   ].join("\n");
+}
+
+function packDisabledMessage(err: unknown): string | null {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (msg.includes("PACKAGE_NOT_ENABLED")) {
+    return "Package is not enabled — this automation will not run (409 PACKAGE_NOT_ENABLED).";
+  }
+  return null;
 }
 
 export function AutomationsPanel({
@@ -65,6 +94,8 @@ export function AutomationsPanel({
   const theme = useTheme();
   const [list, setList] = useState<AutomationRow[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [managedDetail, setManagedDetail] = useState<AutomationRow | null>(null);
+  const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>("all");
   const [err, setErr] = useState("");
   const [warn, setWarn] = useState("");
   const [busy, setBusy] = useState(false);
@@ -74,6 +105,7 @@ export function AutomationsPanel({
     label: "",
     objectApiName: "Contact",
     triggerEvent: "create",
+    description: "",
   });
   const [editorRel, setEditorRel] = useState("");
   const [dirty, setDirty] = useState(false);
@@ -123,8 +155,17 @@ export function AutomationsPanel({
   useEffect(() => {
     void loadList();
     setSelected(null);
+    setManagedDetail(null);
     setWarn("");
   }, [loadList, refreshKey]);
+
+  const filtered = useMemo(() => {
+    return list.filter((a) => {
+      if (ownershipFilter === "package") return isManaged(a);
+      if (ownershipFilter === "custom") return !isManaged(a);
+      return true;
+    });
+  }, [list, ownershipFilter]);
 
   const openLocalFile = async (rel: string) => {
     setErr("");
@@ -137,9 +178,10 @@ export function AutomationsPanel({
       const text = await window.one.readText(root, rel);
       setEditorRel(rel);
       const lang = /\.ya?ml$/i.test(rel) ? "yaml" : "typescript";
-      const model = editor.current?.getModel();
+      const model = editor.current?.getModel?.();
       if (model) monaco.editor.setModelLanguage(model, lang);
-      editor.current?.setValue(text);
+      editor.current?.updateOptions?.({ readOnly: false });
+      editor.current?.setValue?.(text);
       setDirty(false);
     } catch (e) {
       setErr(String(e));
@@ -171,9 +213,37 @@ export function AutomationsPanel({
     }
   };
 
+  const showManagedSource = (detail: AutomationRow) => {
+    const model = editor.current?.getModel?.();
+    if (model) monaco.editor.setModelLanguage(model, "typescript");
+    editor.current?.updateOptions?.({ readOnly: true });
+    editor.current?.setValue?.(detail.source || "// No source on this managed automation.");
+    setEditorRel("");
+    setDirty(false);
+  };
+
   const selectAutomation = async (apiName: string) => {
     setSelected(apiName);
+    setRunMsg("");
     const row = list.find((a) => a.apiName === apiName);
+    if (isManaged(row)) {
+      setBusy(true);
+      try {
+        const detail = (await bridge.fetch(
+          `/metadata/v1/automations/${encodeURIComponent(apiName)}`,
+        )) as AutomationRow;
+        setManagedDetail(detail);
+        showManagedSource(detail);
+      } catch (e) {
+        setErr(String(e));
+        setManagedDetail(row ?? null);
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    setManagedDetail(null);
+    editor.current?.updateOptions?.({ readOnly: false });
     if (row?.entryFile && bridge.session?.repoPath) {
       await openLocalFile(row.entryFile);
     } else if (bridge.session?.repoPath) {
@@ -181,7 +251,13 @@ export function AutomationsPanel({
     }
   };
 
-  const mirrorLocal = async (apiName: string, label: string, objectApiName: string, entryFile: string) => {
+  const mirrorLocal = async (
+    apiName: string,
+    label: string,
+    objectApiName: string,
+    entryFile: string,
+    description: string,
+  ) => {
     const root = bridge.session?.repoPath;
     if (!root || !window.one) return;
     const yamlRel = `metadata/automations/${apiName}.yaml`;
@@ -194,6 +270,7 @@ export function AutomationsPanel({
         objectApiName,
         triggerEvent: form.triggerEvent || "create",
         entryFile,
+        description,
       }),
     );
     try {
@@ -213,6 +290,7 @@ export function AutomationsPanel({
     const apiName = form.apiName.trim();
     const label = form.label.trim();
     const objectApiName = form.objectApiName.trim();
+    const description = form.description.trim();
     if (!apiName || !label || !objectApiName) {
       setErr("apiName, label, and objectApiName are required");
       return;
@@ -230,6 +308,7 @@ export function AutomationsPanel({
           label,
           objectApiName,
           triggerEvent: form.triggerEvent || "create",
+          description,
           active: true,
           runtime: "code",
           execution: "async",
@@ -238,12 +317,12 @@ export function AutomationsPanel({
         }),
       });
       try {
-        await mirrorLocal(apiName, label, objectApiName, entryFile);
+        await mirrorLocal(apiName, label, objectApiName, entryFile, description);
       } catch (e) {
         setWarn(`Created on install; local YAML mirror skipped: ${e}`);
       }
       setShowNew(false);
-      setForm({ apiName: "", label: "", objectApiName: "Contact", triggerEvent: "create" });
+      setForm({ apiName: "", label: "", objectApiName: "Contact", triggerEvent: "create", description: "" });
       await loadList();
       setSelected(apiName);
       if (bridge.session?.repoPath) await openLocalFile(entryFile);
@@ -254,7 +333,10 @@ export function AutomationsPanel({
     }
   };
 
-  const selectedRow = list.find((a) => a.apiName === selected) ?? null;
+  const selectedRow = (selected && (managedDetail?.apiName === selected ? managedDetail : null))
+    ?? list.find((a) => a.apiName === selected)
+    ?? null;
+  const selectedManaged = isManaged(selectedRow);
 
   const toggleActive = async (apiName: string, active: boolean) => {
     setErr("");
@@ -265,6 +347,9 @@ export function AutomationsPanel({
         body: JSON.stringify({ active }),
       });
       await loadList();
+      if (selectedManaged) {
+        setManagedDetail((cur) => (cur && cur.apiName === apiName ? { ...cur, active } : cur));
+      }
     } catch (e) {
       setErr(String(e));
     } finally {
@@ -281,7 +366,8 @@ export function AutomationsPanel({
       setRunMsg(run.lastError ? `${run.status}: ${run.lastError}` : `${run.status}${run.id ? ` · ${run.id}` : ""}`);
       if (run.status === "failed") setErr(run.lastError || "Automation run failed");
     } catch (e) {
-      setErr(String(e));
+      const packMsg = packDisabledMessage(e);
+      setErr(packMsg || String(e));
     } finally {
       setBusy(false);
     }
@@ -304,7 +390,7 @@ export function AutomationsPanel({
     <ToolSurface testId="automations-panel">
       <PanelHeader
         title="Automations"
-        subtitle="Create code automations on the active env. Edit entry TypeScript locally, commit in Repo, pack from Ship — no CLI required."
+        subtitle="Package process is managed on the install. Custom automations edit TypeScript locally, then pack from Ship."
         actions={
           <>
             <Button variant="secondary" busy={busy} onClick={() => void loadList()}>
@@ -318,6 +404,24 @@ export function AutomationsPanel({
       />
       {err && <p className="err">{err}</p>}
       {warn && <p className="muted" data-testid="automations-warn">{warn}</p>}
+
+      <div className="agents-section-filters" data-testid="automations-filters">
+        {([
+          ["all", "All"],
+          ["package", "Package"],
+          ["custom", "Custom"],
+        ] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={`agents-section-chip ${ownershipFilter === id ? "active" : ""}`}
+            onClick={() => setOwnershipFilter(id)}
+            data-testid={`automations-filter-${id}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {showNew ? (
         <div className="env-card" data-testid="automations-create">
@@ -361,6 +465,16 @@ export function AutomationsPanel({
               </select>
             </label>
           </div>
+          <label>
+            Description
+            <input
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="What this automation does (optional, ≤500 characters)"
+              data-testid="automations-description"
+              maxLength={500}
+            />
+          </label>
           <Button variant="primary" busy={busy} onClick={() => void createAutomation()} data-testid="automations-create-btn">
             Create code automation
           </Button>
@@ -370,14 +484,14 @@ export function AutomationsPanel({
       <div className="govern-master-detail">
         <div>
           <p className="muted">On install</p>
-          {list.length === 0 ? (
+          {filtered.length === 0 ? (
             <EmptyState
               title="No automations yet"
               description="Create a code automation, or initialize the sample customer repo for CreateAccount_From_Contact."
             />
           ) : (
             <ul className="govern-list" data-testid="automations-list">
-              {list.map((a) => (
+              {filtered.map((a) => (
                 <li key={a.apiName}>
                   <button
                     type="button"
@@ -386,6 +500,20 @@ export function AutomationsPanel({
                     data-testid={`automation-${a.apiName}`}
                   >
                     <strong>{a.label || a.apiName}</strong>
+                    <span className="row" style={{ gap: "0.35rem", flexWrap: "wrap" }}>
+                      <StatusBadge tone={isManaged(a) ? "neutral" : "accent"}>
+                        {isManaged(a) ? "managed" : "custom"}
+                      </StatusBadge>
+                      <StatusBadge tone={a.active === false ? "neutral" : "success"}>
+                        {a.active === false ? "Off" : "On"}
+                      </StatusBadge>
+                      {a.packageName ? <span className="muted mono">{a.packageName}</span> : null}
+                    </span>
+                    {a.description ? (
+                      <span className="muted" data-testid={`automation-desc-${a.apiName}`}>
+                        {a.description}
+                      </span>
+                    ) : null}
                     <span className="muted">
                       {a.objectApiName} · {a.triggerEvent ?? "create"} · {a.runtime ?? "actions"}
                     </span>
@@ -396,40 +524,65 @@ export function AutomationsPanel({
           )}
         </div>
         <div>
-          <div className="editor-chrome">
-            <span className="editor-breadcrumb">{editorRel || "src/automations/**"}</span>
-            {dirty ? (
-              <StatusBadge tone="warn">
-                <span className="dirty-dot" /> Unsaved
-              </StatusBadge>
-            ) : editorRel ? (
-              <StatusBadge tone="success">Saved</StatusBadge>
-            ) : null}
-            <Button variant="primary" busy={busy} disabled={!editorRel} onClick={() => void saveLocal()}>
-              Save file
-            </Button>
-          </div>
+          {selectedManaged ? (
+            <div className="editor-chrome">
+              <span className="editor-breadcrumb" data-testid="automations-managed-source">
+                Managed source (read-only)
+              </span>
+              <StatusBadge tone="neutral">Package</StatusBadge>
+            </div>
+          ) : (
+            <div className="editor-chrome">
+              <span className="editor-breadcrumb">{editorRel || "src/automations/**"}</span>
+              {dirty ? (
+                <StatusBadge tone="warn">
+                  <span className="dirty-dot" /> Unsaved
+                </StatusBadge>
+              ) : editorRel ? (
+                <StatusBadge tone="success">Saved</StatusBadge>
+              ) : null}
+              <Button
+                variant="primary"
+                busy={busy}
+                disabled={!editorRel}
+                onClick={() => void saveLocal()}
+                data-testid="automations-save"
+              >
+                Save file
+              </Button>
+            </div>
+          )}
           <div className="editor-shell" data-testid="automations-editor">
             <div ref={host} className="monaco-host" style={{ minHeight: 280, width: "100%" }} />
           </div>
           {selected ? (
             <div className="row" style={{ marginTop: "0.5rem" }}>
-              <Button
-                variant="ghost"
-                onClick={() => void openLocalFile(`metadata/automations/${selected}.yaml`)}
-              >
-                Open YAML
-              </Button>
-              {selectedRow?.entryFile ? (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (selectedRow.entryFile) void openLocalFile(selectedRow.entryFile);
-                  }}
-                >
-                  Open entry TS
-                </Button>
-              ) : null}
+              {selectedManaged ? (
+                <p className="muted">
+                  {selectedRow?.description || "Managed package automation."} Trigger{" "}
+                  {selectedRow?.triggerEvent ?? "update"} · {selectedRow?.execution ?? "sync"}. Source is
+                  product-owned — toggle Active to turn process off.
+                </p>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => void openLocalFile(`metadata/automations/${selected}.yaml`)}
+                  >
+                    Open YAML
+                  </Button>
+                  {selectedRow?.entryFile ? (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        if (selectedRow.entryFile) void openLocalFile(selectedRow.entryFile);
+                      }}
+                    >
+                      Open entry TS
+                    </Button>
+                  ) : null}
+                </>
+              )}
               <label className="row">
                 <input
                   type="checkbox"
