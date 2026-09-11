@@ -44,17 +44,17 @@ func TestSyncCodeAutomationCommitAndRollback(t *testing.T) {
 	const autoOK = "CodeSyncCreateChild"
 	const autoFail = "CodeSyncFailChild"
 
-	cleanup := func() {
-		_, _ = pool.Exec(ctx, `DELETE FROM jobs WHERE payload->>'apiName' = ANY($1::text[])`, []string{autoOK, autoFail})
-		_, _ = pool.Exec(ctx, `DELETE FROM records WHERE object_api_name = ANY($1::text[])`, []string{parent, child})
-		_, _ = pool.Exec(ctx, `DELETE FROM automation_permissions WHERE automation_api_name = ANY($1::text[])`, []string{autoOK, autoFail})
-		_, _ = pool.Exec(ctx, `DELETE FROM metadata_automations WHERE api_name = ANY($1::text[])`, []string{autoOK, autoFail})
-		_, _ = pool.Exec(ctx, `DELETE FROM metadata_fields WHERE object_api_name = ANY($1::text[])`, []string{parent, child})
-		_, _ = pool.Exec(ctx, `DELETE FROM object_permissions WHERE object_api_name = ANY($1::text[])`, []string{parent, child})
-		_, _ = pool.Exec(ctx, `DELETE FROM metadata_objects WHERE api_name = ANY($1::text[])`, []string{parent, child})
+	cleanup := func(c context.Context) {
+		_, _ = pool.Exec(c, `DELETE FROM jobs WHERE payload->>'apiName' = ANY($1::text[])`, []string{autoOK, autoFail})
+		_, _ = pool.Exec(c, `DELETE FROM records WHERE object_api_name = ANY($1::text[])`, []string{parent, child})
+		_, _ = pool.Exec(c, `DELETE FROM automation_permissions WHERE automation_api_name = ANY($1::text[])`, []string{autoOK, autoFail})
+		_, _ = pool.Exec(c, `DELETE FROM metadata_automations WHERE api_name = ANY($1::text[])`, []string{autoOK, autoFail})
+		_, _ = pool.Exec(c, `DELETE FROM metadata_fields WHERE object_api_name = ANY($1::text[])`, []string{parent, child})
+		_, _ = pool.Exec(c, `DELETE FROM object_permissions WHERE object_api_name = ANY($1::text[])`, []string{parent, child})
+		_, _ = pool.Exec(c, `DELETE FROM metadata_objects WHERE api_name = ANY($1::text[])`, []string{parent, child})
 	}
-	cleanup()
-	t.Cleanup(cleanup)
+	cleanup(ctx)
+	t.Cleanup(func() { cleanup(context.Background()) })
 
 	for _, obj := range []struct{ api, label, plural string }{
 		{parent, "Code Sync Parent", "Code Sync Parents"},
@@ -70,7 +70,12 @@ INSERT INTO metadata_fields (object_api_name, api_name, label, field_type, requi
 VALUES ($1,'Name','Name','text',true,'custom',true,true)`, obj.api); err != nil {
 			t.Fatal(err)
 		}
-		_ = db.EnsureObjectInDataAccessCatalog(ctx, pool, obj.api)
+		if err := db.EnsureObjectInDataAccessCatalog(ctx, pool, obj.api); err != nil {
+			t.Fatalf("catalog %s: %v", obj.api, err)
+		}
+		if err := db.EnsureFlexiblePartition(ctx, pool, obj.api); err != nil {
+			t.Fatalf("partition %s: %v", obj.api, err)
+		}
 	}
 
 	srcOK := `
