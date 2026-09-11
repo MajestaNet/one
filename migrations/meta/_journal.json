@@ -435,6 +435,13 @@
       "when": 1720000061000,
       "tag": "0061_directory_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1720000062000,
+      "tag": "0062_automation_description",
+      "breakpoints": true
     }
   ]
 }

@@ -322,12 +322,13 @@ func ApplyBundleArtifact(
 				_, err := pool.Exec(ctx, `
 INSERT INTO metadata_automations (
   api_name, label, object_api_name, trigger_event, active, condition, actions,
-  package_name, ownership, runtime, execution, entry_file, source, run_as_principal_id
+  package_name, ownership, runtime, execution, entry_file, source, run_as_principal_id,
+  description
 )
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'custom',$9,$10,$11,$12,$13)`,
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'custom',$9,$10,$11,$12,$13,$14)`,
 					auto.APIName, auto.Label, auto.ObjectAPIName, auto.TriggerEvent,
 					auto.Active, string(condJSON), string(actJSON), *pkgName,
-					runtime, execution, entryFile, source, runAs)
+					runtime, execution, entryFile, source, runAs, auto.Description)
 				if err != nil {
 					return nil, fmt.Errorf("create automation %s: %w", auto.APIName, err)
 				}
@@ -344,11 +345,11 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'custom',$9,$10,$11,$12,$13)`,
 UPDATE metadata_automations
 SET label=$2, object_api_name=$3, trigger_event=$4, active=$5, condition=$6, actions=$7,
     package_name=$8, ownership='custom', runtime=$9, execution=$10, entry_file=$11, source=$12,
-    run_as_principal_id=$13, updated_at=now()
+    run_as_principal_id=$13, description=$14, updated_at=now()
 WHERE api_name=$1`,
 					auto.APIName, auto.Label, auto.ObjectAPIName, auto.TriggerEvent,
 					auto.Active, string(condJSON), string(actJSON), *pkgName,
-					runtime, execution, entryFile, source, runAs)
+					runtime, execution, entryFile, source, runAs, auto.Description)
 				if err != nil {
 					return nil, fmt.Errorf("update automation %s: %w", auto.APIName, err)
 				}

@@ -73,6 +73,7 @@ func (s *Server) registerMetadataWrites(prefix string) {
 	s.mux.Handle("POST "+prefix+"/validation-rules", capMeta(authz.CapMetadataBuild, s.handleCreateValidationRule))
 	s.mux.Handle("GET "+prefix+"/snapshot", meta(s.handleSnapshot))
 	s.mux.Handle("GET "+prefix+"/automations", meta(s.handleListAutomations))
+	s.mux.Handle("GET "+prefix+"/automations/{apiName}", meta(s.handleGetAutomation))
 	s.mux.Handle("POST "+prefix+"/automations", capMeta(authz.CapMetadataBuild, s.handleCreateAutomation))
 	s.mux.Handle("PATCH "+prefix+"/automations/{apiName}", capMeta(authz.CapMetadataBuild, s.handlePatchAutomation))
 	s.mux.Handle("GET "+prefix+"/permissions/sets", meta(s.handleListPermissionSets))
@@ -370,7 +371,8 @@ func (s *Server) handleListAutomations(w http.ResponseWriter, r *http.Request) {
 	rows, err := pool.Query(r.Context(), `
 SELECT id::text, api_name, label, object_api_name, trigger_event, active, condition, actions,
        package_name, ownership, created_at, updated_at,
-       runtime, execution, entry_file, source, run_as_principal_id::text
+       runtime, execution, entry_file, source, run_as_principal_id::text,
+       COALESCE(description, '')
 FROM metadata_automations ORDER BY api_name`)
 	if err != nil {
 		writeAPIError(w, err)
@@ -379,48 +381,32 @@ FROM metadata_automations ORDER BY api_name`)
 	defer rows.Close()
 	list := []map[string]any{}
 	for rows.Next() {
-		var id, apiName, label, obj, trigger, ownership string
-		var active bool
-		var condition, actions []byte
-		var pkg *string
-		var created, updated time.Time
-		var runtime, execution string
-		var entryFile, source, runAs *string
-		if err := rows.Scan(
-			&id, &apiName, &label, &obj, &trigger, &active, &condition, &actions,
-			&pkg, &ownership, &created, &updated,
-			&runtime, &execution, &entryFile, &source, &runAs,
-		); err != nil {
+		m, err := scanAutomationJSON(rows)
+		if err != nil {
 			writeAPIError(w, err)
 			return
 		}
-		m := map[string]any{
-			"id": id, "apiName": apiName, "label": label, "objectApiName": obj,
-			"triggerEvent": trigger, "active": active, "ownership": ownership,
-			"runtime": runtime, "execution": execution,
-			"createdAt": created, "updatedAt": updated,
-		}
-		if pkg != nil {
-			m["packageName"] = *pkg
-		}
-		if entryFile != nil {
-			m["entryFile"] = *entryFile
-		}
-		if source != nil {
-			m["source"] = *source
-		}
-		if runAs != nil {
-			m["runAsPrincipalId"] = *runAs
-		}
-		var cond any
-		_ = json.Unmarshal(condition, &cond)
-		m["condition"] = cond
-		var acts any
-		_ = json.Unmarshal(actions, &acts)
-		m["actions"] = acts
 		list = append(list, m)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"automations": list})
+}
+
+func (s *Server) handleGetAutomation(w http.ResponseWriter, r *http.Request) {
+	pool := s.poolOrErr(w)
+	if pool == nil {
+		return
+	}
+	apiName := r.PathValue("apiName")
+	m, err := loadAutomationJSON(r.Context(), pool, apiName)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeErr(w, http.StatusNotFound, "NOT_FOUND", "Automation not found: "+apiName)
+			return
+		}
+		writeAPIError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, m)
 }
 
 func (s *Server) handleCreateAutomation(w http.ResponseWriter, r *http.Request) {
@@ -442,6 +428,11 @@ func (s *Server) handleCreateAutomation(w http.ResponseWriter, r *http.Request) 
 	}
 	if own, _ := body["ownership"].(string); own == "managed" {
 		writeErr(w, http.StatusForbidden, "FORBIDDEN", "Cannot create managed automation")
+		return
+	}
+	description, err := parseAutomationDescription(body, false)
+	if err != nil {
+		writeAPIError(w, err)
 		return
 	}
 	trigger, _ := body["triggerEvent"].(string)
@@ -495,15 +486,15 @@ func (s *Server) handleCreateAutomation(w http.ResponseWriter, r *http.Request) 
 	}
 	var id string
 	var created, updated time.Time
-	err := pool.QueryRow(r.Context(), `
+	err = pool.QueryRow(r.Context(), `
 INSERT INTO metadata_automations (
   api_name, label, object_api_name, trigger_event, active, condition, actions, package_name, ownership,
-  runtime, execution, entry_file, source, run_as_principal_id
+  runtime, execution, entry_file, source, run_as_principal_id, description
 )
-VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8,'custom',$9,$10,$11,$12,$13)
+VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8,'custom',$9,$10,$11,$12,$13,$14)
 RETURNING id::text, created_at, updated_at`,
 		apiName, label, obj, trigger, active, string(cond), string(acts), pkg,
-		runtime, execution, entryVal, sourceVal, runAsVal,
+		runtime, execution, entryVal, sourceVal, runAsVal, description,
 	).Scan(&id, &created, &updated)
 	if err != nil {
 		writeAPIError(w, err)
@@ -513,7 +504,12 @@ RETURNING id::text, created_at, updated_at`,
 		writeAPIError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, httptestGet(pool, r, apiName))
+	createdRow, err := loadAutomationJSON(r.Context(), pool, apiName)
+	if err != nil {
+		writeAPIError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, createdRow)
 }
 
 func (s *Server) handlePatchAutomation(w http.ResponseWriter, r *http.Request) {
@@ -545,6 +541,14 @@ func (s *Server) handlePatchAutomation(w http.ResponseWriter, r *http.Request) {
 	}
 	if v, ok := body["active"].(bool); ok {
 		add("active", v)
+	}
+	if _, ok := body["description"]; ok {
+		description, derr := parseAutomationDescription(body, false)
+		if derr != nil {
+			writeAPIError(w, derr)
+			return
+		}
+		add("description", description)
 	}
 	if v, ok := body["condition"]; ok {
 		b, _ := json.Marshal(v)
@@ -616,28 +620,47 @@ func (s *Server) handlePatchAutomation(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, httptestGet(pool, r, apiName))
+	updated, err := loadAutomationJSON(r.Context(), pool, apiName)
+	if err != nil {
+		writeAPIError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
 }
 
 func httptestGet(pool *db.Pool, r *http.Request, apiName string) map[string]any {
-	var id, label, obj, trigger, ownership string
+	m, err := loadAutomationJSON(r.Context(), pool, apiName)
+	if err != nil {
+		return map[string]any{"apiName": apiName}
+	}
+	return m
+}
+
+type automationRowScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanAutomationJSON(row automationRowScanner) (map[string]any, error) {
+	var id, apiName, label, obj, trigger, ownership, description string
 	var active bool
 	var condition, actions []byte
 	var pkg *string
 	var created, updated time.Time
 	var runtime, execution string
 	var entryFile, source, runAs *string
-	_ = pool.QueryRow(r.Context(), `
-SELECT id::text, label, object_api_name, trigger_event, active, condition, actions, package_name, ownership, created_at, updated_at,
-       runtime, execution, entry_file, source, run_as_principal_id::text
-FROM metadata_automations WHERE api_name=$1`, apiName).Scan(
-		&id, &label, &obj, &trigger, &active, &condition, &actions, &pkg, &ownership, &created, &updated,
-		&runtime, &execution, &entryFile, &source, &runAs)
+	if err := row.Scan(
+		&id, &apiName, &label, &obj, &trigger, &active, &condition, &actions,
+		&pkg, &ownership, &created, &updated,
+		&runtime, &execution, &entryFile, &source, &runAs, &description,
+	); err != nil {
+		return nil, err
+	}
 	m := map[string]any{
 		"id": id, "apiName": apiName, "label": label, "objectApiName": obj,
 		"triggerEvent": trigger, "active": active, "ownership": ownership,
 		"runtime": runtime, "execution": execution,
-		"createdAt": created, "updatedAt": updated,
+		"description": description,
+		"createdAt":   created, "updatedAt": updated,
 	}
 	if pkg != nil {
 		m["packageName"] = *pkg
@@ -656,7 +679,35 @@ FROM metadata_automations WHERE api_name=$1`, apiName).Scan(
 	_ = json.Unmarshal(actions, &acts)
 	m["condition"] = cond
 	m["actions"] = acts
-	return m
+	return m, nil
+}
+
+func loadAutomationJSON(ctx context.Context, pool *db.Pool, apiName string) (map[string]any, error) {
+	row := pool.QueryRow(ctx, `
+SELECT id::text, api_name, label, object_api_name, trigger_event, active, condition, actions,
+       package_name, ownership, created_at, updated_at,
+       runtime, execution, entry_file, source, run_as_principal_id::text,
+       COALESCE(description, '')
+FROM metadata_automations WHERE api_name=$1`, apiName)
+	return scanAutomationJSON(row)
+}
+
+func parseAutomationDescription(body map[string]any, required bool) (string, error) {
+	v, ok := body["description"]
+	if !ok || v == nil {
+		if required {
+			return "", fmt.Errorf("%w: description is required", metadata.ErrValidation)
+		}
+		return "", nil
+	}
+	s, ok := v.(string)
+	if !ok {
+		return "", fmt.Errorf("%w: description must be a string", metadata.ErrValidation)
+	}
+	if err := metadata.ValidateAutomationDescription(s); err != nil {
+		return "", err
+	}
+	return s, nil
 }
 
 func (s *Server) handleListPermissionSets(w http.ResponseWriter, r *http.Request) {
