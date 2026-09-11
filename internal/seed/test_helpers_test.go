@@ -44,11 +44,16 @@ func purgeOptionalDomainMetadata(t *testing.T, ctx context.Context, pool *db.Poo
 		_, _ = pool.Exec(ctx, `DELETE FROM field_projections WHERE object_api_name=$1`, api)
 	}
 	_, _ = pool.Exec(ctx, `DELETE FROM metadata_fields WHERE package_name = 'crm_bridge'`)
-	_, _ = pool.Exec(ctx, `DELETE FROM package_installs WHERE package_name = ANY($1::text[])`,
-		[]string{"notes", "catalog", "sales", "service", "crm_bridge", "billing", "agents_starter",
-			"address", "activities", "lead_marketing",
-			"healthcare", "financial_services", "retail", "sustainability", "education",
-			"automotive", "nonprofit", "marketing_events", "portals", "project_service"})
+	packs := []string{"notes", "catalog", "sales", "service", "crm_bridge", "billing", "agents_starter",
+		"address", "activities", "lead_marketing",
+		"healthcare", "financial_services", "retail", "sustainability", "education",
+		"automotive", "nonprofit", "marketing_events", "portals", "project_service"}
+	_, _ = pool.Exec(ctx, `
+DELETE FROM automation_permissions WHERE automation_api_name IN (
+  SELECT api_name FROM metadata_automations WHERE ownership='managed' AND package_name = ANY($1::text[]))`, packs)
+	_, _ = pool.Exec(ctx, `
+DELETE FROM metadata_automations WHERE ownership='managed' AND package_name = ANY($1::text[])`, packs)
+	_, _ = pool.Exec(ctx, `DELETE FROM package_installs WHERE package_name = ANY($1::text[])`, packs)
 }
 
 func purgeAndInvalidate(t *testing.T, ctx context.Context, pool *db.Pool, meta *metadata.Service) {
