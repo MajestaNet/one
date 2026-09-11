@@ -1,7 +1,7 @@
 # BP-069: Managed package automations (toggle + description + IDE consume)
 
 - **Severity:** Medium
-- **Status:** Open (Phase 0 docs locked; implementation not started)
+- **Status:** Open (Phases 0–5 and 7 landed; Phase 6 Control IDE consume remaining)
 - **Area:** `internal/packages`, `internal/seed`, `internal/metadata`, `internal/httpapi`, `internal/dataengine`, `internal/automation`, `internal/deploy`, `migrations/`, `tools/control-ide` (Phase 6 consume only)
 - **Design:** [ADR-033](../docs/adr/033-managed-package-automations.md) · [package-automations-build-plan.md](../docs/architecture/package-automations-build-plan.md)
 
@@ -35,14 +35,14 @@ See [package-automations-build-plan.md](../docs/architecture/package-automations
 
 | Phase | Status |
 |---|---|
-| 0 Docs / ADR-033 | Done (this change set) |
-| 1 Description column + GET-by-name (custom) | Not started |
-| 2 Registry + SyncAutomationManaged | Not started |
-| 3 PATCH managed `active` + package catalog | Not started |
-| 4 Dispatch gates + proving wraps (`Lead_ConvertOnConvertedStatus`, `Quote_AcceptOnStatusAccepted`) | Not started |
-| 5 Deploy reject managed automations | Not started |
+| 0 Docs / ADR-033 | Done |
+| 1 Description column + GET-by-name (custom) | Done |
+| 2 Registry + SyncAutomationManaged | Done |
+| 3 PATCH managed `active` + package catalog | Done |
+| 4 Dispatch gates + proving wraps (`Lead_ConvertOnConvertedStatus`, `Quote_AcceptOnStatusAccepted`) | Done |
+| 5 Deploy reject managed automations | Done |
 | 6 Control IDE Automations + Packages consume | Not started |
-| 7 Module docs + MCP honesty | Not started |
+| 7 Module docs + MCP honesty | Done (`patch_automation` maps to Metadata PATCH) |
 
 ## Explicit non-goals
 

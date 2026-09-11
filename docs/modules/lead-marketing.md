@@ -10,7 +10,7 @@ Lead → Account/Contact/Opportunity convert is platform action **`lead.convert`
 
 ## Version
 
-`1.2.0` (`LeadMarketingPackageVersion` in `internal/seed`). Adds platform action `lead.convert`.
+`1.3.0` (`LeadMarketingPackageVersion` in `internal/seed`). Adds managed automation `Lead_ConvertOnConvertedStatus` (process wrap around `lead.convert`).
 
 ## Objects
 
@@ -29,9 +29,9 @@ Flexible `records` storage; `ownership=managed`, `package_name=lead_marketing`.
 |---|---|---|---|---|
 | `lead.convert` | `lead_marketing` | `sales` (`createOpportunity`) | yes | Client `POST /client/v1/actions/lead.convert`; guest `ctx.invokeAction`. Shipped (ADR-029 / BP-061). |
 
-## Package automations (planned — [ADR-033](../adr/033-managed-package-automations.md) / [BP-069](../../backlog/BP-069-managed-package-automations.md))
+## Package automations (shipped — [ADR-033](../adr/033-managed-package-automations.md))
 
-Not seeded until BP-069 Phase 4. After enable they default **on**; disable with `PATCH /metadata/v1/automations/{apiName}` `{ "active": false }`.
+Seeded on enable as `ownership=managed`, default **on**. Disable with `PATCH /metadata/v1/automations/{apiName}` `{ "active": false }` (`metadata.build` + admin). Soft-disable of this pack skips dispatch even if `active` is still true.
 
 | apiName | Trigger | Execution | Description |
 |---|---|---|---|

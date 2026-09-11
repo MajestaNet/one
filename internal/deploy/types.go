@@ -86,6 +86,7 @@ type SnapshotAutomation struct {
 	EntryFile        *string `json:"entryFile,omitempty" yaml:"entryFile,omitempty"`               // src/automations/….ts
 	Source           *string `json:"source,omitempty" yaml:"source,omitempty"`                     // embedded guest TS
 	RunAsPrincipalID *string `json:"runAsPrincipalId,omitempty" yaml:"runAsPrincipalId,omitempty"` // required for schedule
+	Description      string  `json:"description,omitempty" yaml:"description,omitempty"`           // functional, ≤500 Unicode chars
 	PackageName      *string `json:"packageName,omitempty" yaml:"packageName,omitempty"`
 	Ownership        string  `json:"ownership" yaml:"ownership"`
 	ID               *string `json:"id,omitempty" yaml:"id,omitempty"`

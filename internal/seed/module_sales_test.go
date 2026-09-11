@@ -35,6 +35,15 @@ func TestSalesModuleRegistered(t *testing.T) {
 	if len(m.Actions) != 1 || m.Actions[0].APIName != "quote.accept" {
 		t.Fatalf("sales actions=%+v", m.Actions)
 	}
+	if len(m.Automations) != 1 || m.Automations[0].APIName != "Quote_AcceptOnStatusAccepted" {
+		t.Fatalf("sales automations=%+v", m.Automations)
+	}
+	if m.Automations[0].Execution != "sync" || m.Automations[0].TriggerEvent != "update" {
+		t.Fatalf("sales automation trigger/execution=%s/%s", m.Automations[0].TriggerEvent, m.Automations[0].Execution)
+	}
+	if m.Automations[0].Description == "" || m.Automations[0].Source == "" {
+		t.Fatal("sales automation missing description or source")
+	}
 }
 
 func TestEnableSalesPackage(t *testing.T) {
@@ -107,6 +116,17 @@ func TestEnableSalesPackage(t *testing.T) {
 	}
 	if _, err := meta.GetObject(ctx, "Lead"); err == nil {
 		t.Fatal("Lead must not be seeded by sales")
+	}
+	var autoActive bool
+	var autoDesc, autoOwn string
+	if err := pool.QueryRow(ctx, `
+SELECT active, COALESCE(description,''), COALESCE(ownership,'')
+FROM metadata_automations WHERE api_name='Quote_AcceptOnStatusAccepted'`).
+		Scan(&autoActive, &autoDesc, &autoOwn); err != nil {
+		t.Fatalf("managed automation: %v", err)
+	}
+	if !autoActive || autoOwn != "managed" || autoDesc == "" {
+		t.Fatalf("Quote_AcceptOnStatusAccepted active=%v ownership=%s desc=%q", autoActive, autoOwn, autoDesc)
 	}
 
 	if _, err := seed.DisablePackage(ctx, meta, "sales"); err != nil {

@@ -22,6 +22,15 @@ func TestLeadMarketingModuleRegistered(t *testing.T) {
 	if len(m.Actions) != 1 || m.Actions[0].APIName != "lead.convert" || !m.Actions[0].SyncSafe {
 		t.Fatalf("lead_marketing actions=%+v", m.Actions)
 	}
+	if len(m.Automations) != 1 || m.Automations[0].APIName != "Lead_ConvertOnConvertedStatus" {
+		t.Fatalf("lead_marketing automations=%+v", m.Automations)
+	}
+	if m.Automations[0].Execution != "sync" || m.Automations[0].TriggerEvent != "update" {
+		t.Fatalf("lead_marketing automation trigger/execution=%s/%s", m.Automations[0].TriggerEvent, m.Automations[0].Execution)
+	}
+	if m.Automations[0].Description == "" || m.Automations[0].Source == "" {
+		t.Fatal("lead_marketing automation missing description or source")
+	}
 }
 
 func TestEnableLeadMarketingPackage(t *testing.T) {
@@ -67,6 +76,17 @@ func TestEnableLeadMarketingPackage(t *testing.T) {
 		if obj.PackageName == nil || *obj.PackageName != "lead_marketing" {
 			t.Fatalf("%s package=%v", api, obj.PackageName)
 		}
+	}
+	var autoActive bool
+	var autoDesc, autoOwn, autoSrc string
+	if err := pool.QueryRow(ctx, `
+SELECT active, COALESCE(description,''), COALESCE(ownership,''), COALESCE(source,'')
+FROM metadata_automations WHERE api_name='Lead_ConvertOnConvertedStatus'`).
+		Scan(&autoActive, &autoDesc, &autoOwn, &autoSrc); err != nil {
+		t.Fatalf("managed automation: %v", err)
+	}
+	if !autoActive || autoOwn != "managed" || autoDesc == "" || autoSrc == "" {
+		t.Fatalf("Lead_ConvertOnConvertedStatus active=%v ownership=%s desc=%q srcLen=%d", autoActive, autoOwn, autoDesc, len(autoSrc))
 	}
 	if _, err := seed.DisablePackage(ctx, meta, "lead_marketing"); err != nil {
 		t.Fatalf("disable: %v", err)

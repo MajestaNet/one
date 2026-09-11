@@ -27,6 +27,18 @@ type PackageStatus struct {
 	// package is not enabled on this install — Explorer visualizes from this.
 	Objects        []packages.CatalogObject `json:"objects,omitempty"`
 	ActionAPINames []string                 `json:"actionApiNames,omitempty"`
+	// AutomationAPINames is the declared catalog (even when the pack is disabled).
+	AutomationAPINames []string                  `json:"automationApiNames"`
+	Automations        []PackageAutomationStatus `json:"automations"`
+}
+
+// PackageAutomationStatus is one declared managed automation on a package catalog row.
+type PackageAutomationStatus struct {
+	APIName     string `json:"apiName"`
+	Label       string `json:"label"`
+	Description string `json:"description"`
+	Active      *bool  `json:"active,omitempty"`
+	Installed   bool   `json:"installed"`
 }
 
 // ListPackageStatuses returns image registry modules with install state.
@@ -66,21 +78,74 @@ func packageStatus(ctx context.Context, meta *metadata.Service, m packages.Modul
 			actions = append(actions, a.APIName)
 		}
 	}
+	autoNames := make([]string, 0, len(m.Automations))
+	autos := make([]PackageAutomationStatus, 0, len(m.Automations))
+	for _, a := range m.Automations {
+		if a.APIName == "" {
+			continue
+		}
+		autoNames = append(autoNames, a.APIName)
+		st := PackageAutomationStatus{
+			APIName:     a.APIName,
+			Label:       a.Label,
+			Description: a.Description,
+		}
+		autos = append(autos, st)
+	}
+	if err := fillInstalledAutomations(ctx, meta, autos); err != nil {
+		return PackageStatus{}, err
+	}
 	return PackageStatus{
-		Name:              m.Name,
-		Label:             m.Label,
-		Description:       m.Description,
-		Version:           m.Version,
-		InstalledVersion:  ver,
-		DependsOn:         m.DependsOn,
-		Optional:          m.Optional,
-		AutoEnable:        m.AutoEnable,
-		Enabled:           enabled && ver != "",
-		DocumentationPath: m.DocumentationPath,
-		ObjectAPINames:    objs,
-		Objects:           packages.CatalogObjects(m),
-		ActionAPINames:    actions,
+		Name:               m.Name,
+		Label:              m.Label,
+		Description:        m.Description,
+		Version:            m.Version,
+		InstalledVersion:   ver,
+		DependsOn:          m.DependsOn,
+		Optional:           m.Optional,
+		AutoEnable:         m.AutoEnable,
+		Enabled:            enabled && ver != "",
+		DocumentationPath:  m.DocumentationPath,
+		ObjectAPINames:     objs,
+		Objects:            packages.CatalogObjects(m),
+		ActionAPINames:     actions,
+		AutomationAPINames: autoNames,
+		Automations:        autos,
 	}, nil
+}
+
+func fillInstalledAutomations(ctx context.Context, meta *metadata.Service, autos []PackageAutomationStatus) error {
+	if len(autos) == 0 || meta == nil || meta.Pool() == nil {
+		return nil
+	}
+	names := make([]string, len(autos))
+	idx := make(map[string]int, len(autos))
+	for i, a := range autos {
+		names[i] = a.APIName
+		idx[a.APIName] = i
+	}
+	rows, err := meta.Pool().Query(ctx, `
+SELECT api_name, active FROM metadata_automations
+WHERE api_name = ANY($1::text[])`, names)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var apiName string
+		var active bool
+		if err := rows.Scan(&apiName, &active); err != nil {
+			return err
+		}
+		i, ok := idx[apiName]
+		if !ok {
+			continue
+		}
+		act := active
+		autos[i].Active = &act
+		autos[i].Installed = true
+	}
+	return rows.Err()
 }
 
 // EnablePackage installs/migrates an optional managed module on this install.

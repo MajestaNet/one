@@ -62,7 +62,13 @@ func TestSyncInvokeActionConvertAndRollback(t *testing.T) {
 	}
 	cleanup()
 	t.Cleanup(func() {
-		cleanup()
+		bg := context.Background()
+		_, _ = pool.Exec(bg, `UPDATE metadata_automations SET active=false WHERE api_name = ANY($1::text[])`, []string{autoOK, autoFail})
+		_, _ = pool.Exec(bg, `DELETE FROM metadata_automations WHERE api_name = ANY($1::text[])`, []string{autoOK, autoFail})
+		_, _ = pool.Exec(bg, `DELETE FROM automation_permissions WHERE automation_api_name = ANY($1::text[])`, []string{autoOK, autoFail})
+		_, _ = pool.Exec(bg, `DELETE FROM records WHERE object_api_name IN ('Lead','Account','Contact') AND data->>'Company' LIKE 'InvokeAct%'`)
+		_, _ = pool.Exec(bg, `DELETE FROM records WHERE object_api_name='Account' AND data->>'Name' LIKE 'InvokeAct%'`)
+		_, _ = pool.Exec(bg, `UPDATE metadata_cache_epoch SET epoch = epoch + 1 WHERE id = 1`)
 		pool.Close()
 	})
 

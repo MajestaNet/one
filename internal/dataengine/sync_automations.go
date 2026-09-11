@@ -143,8 +143,15 @@ func (s *Service) dispatchAutomations(
 SELECT id::text, api_name, trigger_event, COALESCE(actions, '[]'::jsonb),
        COALESCE(runtime, 'actions'), COALESCE(execution, 'async'),
        COALESCE(source, ''), COALESCE(entry_file, '')
-FROM metadata_automations
+FROM metadata_automations a
 WHERE object_api_name = $1 AND active = true
+  AND (
+    COALESCE(a.ownership, 'custom') <> 'managed'
+    OR EXISTS (
+      SELECT 1 FROM package_installs p
+      WHERE p.package_name = a.package_name AND p.enabled = true
+    )
+  )
 ORDER BY api_name`, objectAPIName)
 	if err != nil {
 		return err

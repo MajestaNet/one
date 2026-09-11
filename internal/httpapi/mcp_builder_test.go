@@ -1,11 +1,13 @@
 package httpapi_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MajestaNet/ide/internal/seed"
 	"github.com/MajestaNet/ide/internal/testutil"
 )
 
@@ -214,5 +216,49 @@ func TestMetadataPlaybookUnknownAllowedSkillRejected(t *testing.T) {
 	})
 	if rr.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 on PATCH unknown allowedSkills, got %d %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestMCPPatchAutomationManagedActive(t *testing.T) {
+	d := testutil.RequireDatabase(t)
+	testutil.BootstrapCore(t, d, testutil.BootstrapOptions{})
+	srv := testutil.NewTestServer(t, d, testutil.ServerOptions{
+		APIKeys: "admin-key+admin,builder-key:metadata",
+	})
+	const autoName = "Lead_ConvertOnConvertedStatus"
+	if _, err := seed.EnablePackage(t.Context(), d.Meta, "lead_marketing"); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = d.Pool.Exec(context.Background(), `UPDATE metadata_automations SET active=true WHERE api_name=$1`, autoName)
+	})
+
+	rr := mcpCall(t, srv.Handler, "admin-key", "patch_automation", map[string]any{
+		"apiName": autoName, "active": false,
+	})
+	if rr.Code != http.StatusOK {
+		t.Fatalf("admin patch: %d %s", rr.Code, rr.Body.String())
+	}
+
+	var active bool
+	if err := d.Pool.QueryRow(t.Context(), `SELECT active FROM metadata_automations WHERE api_name=$1`, autoName).Scan(&active); err != nil {
+		t.Fatal(err)
+	}
+	if active {
+		t.Fatal("expected active=false")
+	}
+
+	rr = mcpCall(t, srv.Handler, "builder-key", "patch_automation", map[string]any{
+		"apiName": autoName, "active": true,
+	})
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("non-admin: expected 403, got %d %s", rr.Code, rr.Body.String())
+	}
+
+	rr = mcpCall(t, srv.Handler, "admin-key", "patch_automation", map[string]any{
+		"apiName": autoName, "label": "nope",
+	})
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("managed extra field: expected 403, got %d %s", rr.Code, rr.Body.String())
 	}
 }

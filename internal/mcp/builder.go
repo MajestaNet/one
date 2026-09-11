@@ -302,6 +302,114 @@ func upsertField(ctx context.Context, deps Deps, actor *authz.Actor, args map[st
 	return field, nil
 }
 
+func patchAutomation(ctx context.Context, deps Deps, actor *authz.Actor, args map[string]any) (any, error) {
+	if err := requireScope(actor, authz.ScopeMetadata); err != nil {
+		return nil, err
+	}
+	if err := requireCapability(ctx, deps, actor, authz.CapMetadataBuild); err != nil {
+		return nil, err
+	}
+	if deps.Pool == nil {
+		return nil, fmt.Errorf("database unavailable")
+	}
+	apiName := strArg(args, "apiName")
+	if apiName == "" {
+		return nil, fmt.Errorf("apiName required")
+	}
+	var ownership string
+	err := deps.Pool.QueryRow(ctx, `
+SELECT COALESCE(ownership, 'custom') FROM metadata_automations WHERE api_name=$1`, apiName).Scan(&ownership)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("%w: automation not found", ErrNotFound)
+		}
+		return nil, err
+	}
+	body := map[string]any{}
+	for k, v := range args {
+		if k == "apiName" {
+			continue
+		}
+		body[k] = v
+	}
+	if ownership == "managed" {
+		if !authz.HasAdminPrivilege(actor) {
+			return nil, fmt.Errorf("%w: Admin required to toggle managed automation active", ErrForbidden)
+		}
+		for k := range body {
+			if k != "active" {
+				return nil, fmt.Errorf("%w: managed automations only allow PATCH {\"active\"}", ErrForbidden)
+			}
+		}
+		active, ok := body["active"].(bool)
+		if !ok {
+			return nil, fmt.Errorf("active must be a boolean")
+		}
+		if _, err := deps.Pool.Exec(ctx, `
+UPDATE metadata_automations SET active=$2, updated_at=now()
+WHERE api_name=$1 AND ownership='managed'`, apiName, active); err != nil {
+			return nil, err
+		}
+		return loadMCPAutomation(ctx, deps, apiName)
+	}
+	if err := metadata.AssertCustomerMutable(ownership, apiName, "automation"); err != nil {
+		return nil, mapDomainErr(err)
+	}
+	sets := []string{"updated_at=now()"}
+	qargs := []any{apiName}
+	add := func(col string, v any) {
+		qargs = append(qargs, v)
+		sets = append(sets, fmt.Sprintf("%s=$%d", col, len(qargs)))
+	}
+	if v, ok := body["active"].(bool); ok {
+		add("active", v)
+	}
+	if _, ok := body["description"]; ok {
+		s, ok := body["description"].(string)
+		if !ok {
+			return nil, fmt.Errorf("description must be a string")
+		}
+		if err := metadata.ValidateAutomationDescription(s); err != nil {
+			return nil, mapDomainErr(err)
+		}
+		add("description", s)
+	}
+	if _, err := deps.Pool.Exec(ctx, `UPDATE metadata_automations SET `+strings.Join(sets, ", ")+` WHERE api_name=$1 AND ownership='custom'`, qargs...); err != nil {
+		return nil, err
+	}
+	return loadMCPAutomation(ctx, deps, apiName)
+}
+
+func loadMCPAutomation(ctx context.Context, deps Deps, apiName string) (map[string]any, error) {
+	var label, objectAPIName, trigger, runtime, execution, ownership, description string
+	var active bool
+	var pkg *string
+	err := deps.Pool.QueryRow(ctx, `
+SELECT COALESCE(label,''), COALESCE(object_api_name,''), COALESCE(trigger_event,''),
+       active, COALESCE(runtime,'actions'), COALESCE(execution,'async'),
+       COALESCE(ownership,'custom'), package_name, COALESCE(description,'')
+FROM metadata_automations WHERE api_name=$1`, apiName).Scan(
+		&label, &objectAPIName, &trigger, &active, &runtime, &execution, &ownership, &pkg, &description)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]any{
+		"apiName":       apiName,
+		"label":         label,
+		"objectApiName": objectAPIName,
+		"triggerEvent":  trigger,
+		"active":        active,
+		"runtime":       runtime,
+		"execution":     execution,
+		"ownership":     ownership,
+		"description":   description,
+	}
+	if pkg != nil {
+		out["packageName"] = *pkg
+	}
+	return out, nil
+}
+
 func fieldPatchFromArgs(args map[string]any) metadata.FieldPatch {
 	var patch metadata.FieldPatch
 	if v, ok := args["label"].(string); ok {

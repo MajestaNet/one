@@ -16,7 +16,10 @@ import (
 	"github.com/MajestaNet/ide/internal/automation"
 	"github.com/MajestaNet/ide/internal/dataengine"
 	"github.com/MajestaNet/ide/internal/db"
+	"github.com/MajestaNet/ide/internal/metadata"
 )
+
+var errManagedPackageDisabled = errors.New("managed automation package not enabled")
 
 type automationDefRow struct {
 	ID            string
@@ -30,6 +33,8 @@ type automationDefRow struct {
 	Source        string
 	EntryFile     string
 	ActionsJSON   []byte
+	Ownership     string
+	PackageName   string
 }
 
 func (s *Server) handleListCallableAutomations(w http.ResponseWriter, r *http.Request) {
@@ -116,10 +121,14 @@ func (s *Server) handleCreateAutomationRun(w http.ResponseWriter, r *http.Reques
 		body.Input = map[string]any{}
 	}
 
-	def, err := loadActiveAutomation(r.Context(), pool, apiName)
+	def, err := loadCallableAutomation(r.Context(), pool, apiName)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeErr(w, http.StatusNotFound, "NOT_FOUND", "automation not found or inactive")
+			return
+		}
+		if errors.Is(err, errManagedPackageDisabled) {
+			writeErr(w, http.StatusConflict, "PACKAGE_NOT_ENABLED", "owning package is not enabled")
 			return
 		}
 		writeAPIError(w, err)
@@ -301,18 +310,36 @@ WHERE id=$1::uuid AND job_type='automation.run'
 	writeJSON(w, http.StatusOK, out)
 }
 
-func loadActiveAutomation(ctx context.Context, pool *db.Pool, apiName string) (*automationDefRow, error) {
+func loadCallableAutomation(ctx context.Context, pool *db.Pool, apiName string) (*automationDefRow, error) {
 	var def automationDefRow
+	var pkg *string
 	err := pool.QueryRow(ctx, `
 SELECT id::text, api_name, COALESCE(label,''), COALESCE(object_api_name,''), COALESCE(trigger_event,''),
        active, COALESCE(runtime,'actions'), COALESCE(execution,'async'),
-       COALESCE(source,''), COALESCE(entry_file,''), COALESCE(actions, '[]'::jsonb)
+       COALESCE(source,''), COALESCE(entry_file,''), COALESCE(actions, '[]'::jsonb),
+       COALESCE(ownership, 'custom'), package_name
 FROM metadata_automations
-WHERE api_name=$1 AND active=true`, apiName).Scan(
+WHERE api_name=$1`, apiName).Scan(
 		&def.ID, &def.APIName, &def.Label, &def.ObjectAPIName, &def.TriggerEvent,
-		&def.Active, &def.Runtime, &def.Execution, &def.Source, &def.EntryFile, &def.ActionsJSON)
+		&def.Active, &def.Runtime, &def.Execution, &def.Source, &def.EntryFile, &def.ActionsJSON,
+		&def.Ownership, &pkg)
 	if err != nil {
 		return nil, err
+	}
+	if pkg != nil {
+		def.PackageName = *pkg
+	}
+	if !def.Active {
+		return nil, pgx.ErrNoRows
+	}
+	if def.Ownership == "managed" {
+		enabled, err := metadata.PackageInstallEnabled(ctx, pool, def.PackageName)
+		if err != nil {
+			return nil, err
+		}
+		if !enabled {
+			return nil, errManagedPackageDisabled
+		}
 	}
 	return &def, nil
 }

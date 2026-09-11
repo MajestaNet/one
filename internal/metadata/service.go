@@ -472,7 +472,8 @@ ORDER BY r.object_api_name, r.api_name`)
 	// Customer-owned automations (may target managed or customer objects).
 	autoRows, err := s.pool.Query(ctx, `
 SELECT a.api_name, a.label, a.object_api_name, a.trigger_event, a.active, a.condition, a.actions,
-       a.package_name, a.ownership, a.runtime, a.execution, a.entry_file, a.source, a.run_as_principal_id::text
+       a.package_name, a.ownership, a.runtime, a.execution, a.entry_file, a.source, a.run_as_principal_id::text,
+       COALESCE(a.description, '')
 FROM metadata_automations a
 WHERE a.ownership = 'custom'
 ORDER BY a.api_name`)
@@ -483,7 +484,7 @@ ORDER BY a.api_name`)
 	var automations []map[string]any
 	sources := map[string]string{}
 	for autoRows.Next() {
-		var apiName, label, objectAPIName, triggerEvent string
+		var apiName, label, objectAPIName, triggerEvent, description string
 		var active bool
 		var condition, actions []byte
 		var pkg, ownership *string
@@ -491,7 +492,7 @@ ORDER BY a.api_name`)
 		var entryFile, source, runAs *string
 		if err := autoRows.Scan(
 			&apiName, &label, &objectAPIName, &triggerEvent, &active, &condition, &actions,
-			&pkg, &ownership, &runtime, &execution, &entryFile, &source, &runAs,
+			&pkg, &ownership, &runtime, &execution, &entryFile, &source, &runAs, &description,
 		); err != nil {
 			return nil, err
 		}
@@ -517,6 +518,7 @@ ORDER BY a.api_name`)
 			"ownership":     ownershipStr,
 			"runtime":       runtime,
 			"execution":     execution,
+			"description":   description,
 		}
 		if pkg != nil {
 			a["packageName"] = *pkg
