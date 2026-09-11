@@ -270,12 +270,24 @@ func ApplyBundleArtifact(
 
 	// Automations
 	for _, auto := range artifact.Automations {
-		var existingID string
+		if auto.Ownership == "managed" || isManagedPackageName(auto.PackageName) {
+			report.Actions = append(report.Actions, ApplyAction{
+				Kind: "automation", APIName: auto.APIName, Action: "skipped",
+			})
+			continue
+		}
+		var existingID, existingOwn string
 		err := pool.QueryRow(ctx,
-			`SELECT id::text FROM metadata_automations WHERE api_name=$1`, auto.APIName,
-		).Scan(&existingID)
+			`SELECT id::text, COALESCE(ownership, 'custom') FROM metadata_automations WHERE api_name=$1`, auto.APIName,
+		).Scan(&existingID, &existingOwn)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return nil, fmt.Errorf("check automation %s: %w", auto.APIName, err)
+		}
+		if err == nil && existingOwn == "managed" {
+			report.Actions = append(report.Actions, ApplyAction{
+				Kind: "automation", APIName: auto.APIName, Action: "skipped",
+			})
+			continue
 		}
 
 		pkgName := auto.PackageName
@@ -346,7 +358,7 @@ UPDATE metadata_automations
 SET label=$2, object_api_name=$3, trigger_event=$4, active=$5, condition=$6, actions=$7,
     package_name=$8, ownership='custom', runtime=$9, execution=$10, entry_file=$11, source=$12,
     run_as_principal_id=$13, description=$14, updated_at=now()
-WHERE api_name=$1`,
+WHERE api_name=$1 AND ownership='custom'`,
 					auto.APIName, auto.Label, auto.ObjectAPIName, auto.TriggerEvent,
 					auto.Active, string(condJSON), string(actJSON), *pkgName,
 					runtime, execution, entryFile, source, runAs, auto.Description)
