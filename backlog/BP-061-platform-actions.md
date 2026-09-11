@@ -47,7 +47,7 @@ See [platform-actions-build-plan.md](../docs/architecture/platform-actions-build
 
 ## Explicit non-goals
 
-- Managed locked TypeScript automations in packages
+- Managed locked TypeScript as **integrity verbs** (process wraps: [ADR-033](../docs/adr/033-managed-package-automations.md) / [BP-069](./BP-069-managed-package-automations.md))
 - Prompt templates as convert runtime
 - Per-verb Client routes or per-verb `ctx` methods
 - Customer-defined platform actions
@@ -61,4 +61,5 @@ See [platform-actions-build-plan.md](../docs/architecture/platform-actions-build
 - [ADR-011](../docs/adr/011-sales-service-managed-modules.md) · [ADR-020](../docs/adr/020-cdm-managed-packages.md) · [BP-049](./BP-049-cdm-managed-packages.md)
 - [BP-046](./BP-046-record-merge-dedupe.md) · [BP-044](./BP-044-billing-module-order-from-quote.md)
 - [BP-047](./BP-047-integrations-callable-oauth.md) (customer automation invoke — different noun)
+- [BP-069](./BP-069-managed-package-automations.md) (managed process wraps that call this catalog)
 - [BP-006](./BP-006-agent-guardrails.md) (later MCP `invoke_action`)

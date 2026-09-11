@@ -245,6 +245,7 @@ IDE agents do not implement convert. They consume `POST /client/v1/actions/lead.
 ## Related
 
 - [ADR-029](../adr/029-platform-actions.md)
+- [ADR-033](../adr/033-managed-package-automations.md) · [package-automations-build-plan.md](./package-automations-build-plan.md) — managed wraps that call this catalog
 - [customer-automations-build.md](./customer-automations-build.md)
 - [modules/lead-marketing.md](../modules/lead-marketing.md)
 - [customization-authz.md](./customization-authz.md)

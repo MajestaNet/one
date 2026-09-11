@@ -15,6 +15,8 @@ Runtime schema remains authenticated (`GET /client/v1/describe`, `GET /metadata/
 
 **Platform actions** (integrity verbs such as `lead.convert`) are product Go registered on the module, invoked on Client `GET/POST /client/v1/actions/{apiName}`, and gated by `package_installs` — [ADR-029](../adr/029-platform-actions.md). They are not customer automations and are not locked TypeScript in the pack.
 
+**Managed package automations** (process wraps such as `Lead_ConvertOnConvertedStatus`) are product guest TypeScript seeded as `ownership=managed` Metadata rows on package enable, default **on**, disableable with `PATCH /metadata/v1/automations/{apiName}` `{ "active": false }` — [ADR-033](../adr/033-managed-package-automations.md).
+
 ## Always-on
 
 Seeded with `AUTO_SEED=1`. Not Metadata enable/disable targets.

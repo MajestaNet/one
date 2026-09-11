@@ -20,7 +20,7 @@ The GitHub repo path remains `github.com/MajestaNet/ide` until it is moved to `o
 | **Install** | `INSTALL_ID` | One running instance: one API, one Postgres database, one JWT issuer. |
 | **Org** | CLI alias | DX name for the **connected install** (`one org validate` / `one org deploy`). Not the Account object. |
 | **Custom** | `ownership=custom` | Customer-owned metadata (objects, automations, tests). Contrasts with `managed`. |
-| **Managed** | `ownership=managed` | Product seed / kernel definitions. Upgraded with the image, never Deploy-promoted. |
+| **Managed** | `ownership=managed` | Product seed / kernel definitions. Upgraded with the image, never Deploy-promoted. Managed **package automations** may have `active` toggled on the install ([ADR-033](./adr/033-managed-package-automations.md)). |
 
 Example: customer `acme-corp` runs installs `acme-test` and `acme-prod`. Custom objects live in the customer Git repo (`one/v1`) and deploy to each install. Account and Contact stay `managed`.
 

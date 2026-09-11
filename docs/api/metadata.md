@@ -4,7 +4,7 @@ Shape **this install’s** model: objects, fields, rules, automations, permissio
 
 **Scope:** `metadata`. Writes that change definitions also need `metadata.build` (or `authz.manage` / `identity.manage` / `govern.network` where noted).
 
-**Does not:** mutate `ownership=managed` artifacts (403); promote to sibling installs (use [Deploy](./deploy.md)); CRUD business records (use [Client](./client.md)); roll product images (use [Ops](./ops.md)).
+**Does not:** mutate `ownership=managed` artifacts except the documented **managed automation `active` toggle** ([ADR-033](../adr/033-managed-package-automations.md)); promote to sibling installs (use [Deploy](./deploy.md)); CRUD business records (use [Client](./client.md)); roll product images (use [Ops](./ops.md)).
 
 Writes are always local to the install that receives the request. Prefer `/metadata/v1`. Flat `/v1` aliases exist for core object/field verbs during transition.
 
@@ -30,7 +30,7 @@ Object delete refuses when fields or validation rules still exist. Field delete 
 
 | Method | Path | Capability | What it does | What it does not |
 |---|---|---|---|---|
-| `GET` `POST` `PATCH` | `/metadata/v1/automations` · `/{apiName}` | `metadata.build` on write | Automation **definitions** | Invoke a run (Client) |
+| `GET` `POST` `PATCH` | `/metadata/v1/automations` · `/{apiName}` | `metadata.build` on write; managed `active` also needs **admin** | Automation **definitions**; `description`; managed rows: PATCH `{ "active" }` only | Invoke a run (Client); edit managed source/label |
 | `GET` `POST` `PATCH` | `/metadata/v1/permissions/sets` · `/{apiName}` | `authz.manage` on write | Permission-set **definitions** (object + field + system) | Assign to a user (Client) |
 | `GET` | `/metadata/v1/snapshot` | `metadata` | Export **customer-owned** metadata (includes customer fields on managed objects) | Include managed package internals |
 
@@ -41,7 +41,7 @@ Defs ship in the product image. Enable is Metadata, not Deploy. Always-on `core`
 | Method | Path | Capability | What it does | What it does not |
 |---|---|---|---|---|
 | `GET` | `/metadata/v1/packages` | `metadata` | Image catalog + install state | |
-| `GET` | `/metadata/v1/packages/{name}` | `metadata` | Detail (version, deps, objects, enabled?) | |
+| `GET` | `/metadata/v1/packages/{name}` | `metadata` | Detail (version, deps, objects, declared actions/automations, enabled?) | |
 | `POST` | `/metadata/v1/packages/{name}/enable` | `metadata.build` + admin | Idempotent install/migrate of managed defs | Promote via Deploy |
 | `POST` | `/metadata/v1/packages/{name}/disable` | `metadata.build` + admin | Soft-disable: stop future upgrades; keep metadata/records | Hard-uninstall |
 

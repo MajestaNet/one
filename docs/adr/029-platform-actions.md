@@ -26,6 +26,8 @@ Platform actions are **not** Metadata automations. They are not Deploy-promoted.
 
 Starter clone templates (the `agents_starter` pattern) remain valid for **example customer automations**. They are not a substitute for integrity verbs.
 
+**Managed package automations** ([ADR-033](./033-managed-package-automations.md)) are a third noun: product guest TypeScript seeded as `ownership=managed` Metadata rows that **call** these actions. They are not the action catalog. The install may disable them; it may not fork the Go verb.
+
 ### 2. One Client surface that scales
 
 Do **not** add a new HTTP family. Do **not** add a dedicated route per verb.
@@ -134,7 +136,7 @@ Do not register pricing engines, CPQ rules, or customer process as platform acti
 - Per-verb Client routes or per-verb `ctx` methods
 - Permission-set `actionAccess` catalog (v1)
 - Drag-and-drop / prompt-as-runtime for integrity verbs
-- Managed locked TypeScript automations inside packages
+- Managed locked TypeScript as **integrity verbs** (process wraps that call this catalog are [ADR-033](./033-managed-package-automations.md), not a second convert implementation)
 - Auto-mapping customer custom fields on convert
 - Person Accounts, Lead in `sales` / `core`, product mailer
 - Composite action subrequests and MCP `invoke_action` in v1 (follow-ons)
@@ -142,5 +144,5 @@ Do not register pricing engines, CPQ rules, or customer process as platform acti
 ## Related
 
 - Build plan: [platform-actions-build-plan.md](../architecture/platform-actions-build-plan.md)
-- [ADR-004](./004-three-api-families.md) · [ADR-011](./011-sales-service-managed-modules.md) · [ADR-014](./014-customer-code-automations.md) · [ADR-020](./020-cdm-managed-packages.md) · [ADR-025](./025-api-revision-versioning.md)
-- [BP-049](../../backlog/BP-049-cdm-managed-packages.md) · [BP-046](../../backlog/BP-046-record-merge-dedupe.md) · [BP-044](../../backlog/BP-044-billing-module-order-from-quote.md) · [BP-009](../../backlog/BP-009-no-in-kernel-language.md) · [BP-047](../../backlog/BP-047-integrations-callable-oauth.md)
+- [ADR-004](./004-three-api-families.md) · [ADR-011](./011-sales-service-managed-modules.md) · [ADR-014](./014-customer-code-automations.md) · [ADR-020](./020-cdm-managed-packages.md) · [ADR-025](./025-api-revision-versioning.md) · [ADR-033](./033-managed-package-automations.md)
+- [BP-049](../../backlog/BP-049-cdm-managed-packages.md) · [BP-046](../../backlog/BP-046-record-merge-dedupe.md) · [BP-044](../../backlog/BP-044-billing-module-order-from-quote.md) · [BP-009](../../backlog/BP-009-no-in-kernel-language.md) · [BP-047](../../backlog/BP-047-integrations-callable-oauth.md) · [BP-069](../../backlog/BP-069-managed-package-automations.md)

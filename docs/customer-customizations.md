@@ -17,6 +17,7 @@ Majesta One allows rich per-customer customization (objects, fields, validation,
 |---|---|---|
 | Custom objects / fields / rules | Install DB (`ownership=custom`) | Same Git SHA → `one org deploy` (or Deploy API apply) |
 | Automations, permission sets (customer) | Install DB | Same Git SHA → `one org deploy` |
+| Managed package automations | Product seed (`ownership=managed`) | Image upgrade; install may PATCH `active` only ([ADR-033](./adr/033-managed-package-automations.md)) |
 | AgentSpecs (customer playbooks) | Install DB (`agent_playbooks`) | Same Git SHA → `one org deploy` |
 | Customer test suites | Install DB (`/deploy/v1/tests`) | Included in the customer pack / CI gate |
 | Managed core definitions (`core` / `platform`) | Product seed (`ownership=managed`) | Product image upgrade only |
@@ -24,7 +25,7 @@ Majesta One allows rich per-customer customization (objects, fields, validation,
 | Platform actions (`lead.convert`, …) | Product Go catalog ([ADR-029](./adr/029-platform-actions.md)) | Image upgrade; **gated** by enabled packages; customers wrap via `ctx.invokeAction`, they do not own the verb |
 | `agents_starter` templates | Product seed templates | Always-on clone → customer AgentSpecs ([customer-agents.md](./customer-agents.md)) |
 
-Deploy **rejects** managed package internals in customer bundles. Metadata API **rejects** mutating managed definitions. See [api-families.md](./api-families.md), [Metadata API](./api/metadata.md), [Deploy API](./api/deploy.md), and [multi-env-deploy.md](./multi-env-deploy.md).
+Deploy **rejects** managed package internals in customer bundles. Metadata API **rejects** mutating managed definitions **except** `PATCH` `{ "active" }` on managed package automations ([ADR-033](./adr/033-managed-package-automations.md)). See [api-families.md](./api-families.md), [Metadata API](./api/metadata.md), [Deploy API](./api/deploy.md), and [multi-env-deploy.md](./multi-env-deploy.md).
 
 ## Recommended workflow (customer or SI)
 
