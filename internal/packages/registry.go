@@ -67,6 +67,26 @@ type RegisteredAction struct {
 	Def    ActionDef
 }
 
+// AutomationDef is a product-owned process wrap shipped with a managed module (ADR-033).
+// Source is Deno guest TypeScript that calls platform actions; not a platform action itself.
+type AutomationDef struct {
+	APIName       string // PascalCase, unique across image, never __c, never noun.verb
+	Label         string
+	Description   string // ≤500 chars, functional; required on managed
+	ObjectAPIName string
+	TriggerEvent  string // create | update | delete | write
+	Runtime       string // code
+	Execution     string // sync | async
+	EntryFile     string // virtual product path, e.g. seed/automations/Lead_ConvertOnConvertedStatus.ts
+	Source        string // TypeScript body (or loaded from embed)
+}
+
+// RegisteredAutomation is an AutomationDef plus the module that declared it.
+type RegisteredAutomation struct {
+	Module string
+	Def    AutomationDef
+}
+
 // Module is one optional (or core) managed package shipped in the product image.
 type Module struct {
 	Name              string
@@ -79,6 +99,8 @@ type Module struct {
 	Objects           []ObjectDef
 	// Actions are package-gated Client verbs (ADR-029). No kernel definitions table.
 	Actions []ActionDef
+	// Automations are ownership=managed Metadata rows seeded on enable (ADR-033).
+	Automations []AutomationDef
 	// FieldExtensions are managed fields on objects owned by a dependency package.
 	FieldExtensions []FieldExtension
 	// AutoEnable: when true, Majesta One enables this package automatically once every
@@ -205,6 +227,110 @@ func ActionsByName() (map[string]RegisteredAction, error) {
 		return out, fmt.Errorf("duplicate platform action apiName: %s", strings.Join(dups, ", "))
 	}
 	return out, nil
+}
+
+// AutomationsByName returns every registered managed automation keyed by apiName.
+// Duplicate apiNames across modules or collisions with ActionDef apiNames are an error.
+func AutomationsByName() (map[string]RegisteredAutomation, error) {
+	mu.RLock()
+	defer mu.RUnlock()
+	out := make(map[string]RegisteredAutomation)
+	var dups []string
+	actionNames := map[string]struct{}{}
+	for _, m := range registry {
+		for _, def := range m.Actions {
+			if def.APIName == "" {
+				continue
+			}
+			actionNames[def.APIName] = struct{}{}
+		}
+	}
+	var collisions []string
+	var invalid []string
+	for _, m := range registry {
+		for _, def := range m.Automations {
+			if def.APIName == "" {
+				continue
+			}
+			if err := ValidateAutomationAPIName(def.APIName); err != nil {
+				invalid = append(invalid, def.APIName+": "+err.Error())
+			}
+			if _, exists := out[def.APIName]; exists {
+				dups = append(dups, def.APIName)
+				continue
+			}
+			if _, ok := actionNames[def.APIName]; ok {
+				collisions = append(collisions, def.APIName)
+			}
+			out[def.APIName] = RegisteredAutomation{Module: m.Name, Def: def}
+		}
+	}
+	var errs []string
+	if len(invalid) > 0 {
+		sort.Strings(invalid)
+		errs = append(errs, "invalid managed automation apiName: "+strings.Join(invalid, "; "))
+	}
+	if len(dups) > 0 {
+		sort.Strings(dups)
+		errs = append(errs, "duplicate managed automation apiName: "+strings.Join(dups, ", "))
+	}
+	if len(collisions) > 0 {
+		sort.Strings(collisions)
+		errs = append(errs, "managed automation apiName collides with platform action: "+strings.Join(collisions, ", "))
+	}
+	if len(errs) > 0 {
+		return out, fmt.Errorf("%s", strings.Join(errs, "; "))
+	}
+	return out, nil
+}
+
+// CatalogNameTaken reports whether apiName is a registered platform action or managed automation.
+func CatalogNameTaken(apiName string) bool {
+	apiName = strings.TrimSpace(apiName)
+	if apiName == "" {
+		return false
+	}
+	autos, _ := AutomationsByName()
+	if _, ok := autos[apiName]; ok {
+		return true
+	}
+	acts, _ := ActionsByName()
+	_, ok := acts[apiName]
+	return ok
+}
+
+// ValidateAutomationAPIName enforces PascalCase (optional underscore segments), no __c, no dotted verbs.
+func ValidateAutomationAPIName(apiName string) error {
+	name := strings.TrimSpace(apiName)
+	if name == "" {
+		return fmt.Errorf("apiName is required")
+	}
+	if strings.Contains(name, ".") {
+		return fmt.Errorf("automation apiName %q must not be a dotted platform-action name", name)
+	}
+	if strings.Contains(name, "__c") {
+		return fmt.Errorf("automation apiName %q must not use the customer __c suffix", name)
+	}
+	if name[0] < 'A' || name[0] > 'Z' {
+		return fmt.Errorf("automation apiName %q must be PascalCase", name)
+	}
+	for _, r := range name {
+		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' {
+			continue
+		}
+		return fmt.Errorf("automation apiName %q contains invalid characters", name)
+	}
+	return nil
+}
+
+// Unregister removes a module from the image registry (tests).
+func Unregister(name string) {
+	if name == "" {
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	delete(registry, name)
 }
 
 // AssertKnownOptional returns an error if name is not an optional registered module.
