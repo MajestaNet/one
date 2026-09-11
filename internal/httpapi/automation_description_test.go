@@ -114,3 +114,17 @@ func TestAutomationDescriptionRoundTrip(t *testing.T) {
 	}
 	assertErrorCode(t, rr.Body.Bytes(), "NOT_FOUND")
 }
+
+func TestCreateAutomationRejectsRegistryCollision(t *testing.T) {
+	d := testutil.RequireDatabase(t)
+	testutil.BootstrapCore(t, d, testutil.BootstrapOptions{})
+	srv := testutil.NewTestServer(t, d, testutil.ServerOptions{APIKeys: "admin-key+admin"})
+
+	rr := testutil.AuthRequest(srv.Handler, http.MethodPost, "/metadata/v1/automations", "admin-key", map[string]any{
+		"apiName": "lead.convert", "label": "Nope", "objectApiName": "Lead",
+	})
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("dotted: %d %s", rr.Code, rr.Body.String())
+	}
+	assertErrorCode(t, rr.Body.Bytes(), "VALIDATION_ERROR")
+}

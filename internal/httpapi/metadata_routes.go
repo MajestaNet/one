@@ -17,6 +17,7 @@ import (
 	"github.com/MajestaNet/ide/internal/automation"
 	"github.com/MajestaNet/ide/internal/db"
 	"github.com/MajestaNet/ide/internal/metadata"
+	"github.com/MajestaNet/ide/internal/packages"
 	"github.com/MajestaNet/ide/internal/seed"
 	"github.com/MajestaNet/ide/internal/webhook"
 )
@@ -428,6 +429,14 @@ func (s *Server) handleCreateAutomation(w http.ResponseWriter, r *http.Request) 
 	}
 	if own, _ := body["ownership"].(string); own == "managed" {
 		writeErr(w, http.StatusForbidden, "FORBIDDEN", "Cannot create managed automation")
+		return
+	}
+	if strings.Contains(apiName, ".") {
+		writeErr(w, http.StatusBadRequest, "VALIDATION_ERROR", "automation apiName must not be a dotted platform-action name")
+		return
+	}
+	if packages.CatalogNameTaken(apiName) {
+		writeErr(w, http.StatusBadRequest, "VALIDATION_ERROR", "apiName collides with a managed registry name")
 		return
 	}
 	description, err := parseAutomationDescription(body, false)
