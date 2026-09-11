@@ -176,6 +176,10 @@ func syncModuleDefs(ctx context.Context, meta *metadata.Service, m packages.Modu
 			return err
 		}
 	}
+	// Pass 5: managed package automations (ADR-033).
+	if err := meta.SyncManagedAutomations(ctx, m.Name, m.Automations); err != nil {
+		return err
+	}
 	return nil
 }
 

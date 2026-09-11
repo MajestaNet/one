@@ -241,6 +241,19 @@ func ListTools() []ToolDesc {
 			},
 		},
 		{
+			Name:        "patch_automation",
+			Description: "Patch an automation via PATCH /metadata/v1/automations/{apiName} (requires scope:metadata and metadata.build). Managed rows: {active} only, also requires admin. Custom rows may set description and active." + authNote,
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"apiName":     map[string]any{"type": "string"},
+					"active":      map[string]any{"type": "boolean"},
+					"description": map[string]any{"type": "string"},
+				},
+				"required": []string{"apiName"},
+			},
+		},
+		{
 			Name:        "org_validate",
 			Description: "Validate a local package vs this install via POST /deploy/v1/packages/validate-local (requires scope:deploy and deploy.promote)." + authNote,
 			InputSchema: map[string]any{
@@ -331,6 +344,8 @@ func CallTool(ctx context.Context, deps Deps, actor *authz.Actor, name string, a
 		return upsertObject(ctx, deps, actor, args)
 	case "upsert_field":
 		return upsertField(ctx, deps, actor, args)
+	case "patch_automation":
+		return patchAutomation(ctx, deps, actor, args)
 	case "org_validate":
 		return orgValidate(ctx, deps, actor, args)
 	case "org_deploy":

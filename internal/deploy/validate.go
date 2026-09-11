@@ -359,6 +359,14 @@ func ValidateBundleArtifact(
 				Path:     fmt.Sprintf("automations.%s", auto.APIName),
 			})
 		}
+		if err := metadata.ValidateAutomationDescription(auto.Description); err != nil {
+			report.Issues = append(report.Issues, ValidationIssue{
+				Severity: "error",
+				Code:     "VALIDATION_ERROR",
+				Message:  err.Error(),
+				Path:     fmt.Sprintf("automations.%s.description", auto.APIName),
+			})
+		}
 	}
 
 	// Validate packed guest sources (import ban).

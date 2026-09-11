@@ -121,6 +121,7 @@ Supported JSON-RPC methods: `initialize`, `notifications/initialized`, `ping`, `
 | `get_object_metadata` / `list_objects_metadata` | Metadata object GET/list | `metadata` |
 | `list_agent_specs` | Metadata AgentSpecs list | `metadata` |
 | `upsert_object` / `upsert_field` | Metadata object/field POST+PATCH | `metadata` + `metadata.build` |
+| `patch_automation` | `PATCH /metadata/v1/automations/{apiName}` (managed: `{active}` + admin) | `metadata` + `metadata.build` |
 | `org_validate` | `POST /deploy/v1/packages/validate-local` | `deploy` + `deploy.promote` |
 | `org_deploy` | `POST /deploy/v1/promotions` | `deploy` + `deploy.promote` |
 | `pack` | `POST /deploy/v1/packages/pack` (JSON artifact) | `deploy` + `deploy.promote` |

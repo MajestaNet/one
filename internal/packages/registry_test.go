@@ -42,3 +42,30 @@ func TestActionsByNameUnique(t *testing.T) {
 		t.Fatalf("quote.accept=%+v ok=%v", qa, ok)
 	}
 }
+
+func TestAutomationsByNameUnique(t *testing.T) {
+	if _, err := packages.AutomationsByName(); err != nil {
+		t.Fatal(err)
+	}
+	if !packages.CatalogNameTaken("lead.convert") {
+		t.Fatal("lead.convert should be taken as a platform action")
+	}
+	if packages.CatalogNameTaken("NotARegistryName_BP069") {
+		t.Fatal("unknown name should not be taken")
+	}
+}
+
+func TestValidateAutomationAPIName(t *testing.T) {
+	if err := packages.ValidateAutomationAPIName("Lead_ConvertOnConvertedStatus"); err != nil {
+		t.Fatal(err)
+	}
+	if err := packages.ValidateAutomationAPIName("lead.convert"); err == nil {
+		t.Fatal("expected dotted name to fail")
+	}
+	if err := packages.ValidateAutomationAPIName("LeadConvert__c"); err == nil {
+		t.Fatal("expected __c to fail")
+	}
+	if err := packages.ValidateAutomationAPIName("leadConvert"); err == nil {
+		t.Fatal("expected lowercase start to fail")
+	}
+}
