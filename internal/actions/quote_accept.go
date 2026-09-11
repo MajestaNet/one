@@ -64,7 +64,8 @@ func acceptQuote(ctx context.Context, s *Service, actor *authz.Actor, input map[
 
 	status := strings.TrimSpace(strVal(quote["Status"]))
 	existingOrderID := strings.TrimSpace(strVal(quote["OrderId"]))
-	alreadyAccepted := status == "Accepted"
+	acceptedAt := strings.TrimSpace(strVal(quote["AcceptedAt"]))
+	alreadyAccepted := status == "Accepted" && acceptedAt != ""
 
 	if alreadyAccepted {
 		if !createOrder {
@@ -73,7 +74,7 @@ func acceptQuote(ctx context.Context, s *Service, actor *authz.Actor, input map[
 		if existingOrderID != "" {
 			return acceptedResult(quoteID, existingOrderID, true), nil
 		}
-	} else if status != "Draft" && status != "Presented" {
+	} else if status != "Draft" && status != "Presented" && status != "Accepted" {
 		return nil, errValidation("Quote Status " + status + " cannot be accepted")
 	}
 

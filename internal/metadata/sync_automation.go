@@ -142,3 +142,17 @@ func nilIfEmpty(s string) any {
 func errorsIsNoRows(err error) bool {
 	return errors.Is(err, pgx.ErrNoRows)
 }
+
+// PackageInstallEnabled reports whether package_installs.enabled is true for name.
+func PackageInstallEnabled(ctx context.Context, pool *db.Pool, packageName string) (bool, error) {
+	if pool == nil || strings.TrimSpace(packageName) == "" {
+		return false, nil
+	}
+	var enabled bool
+	err := pool.QueryRow(ctx, `
+SELECT enabled FROM package_installs WHERE package_name=$1`, packageName).Scan(&enabled)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	return enabled, err
+}

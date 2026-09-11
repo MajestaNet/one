@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/MajestaNet/ide/internal/authz"
 	"github.com/MajestaNet/ide/internal/automation"
 	"github.com/MajestaNet/ide/internal/dataengine"
 	"github.com/MajestaNet/ide/internal/db"
+	"github.com/MajestaNet/ide/internal/metadata"
 )
 
 // processAutomationRun executes an automation.run job (actions or Deno code).
@@ -29,15 +31,31 @@ func processAutomationRun(ctx context.Context, pool *db.Pool, payload map[string
 
 	if automationID != "" {
 		var actionsJSON []byte
+		var ownership, pkgName string
+		var pkg *string
 		err := pool.QueryRow(ctx, `
 SELECT api_name, COALESCE(runtime, 'actions'), COALESCE(actions, '[]'::jsonb),
-       COALESCE(source, ''), COALESCE(entry_file, ''), COALESCE(run_as_principal_id::text, '')
+       COALESCE(source, ''), COALESCE(entry_file, ''), COALESCE(run_as_principal_id::text, ''),
+       COALESCE(ownership, 'custom'), package_name
 FROM metadata_automations WHERE id=$1::uuid`, automationID).Scan(
-			&apiName, &runtime, &actionsJSON, &source, &entryFile, &runAsPrincipalID)
+			&apiName, &runtime, &actionsJSON, &source, &entryFile, &runAsPrincipalID, &ownership, &pkg)
 		if err != nil {
 			return fmt.Errorf("load automation %s: %w", automationID, err)
 		}
 		actionsRaw = actionsJSON
+		if pkg != nil {
+			pkgName = *pkg
+		}
+		if strings.EqualFold(ownership, "managed") {
+			enabled, perr := metadata.PackageInstallEnabled(ctx, pool, pkgName)
+			if perr != nil {
+				return perr
+			}
+			if !enabled {
+				log.Printf("[worker] skip automation %s: package %s is not enabled", apiName, pkgName)
+				return nil
+			}
+		}
 	}
 
 	// ADR-014: schedule uses definition run-as; record/manual/API invoke use the starter principal.

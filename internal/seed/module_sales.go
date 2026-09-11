@@ -4,7 +4,7 @@ import (
 	"github.com/MajestaNet/ide/internal/packages"
 )
 
-const SalesPackageVersion = "2.2.0"
+const SalesPackageVersion = "2.3.0"
 
 func registerSalesModule() {
 	packages.Register(packages.Module{
@@ -17,6 +17,9 @@ func registerSalesModule() {
 		DocumentationPath: "docs/modules/sales.md",
 		Actions: []packages.ActionDef{
 			quoteAcceptActionDef(),
+		},
+		Automations: []packages.AutomationDef{
+			quoteAcceptOnStatusAcceptedDef(),
 		},
 		Objects: []packages.ObjectDef{
 			{
@@ -140,6 +143,20 @@ func registerSalesModule() {
 			},
 		},
 	})
+}
+
+func quoteAcceptOnStatusAcceptedDef() packages.AutomationDef {
+	return packages.AutomationDef{
+		APIName:       "Quote_AcceptOnStatusAccepted",
+		Label:         "Accept Quote on Accepted status",
+		Description:   "When Quote.Status becomes Accepted, runs quote.accept in the same transaction. Does not copy customer custom fields.",
+		ObjectAPIName: "Quote",
+		TriggerEvent:  "update",
+		Runtime:       "code",
+		Execution:     "sync",
+		EntryFile:     "seed/automations/Quote_AcceptOnStatusAccepted.ts",
+		Source:        quoteAcceptOnStatusAcceptedSrc,
+	}
 }
 
 func quoteAcceptActionDef() packages.ActionDef {

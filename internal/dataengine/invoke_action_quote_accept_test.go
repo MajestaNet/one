@@ -67,7 +67,13 @@ func TestSyncInvokeActionQuoteAccept(t *testing.T) {
 	}
 	cleanup()
 	t.Cleanup(func() {
-		cleanup()
+		bg := context.Background()
+		_, _ = pool.Exec(bg, `UPDATE metadata_automations SET active=false WHERE api_name=$1`, autoName)
+		_, _ = pool.Exec(bg, `DELETE FROM metadata_automations WHERE api_name=$1`, autoName)
+		_, _ = pool.Exec(bg, `DELETE FROM automation_permissions WHERE automation_api_name=$1`, autoName)
+		_, _ = pool.Exec(bg, `DELETE FROM records WHERE object_api_name IN ('QuoteLine','Quote','OrderLine','Order','Product','Account') AND (
+			data->>'Name' LIKE 'InvokeQuote%' OR data->>'Name' LIKE 'InvokeQ Product%' OR data->>'Name' LIKE 'InvokeQ Co%')`)
+		_, _ = pool.Exec(bg, `UPDATE metadata_cache_epoch SET epoch = epoch + 1 WHERE id = 1`)
 		pool.Close()
 	})
 

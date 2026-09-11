@@ -52,9 +52,7 @@ func convertLead(ctx context.Context, s *Service, actor *authz.Actor, input map[
 			"alreadyConverted": true,
 		}, nil
 	}
-	if status == "Converted" {
-		return nil, errValidation("Lead is Converted but missing AccountId or ContactId")
-	}
+	// Status may already be Converted from a field write; managed wraps call convert to finish the verb.
 
 	accountID, err := s.resolveConvertAccount(ctx, actor, lead, strings.TrimSpace(strVal(input["accountId"])))
 	if err != nil {
