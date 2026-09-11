@@ -3,6 +3,14 @@ import type { AppBridge } from "../App";
 import { Button, EmptyState, PanelHeader, StatusBadge, SearchField, ToolSurface, ToolToolbar } from "../ui";
 import { IconMetadata } from "../icons/Icons";
 
+export type PackageAutomationStatus = {
+  apiName: string;
+  label: string;
+  description?: string;
+  active?: boolean | null;
+  installed?: boolean;
+};
+
 export type PackageStatus = {
   name: string;
   label: string;
@@ -15,6 +23,8 @@ export type PackageStatus = {
   enabled?: boolean;
   documentationPath?: string;
   objectApiNames?: string[];
+  automationApiNames?: string[];
+  automations?: PackageAutomationStatus[];
 };
 
 function sortPackages(rows: PackageStatus[]): PackageStatus[] {
@@ -81,11 +91,16 @@ export function PackagesPanel({
     if (!q) return packages;
     return packages.filter((p) => {
       const objects = (p.objectApiNames ?? []).join(" ").toLowerCase();
+      const autos = (p.automations ?? [])
+        .map((a) => `${a.apiName} ${a.label} ${a.description ?? ""}`)
+        .join(" ")
+        .toLowerCase();
       return (
         p.name.toLowerCase().includes(q) ||
         (p.label || "").toLowerCase().includes(q) ||
         (p.description || "").toLowerCase().includes(q) ||
-        objects.includes(q)
+        objects.includes(q) ||
+        autos.includes(q)
       );
     });
   }, [packages, filter]);
@@ -97,6 +112,22 @@ export function PackagesPanel({
       await bridge.fetch(`/metadata/v1/packages/${encodeURIComponent(name)}/enable`, {
         method: "POST",
         body: "{}",
+      });
+      await load();
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setActionName(null);
+    }
+  };
+
+  const toggleAutomation = async (apiName: string, active: boolean) => {
+    setErr("");
+    setActionName(apiName);
+    try {
+      await bridge.fetch(`/metadata/v1/automations/${encodeURIComponent(apiName)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ active }),
       });
       await load();
     } catch (e) {
@@ -221,6 +252,30 @@ export function PackagesPanel({
                               : "No objects listed."}
                           </p>
                         )}
+                        {(p.automations ?? []).length ? (
+                          <ul className="pkg-object-list" data-testid={`pkg-autos-${p.name}`}>
+                            {(p.automations ?? []).map((a) => (
+                              <li key={a.apiName} data-testid={`pkg-auto-${a.apiName}`}>
+                                <strong>{a.label || a.apiName}</strong>
+                                {a.description ? <span className="muted"> — {a.description}</span> : null}
+                                {a.installed ? (
+                                  <label className="row" style={{ marginTop: "0.25rem" }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={a.active === true}
+                                      disabled={actionName === a.apiName}
+                                      onChange={(e) => void toggleAutomation(a.apiName, e.target.checked)}
+                                      data-testid={`pkg-auto-active-${a.apiName}`}
+                                    />
+                                    Active
+                                  </label>
+                                ) : (
+                                  <span className="muted"> Not installed</span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
                       </div>
                     ) : null}
                   </td>

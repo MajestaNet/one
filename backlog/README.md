@@ -59,7 +59,7 @@ Each BP header includes an **`Area:`** field — preferred code scope. Resolve A
 | [BP-066](./BP-066-ide-demo-client-fidelity.md) | Medium | Open (WS0–WS3/WS5 in IDE; WS4 remains) | Control IDE as an honest JWT demo of shipped APIs |
 | [BP-067](./BP-067-public-docs-site.md) | Medium | Open (CMS extracted; One source split landed) | Public docs site (`one.majesta.net`) — separate CMS aggregator; this repo does not implement |
 | [BP-068](./BP-068-ide-brand-visual.md) | Medium | Mitigated | Control IDE brand restyle (navy/gold tokens + logo; not chrome expansion) |
-| [BP-069](./BP-069-managed-package-automations.md) | Medium | Open (Phases 0–5, 7 landed; IDE consume remaining) | Managed package automations — enable default-on, Metadata `active` toggle, persisted description, IDE consume |
+| [BP-069](./BP-069-managed-package-automations.md) | Medium | Mitigated | Managed package automations — enable default-on, Metadata `active` toggle, persisted description, IDE consume |
 
 Severity guide: **High** = likely to block real customer load, security, or the install agent-runtime / Ship path; **Medium** = will hurt before GA if ignored. Control IDE commercial delivery is **not** a High driver while chrome is frozen ([ADR-030](../docs/adr/030-install-agent-runtime.md)).
 
@@ -83,9 +83,9 @@ BP-066 may change existing panels so they call shipped family routes honestly. B
 
 **Finish — public docs:** [BP-067](./BP-067-public-docs-site.md) (external CMS aggregator; not this repo’s `make ci`)
 
-**Open product risk (non-IDE):** BP-008, BP-026, BP-028, BP-031, BP-035, BP-038, BP-047, BP-049, BP-069
+**Open product risk (non-IDE):** BP-008, BP-026, BP-028, BP-031, BP-035, BP-038, BP-047, BP-049
 
-**Keep (mitigated — do not reopen for IDE expansion):** BP-001, BP-003, BP-006, BP-009, BP-010, BP-032, BP-036, BP-043, BP-044, BP-050, BP-053, BP-054, BP-055, BP-056, BP-058, BP-060, BP-064, BP-068
+**Keep (mitigated — do not reopen for IDE expansion):** BP-001, BP-003, BP-006, BP-009, BP-010, BP-032, BP-036, BP-043, BP-044, BP-050, BP-053, BP-054, BP-055, BP-056, BP-058, BP-060, BP-064, BP-068, BP-069
 
 Priority: **BP-065** Phase 2 → **BP-048** → **BP-052** → **BP-040** → identity/claim → **BP-017** → **BP-033** → install/distro → **BP-025** pin gaps → headless Client → OTEL/OSS/automations. BP-066 may run in parallel with BP-065 lockstep; it does not outrank install Finish work. BP-067 is vendor-docs, not product runtime.
 
