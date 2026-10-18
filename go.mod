@@ -3,7 +3,7 @@ module github.com/MajestaNet/ide
 go 1.25.0
 
 require (
-	github.com/MicahParks/keyfunc/v3 v3.8.0
+	github.com/MicahParks/keyfunc/v3 v3.8.1
 	github.com/diegoholiveira/jsonlogic/v3 v3.5.3
 	github.com/go-git/go-git/v5 v5.19.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -28,7 +28,7 @@ require (
 require (
 	al.essio.dev/pkg/shellescape v1.5.1 // indirect
 	dario.cat/mergo v1.0.0 // indirect
-	github.com/MicahParks/jwkset v0.11.0 // indirect
+	github.com/MicahParks/jwkset v0.11.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
@@ -63,7 +63,7 @@ require (
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
-	golang.org/x/time v0.9.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
 	google.golang.org/grpc v1.83.0 // indirect
