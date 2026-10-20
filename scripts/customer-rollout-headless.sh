@@ -115,10 +115,10 @@ fi
 
 echo "== D/E org validate + deploy template on test =="
 go run ./cmd/one org validate -dir "$SANDBOX" --alias test
-if command -v deno >/dev/null 2>&1; then
+if command -v node >/dev/null 2>&1; then
   go run ./cmd/one org deploy -dir "$SANDBOX" --alias test --suite CreateAccountFromContact
 else
-  echo "deno not on PATH; deploying without --suite (worker image still has Deno for async runs)"
+  echo "node not on PATH; deploying without --suite (worker image still has Node for async runs)"
   go run ./cmd/one org deploy -dir "$SANDBOX" --alias test
 fi
 

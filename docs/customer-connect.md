@@ -12,7 +12,7 @@ See [ADR-006](./adr/006-jwt-auth.md), [ADR-010](./adr/010-customer-agentic-platf
 
 **MCP server ownership:** the install **is** the MCP server ([ADR-010](./adr/010-customer-agentic-platform.md)). Customers configure principals, credentials, and AgentSpecs — they do **not** author product MCP server code. Optional custom tools live in the vendor-plane TypeScript scaffold under [`tools/one-mcp`](../tools/one-mcp/) (customer-hosted; never in the product image).
 
-**Not the same as code automations:** sandboxed Deno guest TypeScript ([ADR-014](./adr/014-customer-code-automations.md)) runs inside the worker with `one:automation` only — it is not an MCP server and cannot import npm packages.
+**Not the same as code automations:** sandboxed Node guest TypeScript ([ADR-014](./adr/014-customer-code-automations.md)) runs inside the worker with `one:automation` only — it is not an MCP server and cannot import npm packages.
 
 ---
 
@@ -282,7 +282,7 @@ Promote connector **defs + secret ref names** via Deploy; re-bind secrets and re
 
 ### Automation send via connector
 
-Packages and Deno automations send transactional contact with `ctx.http` / `ctx.connector` against an allowlisted provider host (same SSRF rules as webhooks). Example shape:
+Packages and Node guest automations send transactional contact with `ctx.http` / `ctx.connector` against an allowlisted provider host (same SSRF rules as webhooks). Example shape:
 
 1. `POST /metadata/v1/secrets` — store SendGrid API key as `enc:v1:…`
 2. `POST /metadata/v1/connectors` — `baseUrl` `https://api.sendgrid.com`, secret ref

@@ -3,7 +3,7 @@
 **Active plan** for protecting a live Majesta One install while customers validate/deploy, run automations/agents, and debug their own code — without incumbent-platform ceilings as the product limit.
 
 **Playbooks:** [agent-worker.md](./agent-worker.md) · [agent-api-families.md](./agent-api-families.md) · [agent-data-architecture.md](./agent-data-architecture.md) · [agent-deploy.md](./agent-deploy.md) · [agent-authz.md](./agent-authz.md)  
-**Domain agents:** `worker-jobs` (quotas, job classes, Deno caps); `api-families` (admission + Client debug routes); `db-backend-perf` (ExecutionRun / ExecutionLogEntry + HV); `deploy-ops` (async org validate/deploy); `authz-security` (debug.read capability).  
+**Domain agents:** `worker-jobs` (quotas, job classes, guest caps); `api-families` (admission + Client debug routes); `db-backend-perf` (ExecutionRun / ExecutionLogEntry + HV); `deploy-ops` (async org validate/deploy); `authz-security` (debug.read capability).  
 **Backlog:** [BP-033](../../backlog/BP-033-customer-runtime-isolation.md) · related [BP-005](./agent-worker.md) · [BP-008](../../backlog/BP-008-production-packaging.md) · [BP-009](../../backlog/BP-009-no-in-kernel-language.md) · [BP-006](../../backlog/BP-006-agent-guardrails.md) · [BP-032](../../backlog/BP-032-customer-dx-validate-deploy.md) (DX UX only — not resource isolation)
 
 ---
@@ -28,7 +28,7 @@ Automation / agent runs    ──► worker job classes + per-run + install quot
 | Isolation unit | **Install** (ADR-001) — not multi-tenant SaaS fair-share | One customer DB; scale = App Platform / Helm replicas + quota knobs |
 | Live vs Build traffic | **Family + job-class admission** on API and worker | Validate/deploy must not starve `/client/v1` |
 | Expensive Deploy work | **Async by default** (`deploy.validate`, `deploy.apply` / org deploy, `customer.test.run`) with sync only for tiny packs under a size gate | Today org validate/apply can run sync on the API process; **no** peer/inbound promote ([multi-env-deploy.md](../multi-env-deploy.md)) |
-| Automation runaway | Wall time + depth + mutation caps (shipped) **plus** install concurrent slots, daily run budget, Deno RSS/CPU soft limits, per-run log byte cap | Beat incumbent heap/CPU ceilings without unbounded Deno |
+| Automation runaway | Wall time + depth + mutation caps (shipped) **plus** install concurrent slots, daily run budget, guest RSS/CPU soft limits, per-run log byte cap | Beat incumbent heap/CPU ceilings without an unbounded guest |
 | Agent runaway | Same job-class budgets + tool-call / token budget when hosted loop lands (BP-006 / BP-014) | External MCP still AuthZ-bound; hosted loop needs explicit budgets |
 | Customer debug SoT | Managed objects **`ExecutionRun`** + **`ExecutionLogEntry`** (`storage_mode=high_volume`) | Queryable like CRM data; HV for append-heavy lines ([ADR-013](../adr/013-high-volume-flexible-storage.md)) |
 | Operator telemetry | Keep `audit_log` + slog; OTEL = BP-008 | Do not overload `audit_log` as a developer log |
@@ -43,13 +43,13 @@ Automation / agent runs    ──► worker job classes + per-run + install quot
 | Concurrent `automation.run` | `min(4, worker_replicas*2)` | Varies by platform | Hard semaphore in worker |
 | Concurrent `agent.run` | `min(2, worker_replicas)` | — | Separate class so agents cannot crowd automations |
 | Concurrent org validate/deploy/test | `1` per install (queue others) | One active deploy typical | Protects live DB; repo→org only |
-| Async automation wall time | **120s** (raise from today’s 30s async default as opt-in; keep 30s default until Phase 2) | ~60s CPU typical async limit | Wall clock ≠ CPU; Deno still sandboxed |
+| Async automation wall time | **120s** (raise from today’s 30s async default as opt-in; keep 30s default until Phase 2) | ~60s CPU typical async limit | Wall clock ≠ CPU; the Node guest stays sandboxed |
 | Sync automation wall time | **5s** (keep) | ~10s CPU typical sync limit | Stay strict on request path |
 | Sync mutation count / depth | **50 / 3** (keep) | Platform governor mix | Already in Go |
 | Per-run log capture | **256 KiB** truncated | Typical debug log sizes | Excess → `truncated=true` on run |
 | Daily automation executions | **1_000_000** / install default | ~250k async/day edition-dependent | Soft quota → 429/job fail with clear code |
 | Daily agent runs | **50_000** / install default | — | Raise with install size |
-| Deno memory soft limit | **512 MiB** RSS | 6–12 MiB heap typical | Still far above legacy defaults; cgroup when container supports |
+| guest memory soft limit | **512 MiB** RSS | 6–12 MiB heap typical | Still far above legacy defaults; cgroup when container supports |
 
 ---
 
@@ -139,7 +139,7 @@ flowchart TB
 | `QUOTA_AGENT_RUNS_PER_DAY` | `50000` | Soft daily cap |
 | `EXECUTION_LOG_BYTES_PER_RUN` | `262144` | Capture cap |
 | `EXECUTION_LOG_RETENTION_DAYS` | `14` | HV purge |
-| `DENO_RSS_LIMIT_MB` | `512` | Soft limit when enforceable |
+| `GUEST_RSS_LIMIT_MB` | `512` | Soft limit when enforceable |
 
 ### Phase 1 — Admission control (live vs Build)
 
@@ -161,7 +161,7 @@ flowchart TB
 
 1. Tag jobs with `class` (`automation` | `agent` | `deploy` | `default`); claim loops respect per-class slots.
 2. Daily counters in Postgres (`install_quota_counters` kernel table — date, class, count) with atomic increment; exceed → fail job with `QUOTA_EXCEEDED` and `ExecutionRun.status=throttled`.
-3. Deno: apply RSS limit via OS (`ulimit`/cgroup) when available; always enforce wall timeouts; stream guest logs into capture buffer.
+3. Node guest: apply RSS limit via OS (`ulimit`/cgroup) when available; always enforce wall timeouts; stream guest logs into capture buffer.
 4. Agent stub path: still create `ExecutionRun`; now that the BP-006 hosted loop exists, count tool calls against `Stats.toolCalls` + budget.
 
 **Exit:** A runaway automation loop hits concurrent + daily caps without exhausting API pool connections.
@@ -197,14 +197,14 @@ flowchart TB
 
 1. Document how raising App Platform instance count / worker replicas interacts with slot defaults (`min(N, replicas*k)`).
 2. Optional Metadata/Deploy exposure knobs for quotas (admin-only) — still install-local, not multi-tenant SaaS metering.
-3. Pair with BP-008 OTEL metrics: queue depth, throttle count, Deno OOM.
+3. Pair with BP-008 OTEL metrics: queue depth, throttle count, guest OOM.
 
 ---
 
 ## Non-goals
 
 - Multi-tenant fair-share across customers (ADR-001)
-- Unlimited Deno / npm / network in guest (ADR-014)
+- Unlimited Node guest / npm / network in the guest (ADR-014 / ADR-034)
 - Replacing OTEL with ExecutionLogEntry for operators (BP-008 stays)
 - Using `audit_log` as the developer debug stream
 - Legacy vendor-compatible debug log file format

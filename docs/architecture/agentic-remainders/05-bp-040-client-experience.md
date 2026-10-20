@@ -180,7 +180,7 @@ CORS for local Vite (`127.0.0.1:5174`) is already the install `devCORSOrigin` lo
 - Changing public Connected App defaults or `ShouldIssueRefresh` (IDE azp bypass is BP-065)
 - Bumping `API_REVISION_CURRENT` / per-revision adapters (BP-025 Phase 4)
 - Publishing npm to the public registry as a required GA step (packages may stay `file:` in-tree)
-- npm inside Deno guest ([ADR-014](../../adr/014-customer-code-automations.md))
+- npm inside Node guest ([ADR-014](../../adr/014-customer-code-automations.md))
 
 ---
 

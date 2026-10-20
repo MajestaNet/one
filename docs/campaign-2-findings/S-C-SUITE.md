@@ -20,7 +20,7 @@ Actual (acme-dev, packs enabled, objects already on the install):
 
 - Apply succeeded (`created: 60`, 57 automations). CLI **exit 0**.
 - Suite `status=failed` (run `554072e2-9218-40b8-95f6-b1f2e402010d`). CLI truncated the JSON (#29); full report via `GET /deploy/v1/tests/runs/:id`.
-- Steps 0–7 **passed** (5× `objectExists`, 3× `automationUnitPass` including Deno unit harness).
+- Steps 0–7 **passed** (5× `objectExists`, 3× `automationUnitPass` including the guest unit harness; that run used Deno, since replaced by Node in [ADR-034](../adr/034-node-guest-automations.md)).
 - Step 8 `automationContract` **failed** in 5ms: `contract fixture create: Opportunity requires AccountId and/or ContactId`.
 - Same 400 from the runbook live curl (`Name`/`StageName`/`CloseDate` only). Workaround: create Account, then Opportunity with `AccountId` → 201; worker created `SiteVisit__c` (“North Plant kickoff visit”) in ~2s.
 

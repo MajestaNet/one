@@ -61,7 +61,7 @@ API **and** worker still call `EnsureKernel` on boot (`cmd/api`, `cmd/worker`). 
 ### F. Platform action host RPC (`invokeAction`)
 
 1. Follow [platform-actions-build-plan.md](./platform-actions-build-plan.md) Phase 3 — one frozen SDK method; dispatch to `internal/actions.Invoke` as run-as.
-2. Sync guests may call only `syncSafe` actions (share the write tx). Do not let Deno call Client HTTP.
+2. Sync guests may call only `syncSafe` actions (share the write tx). Do not let the Node guest call Client HTTP.
 3. Do not add per-verb `ctx` methods.
 
 ### G. Managed package automations (BP-069)

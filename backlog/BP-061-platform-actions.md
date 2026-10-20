@@ -9,7 +9,7 @@
 
 Managed packages ship objects/fields only. Customer automations are guest TypeScript ([ADR-014](../docs/adr/014-customer-code-automations.md)). Integrity verbs (Lead convert, record merge, later Quote accept) must be **product Go** — guests must not reimplement multi-object tx, and locked package TS must not become a second process SKU.
 
-Without a **single Client catalog**, each verb becomes a one-off route (`POST /convertLead`, `POST /merge`) that does not scale, is hard to package-gate, and is awkward to call from customer TS (HTTP from Deno is banned; per-verb `ctx` methods explode the frozen SDK).
+Without a **single Client catalog**, each verb becomes a one-off route (`POST /convertLead`, `POST /merge`) that does not scale, is hard to package-gate, and is awkward to call from customer TS (HTTP from the Node guest is banned; per-verb `ctx` methods explode the frozen SDK).
 
 BP-049 listed Lead convert as a follow-up ADR. That ADR is now [ADR-029](../docs/adr/029-platform-actions.md); convert is the first registered action, not a special snowflake.
 

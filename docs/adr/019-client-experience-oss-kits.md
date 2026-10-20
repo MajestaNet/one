@@ -66,7 +66,7 @@ Customers **configure** Experiences on an install; they do **not** load arbitrar
 |---|---|
 | Browser UI (WebRTC softphone, vendor widget) | Customer Experience app; vendor SDK in customer-hosted bundle |
 | Server I/O (REST webhooks, SMS, call control) | Install **connectors** + secret refs + egress allowlist ([BP-014](../../backlog/BP-014-agent-outbound-integrations.md)) |
-| Domain logic | Async Deno automations via `ctx.connector` ([ADR-014](./014-customer-code-automations.md)); no npm in guest |
+| Domain logic | Async Node guest automations via `ctx.connector` ([ADR-014](./014-customer-code-automations.md)); no npm in guest |
 
 Compliance is **capability-based**: narrow Client scopes, no ambient Metadata authority, auditable outbound via connectors, secrets never in the browser.
 
@@ -76,7 +76,7 @@ Compliance is **capability-based**: narrow Client scopes, no ambient Metadata au
 - Customer Electron/React/iframe plugins in Control IDE (ADR-012 stands)
 - Embedding customer webpack bundles in product images or Electron
 - Global marketplace that injects arbitrary code into `cmd/` / `internal/`
-- npm / third-party imports inside Deno guest automations (ADR-014 stands)
+- npm / third-party imports inside Node guest automations (ADR-014 stands)
 - Product-hosted `/x` same-origin SPA router in the Go API
 
 ## Consequences

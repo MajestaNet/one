@@ -2,14 +2,18 @@ package seed
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/MajestaNet/ide/internal/automation"
 )
 
 func TestLeadConvertOnConvertedStatusGuestSkipsUnlessConverted(t *testing.T) {
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	src := leadConvertOnConvertedStatusSrc
 	skipSrc := `
@@ -75,8 +79,11 @@ export default async function run(ctx) {
 }
 
 func TestQuoteAcceptOnStatusAcceptedGuestSkipsUnlessAccepted(t *testing.T) {
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	src := quoteAcceptOnStatusAcceptedSrc
 	skipSrc := `

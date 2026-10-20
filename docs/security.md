@@ -125,7 +125,7 @@ FEATURE_FLAGS=                       # enable only the product modules this inst
 
 ## Outbound connectors (automations)
 
-- Async Deno automations call external HTTPS only via Go host RPC (`ctx.http` / `ctx.connector`) — guest stays deny-net ([BP-014](../backlog/BP-014-agent-outbound-integrations.md))
+- Async Node guest automations call external HTTPS only via Go host RPC (`ctx.http` / `ctx.connector`) — guest stays deny-net ([BP-014](../backlog/BP-014-agent-outbound-integrations.md), [ADR-034](./adr/034-node-guest-automations.md))
 - Install egress allowlist + connector `base_url`; same SSRF rules as webhooks; redirects disabled
 - Provider keys live in `install_secrets` (`enc:v1`); Metadata returns `hasSecret` only; Deploy/Git carry refs, not ciphertext
 - Sync automations must not perform outbound I/O

@@ -2,6 +2,7 @@ package dataengine_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -20,10 +21,13 @@ const (
 	quoteAcceptAuto = "Quote_AcceptOnStatusAccepted"
 )
 
-func requireDenoAndDB(t *testing.T) {
+func requireNodeAndDB(t *testing.T) {
 	t.Helper()
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	if os.Getenv("DATABASE_URL") == "" {
 		t.Skip("DATABASE_URL not set")
@@ -73,7 +77,7 @@ func setManagedAutoActive(t *testing.T, ctx context.Context, pool *db.Pool, apiN
 }
 
 func TestLeadConvertOnConvertedStatusDefaultOn(t *testing.T) {
-	requireDenoAndDB(t)
+	requireNodeAndDB(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	pool, meta, svc, actor := bootstrapManagedAutoEngine(t, ctx)
@@ -122,7 +126,7 @@ func TestLeadConvertOnConvertedStatusDefaultOn(t *testing.T) {
 }
 
 func TestLeadConvertOnConvertedStatusInactiveSkip(t *testing.T) {
-	requireDenoAndDB(t)
+	requireNodeAndDB(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	pool, meta, svc, actor := bootstrapManagedAutoEngine(t, ctx)
@@ -164,7 +168,7 @@ func TestLeadConvertOnConvertedStatusInactiveSkip(t *testing.T) {
 }
 
 func TestLeadConvertOnConvertedStatusPackDisabledSkip(t *testing.T) {
-	requireDenoAndDB(t)
+	requireNodeAndDB(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	pool, meta, svc, actor := bootstrapManagedAutoEngine(t, ctx)
@@ -217,7 +221,7 @@ func TestLeadConvertOnConvertedStatusPackDisabledSkip(t *testing.T) {
 }
 
 func TestLeadConvertOnConvertedStatusAlreadyConvertedNoop(t *testing.T) {
-	requireDenoAndDB(t)
+	requireNodeAndDB(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	pool, meta, svc, actor := bootstrapManagedAutoEngine(t, ctx)
@@ -269,7 +273,7 @@ func TestLeadConvertOnConvertedStatusAlreadyConvertedNoop(t *testing.T) {
 }
 
 func TestQuoteAcceptOnStatusAcceptedIdempotent(t *testing.T) {
-	requireDenoAndDB(t)
+	requireNodeAndDB(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	pool, meta, svc, actor := bootstrapManagedAutoEngine(t, ctx)

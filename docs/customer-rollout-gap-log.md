@@ -76,7 +76,7 @@ Open rows are what an agent should implement. Closed rows stay for traceability.
 
 ### 2026-09-05 — native two-install (no Docker, no Electron)
 
-Lab: Postgres 16 (`one_prod` / `one_test` on `127.0.0.1:5432`); four `go run` processes; Deno 2.9.3 via `DENO_PATH`. Fixtures in gitignored `.customer-sandbox/one-acme-rollout`. Compose overlay not executed. `DISPLAY` present; Control IDE not installed.
+Lab: Postgres 16 (`one_prod` / `one_test` on `127.0.0.1:5432`); four `go run` processes; Deno 2.9.3 via `DENO_PATH`. Fixtures in gitignored `.customer-sandbox/one-acme-rollout`. Compose overlay not executed. `DISPLAY` present; Control IDE not installed. The guest engine is now Node ([ADR-034](./adr/034-node-guest-automations.md)); the rows below record that lab as it ran.
 
 | Date | Beat | Card | Outcome | DX | Class | Issue | Actual (one line) |
 |---|---|---|---|---|---|---|---|

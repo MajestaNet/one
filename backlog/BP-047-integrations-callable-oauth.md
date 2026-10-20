@@ -38,4 +38,4 @@ See [integrations-build-plan.md](../docs/architecture/integrations-build-plan.md
 
 ## Explicit non-goals
 
-- Per-user OAuth; BYO LLM; sync outbound; Deno `fetch`; inbound provider webhooks
+- Per-user OAuth; BYO LLM; sync outbound; guest `fetch`; inbound provider webhooks

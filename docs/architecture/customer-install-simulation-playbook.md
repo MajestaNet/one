@@ -169,7 +169,7 @@ Record beats: S-C-NAMED, S-C-IMPORT-BAN, S-C-STUBS, S-C-PACK-TIME, S-C-WORKER-FA
 
 Must not: add npm imports to “make TS nicer”; edit internal/automation; open BP-033 from a queue; commit the sandbox.
 
-Deno must be in API (suites) and worker (async). Product images set DENO_PATH; native go run needs it in both shells.
+Node must be in API (suites) and worker (async). Product images set NODE_BIN; native go run needs Node 22.22.2 (minimum 22.15) in both shells.
 ```
 
 ### Prompt S-D — same SHA to test and prod

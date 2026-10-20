@@ -88,7 +88,7 @@ See [product-upgrades.md](./product-upgrades.md).
 | `createRecord` | Client create via DataEngine (`storeAs` saves Id) |
 | `assertValidation` | Expect create to fail (or succeed) |
 | `query` | SQL query with `filters` + `expectMinRows` |
-| `automationUnitPass` | Deno unit harness for `tests/automations/**` ([automation-sdk.md](./automation-sdk.md)) |
+| `automationUnitPass` | Node unit harness for `tests/automations/**` ([automation-sdk.md](./automation-sdk.md)) |
 | `automationContract` | Fixture create → invoke automation → assert child rows |
 
 ## Promote gate (ADR-014 Phase 5)

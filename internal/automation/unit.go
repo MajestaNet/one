@@ -22,7 +22,7 @@ type UnitTestRequest struct {
 	AutomationAPIName string
 	AutomationSource  string
 	Trigger           SyncTrigger
-	DenoPath          string
+	NodePath          string
 	Logger            func(message string)
 }
 
@@ -42,7 +42,7 @@ type MockHost struct {
 
 	UnderTestAPIName string
 	UnderTestSource  string
-	DenoPath         string
+	NodePath         string
 	Logger           func(message string)
 }
 
@@ -214,7 +214,7 @@ func RunUnitTest(ctx context.Context, req UnitTestRequest) (*GuestResult, error)
 	host := NewMockHost()
 	host.UnderTestAPIName = req.AutomationAPIName
 	host.UnderTestSource = req.AutomationSource
-	host.DenoPath = req.DenoPath
+	host.NodePath = req.NodePath
 	host.Logger = req.Logger
 
 	trigger := req.Trigger
@@ -228,7 +228,7 @@ func RunUnitTest(ctx context.Context, req UnitTestRequest) (*GuestResult, error)
 		EntryFile:  label,
 		Trigger:    trigger,
 		SyncMode:   true,
-		DenoPath:   req.DenoPath,
+		NodePath:   req.NodePath,
 		Logger:     req.Logger,
 		Bootstrap:  unitBootstrapTS,
 		ExtraFiles: unitExtraFiles(req.AutomationSource),
@@ -297,7 +297,7 @@ func (h unitRPCHost) HandleUnitRPC(ctx context.Context, method string, argsJSON 
 			EntryFile: "src/automations/" + h.mock.UnderTestAPIName + ".ts",
 			Trigger:   trigger,
 			SyncMode:  true,
-			DenoPath:  h.mock.DenoPath,
+			NodePath:  h.mock.NodePath,
 			Logger:    h.mock.Logger,
 		})
 		if err != nil {

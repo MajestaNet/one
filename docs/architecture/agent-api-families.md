@@ -53,7 +53,7 @@ Flat `/v1` remains a compatibility alias during transition — prefer family pat
 1. **Invoke / catalog** → Client `GET/POST /client/v1/actions/{apiName}` only — [platform-actions-build-plan.md](./platform-actions-build-plan.md) / [ADR-029](../adr/029-platform-actions.md).
 2. Domain logic in `internal/actions` + DataEngine; handlers thin.
 3. Do **not** add a per-verb route (`/convertLead`) or a Metadata definition for product verbs.
-4. Guest `invokeAction` is ADR-014 SDK, not a second HTTP client from Deno.
+4. Guest `invokeAction` is ADR-014 SDK, not a second HTTP client from the Node guest.
 
 ### B3. Managed package automations (BP-069)
 

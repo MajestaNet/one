@@ -15,7 +15,7 @@ one org validate -dir .
 one org deploy -dir . --suite CreateAccountFromContact
 ```
 
-`--suite` runs **after** apply so a first deploy can create the suite, then execute it. Guest automation assertions need Deno 2.9.3+ on `PATH`. `org deploy` does not delete extra customer metadata that exists only on the install (delete-by-absence is informational in v1).
+`--suite` runs **after** apply so a first deploy can create the suite, then execute it. Guest automation assertions need Node 22.22.2 on `PATH`. `org deploy` does not delete extra customer metadata that exists only on the install (delete-by-absence is informational in v1).
 
 Point an MCP host at `POST /mcp` (see `AGENTS.md` and `skills/connect/SKILL.md`). Pin `One-API-Revision` from `GET /version` (`apiRevision.recommended` or `current`).
 
@@ -38,7 +38,7 @@ Connect as a JWT client (**Settings → Environments**). It is not required to b
 AGENTS.md
 skills/{connect,query,customize,ship,govern,skill}/SKILL.md
 metadata/objects|fields|validation-rules|automations|permission-sets|webhooks|agents/playbooks|tools|canvases
-src/automations/          # guest TypeScript (Deno)
+src/automations/          # guest TypeScript (Node)
 tests/
   *.yaml                  # Deploy suites (incl. automationUnitPass / automationContract)
   automations/            # unit harness guests

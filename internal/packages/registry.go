@@ -68,7 +68,7 @@ type RegisteredAction struct {
 }
 
 // AutomationDef is a product-owned process wrap shipped with a managed module (ADR-033).
-// Source is Deno guest TypeScript that calls platform actions; not a platform action itself.
+// Source is Node guest TypeScript that calls platform actions; not a platform action itself.
 type AutomationDef struct {
 	APIName       string // PascalCase, unique across image, never __c, never noun.verb
 	Label         string
