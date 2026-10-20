@@ -70,7 +70,7 @@ The declarative document model (allowlisted nodes, first-party renderers, no cus
 - Active delivery: [ADR-021](./021-run-mode-toolspec.md) · [BP-050](../../backlog/BP-050-run-mode-toolspec.md)
 - ADR-012 stands: declarative configure; no customer renderer plugins
 - BoardHandoff may later reference Tool ids under Run ([BP-024](./030-install-agent-runtime.md))
-- Deno automations ([ADR-014](./014-customer-code-automations.md)) remain server-side only; they do not import Tool UI
+- Node guest automations ([ADR-014](./014-customer-code-automations.md)) remain server-side only; they do not import Tool UI
 
 ## Related
 

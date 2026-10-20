@@ -17,7 +17,7 @@ Gap log: [customer-rollout-gap-log.md](./customer-rollout-gap-log.md) (same tabl
 | Ship of record | Customer Git → `one org validate` → `one org deploy` ([customer-developer-workflow.md](./customer-developer-workflow.md)) |
 | Packages | Enable **per install** via Metadata (`POST /metadata/v1/packages/{name}/enable`). Managed packs are **not** in the customer pack |
 | Custom object | `SiteVisit__c` with lookups onto **enabled** managed objects (`Opportunity`, `Project`) plus `Account` / `Contact` |
-| Automations | Guest Deno TS only (`one:automation`). Named set + generated scale stubs. No `npm:` / JSR / std |
+| Automations | Guest Node TS only (`one:automation`). Named set + generated scale stubs. No `npm:` / JSR / URL / Node builtins |
 | Control IDE | Optional JWT demo client ([ADR-030](./adr/030-install-agent-runtime.md)). Exercise **every shipped panel**. Do **not** treat Electron as Ship GUI of record |
 | Promote | **Forbidden.** Peers are topology hints ([multi-env-deploy.md](./multi-env-deploy.md)) |
 | Fixtures | `scripts/customer-install-sim-generate.sh` → `.customer-sandbox/one-acme-sim` |
@@ -87,12 +87,11 @@ docker compose -f deploy/docker-compose.dev-test-prod.yml down -v
 
 ### Native fallback (no Docker)
 
-Three empty databases on one Postgres 16. Unique `INSTALL_ID` / JWT key / claim token / `PORT` per process. Export `DENO_PATH` in **both** API and worker shells.
+Three empty databases on one Postgres 16. Unique `INSTALL_ID` / JWT key / claim token / `PORT` per process. Export `NODE_BIN` in **both** API and worker shells.
 
 ```bash
 createdb one_sim_prod && createdb one_sim_test && createdb one_sim_dev
-export PATH="$HOME/.deno/bin:$PATH"
-export DENO_PATH="$(command -v deno)"
+export NODE_BIN="$(command -v node)"
 export APP_ENV=development FEATURE_FLAGS=agents PRODUCT_VERSION=0.1.0 CUSTOMER_ID=acme-sim
 # prod :8080 / one_sim_prod / acme-prod — wait /readyz, then worker
 # test :8081 / one_sim_test / acme-test
@@ -157,7 +156,7 @@ go run ./cmd/one org use dev
 go run ./cmd/one org list
 ```
 
-6. Confirm workers are up. Guest automations and `--suite` need Deno in the **API** (suites) and **worker** (async).
+6. Confirm workers are up. Guest automations and `--suite` need Node in the **API** (suites) and **worker** (async).
 7. Score: could you do this from [self-host.md](./self-host.md) + [multi-env-deploy.md](./multi-env-deploy.md) alone, or did you need this runbook because the default Compose file is a single `INSTALL_ROLE=dev` stack?
 
 **Beats:** `S-A-COMPOSE` · `S-A-CLAIM-*` · `S-A-HEALTH` · `S-A-MIGRATE-RACE` (retest #28) · `S-A-PEERS` · `S-A-CLI-ALIASES`

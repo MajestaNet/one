@@ -12,7 +12,7 @@ Control IDE today has four launcher modes — Operate, Build, Ship, Govern ([cus
 
 [ADR-019](./019-client-experience-oss-kits.md) covers customer-hosted browser/mobile Client Experiences (OSS kits + Connected Apps). Those apps must not be embedded as iframes or remote React in Control IDE ([ADR-012](./012-customer-repo-and-control-ide.md)).
 
-Customers already author **server-side** TypeScript automations in Deno ([ADR-014](./014-customer-code-automations.md)). The complementary frontend contract is **configure-only**: declare layout and bindings; Majesta One ships how nodes render.
+Customers already author **server-side** TypeScript automations in the Node guest ([ADR-014](./014-customer-code-automations.md), [ADR-034](./034-node-guest-automations.md)). The complementary frontend contract is **configure-only**: declare layout and bindings; Majesta One ships how nodes render.
 
 ## Decision
 
@@ -131,7 +131,7 @@ AgentSpec playbooks may declare `allowedToolSpecs` (evolves `allowedCanvasSpecs`
 - [BP-039](./018-crm-canvas-document.md) marked superseded for IDE surface (design history preserved)  
 - Capabilities: `ide.run`, `ide.run.tools`, `ide.build.tools`; redirect `ide.operate.canvases` / `ide.build.canvasSpecs`  
 - [tech-stack.md](../tech-stack.md) documents the Run base kit (deps land in implementation Phase 3)  
-- Deno automations remain server-side only; Tools invoke them via Client — they do not import UI  
+- Node guest automations remain server-side only; Tools invoke them via Client — they do not import UI  
 - **Run home evolution:** personal reference-only work graph ([ADR-023](./023-run-personal-graph.md) / [BP-055](../../backlog/BP-055-run-personal-graph.md)); CRM-replacement interactions Pin / Wire / Apply ([ADR-024](./024-run-graph-interactions.md) / [BP-056](../../backlog/BP-056-run-graph-crm-interactions.md)) — ToolSpecs remain mountable templates; graph stores refs/definitions only and hydrates via Client AuthZ
 
 ## Amendment — Run chrome frozen (2026-08)

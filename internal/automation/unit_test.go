@@ -2,6 +2,7 @@ package automation_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -9,8 +10,11 @@ import (
 )
 
 func TestRunUnitTest_RunUnderTestCreates(t *testing.T) {
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	autoSrc := `
 export default async function run(ctx) {
@@ -54,8 +58,11 @@ export default async function run(ctx) {
 }
 
 func TestRunUnitTest_InvokeActionMock(t *testing.T) {
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	autoSrc := `
 export default async function run(ctx) {

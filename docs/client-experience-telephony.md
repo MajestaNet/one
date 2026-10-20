@@ -20,7 +20,7 @@ See [ADR-019](./adr/019-client-experience-oss-kits.md), [client-experience-secur
 │  Majesta One install                    │
 │  Client API (sobjects, query)         │
 │  Connectors + egress allowlist        │
-│  Async Deno automations (optional)    │
+│  Async Node guest automations (optional)    │
 └──────────────┬──────────────────────┘
                │ REST webhooks / SMS / call control
                ▼
@@ -65,7 +65,7 @@ See [ADR-019](./adr/019-client-experience-oss-kits.md), [client-experience-secur
 
 ## Compliance notes
 
-- **No npm in Deno guest** — automations use `ctx.connector` only ([ADR-014](./adr/014-customer-code-automations.md)).
+- **No npm in Node guest** — automations use `ctx.connector` only ([ADR-014](./adr/014-customer-code-automations.md)).
 - **Audit** — outbound calls via connector emit OTEL spans ([outbound-otel-build-plan.md](./architecture/outbound-otel-build-plan.md)).
 - **PCI/PII** — do not pass card data through Majesta One records unless metadata and PS grants explicitly allow; vendor SDK handles media paths.
 - **Certification ladder** for partner connector packs is deferred ([BP-040](../backlog/BP-040-client-experience-oss-kits.md) Phase 6).

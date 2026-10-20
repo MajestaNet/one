@@ -38,7 +38,7 @@ POST /client/v1/agents/runs  (+ SSE or worker job)
 
 | Decision | Choice |
 |---|---|
-| Where the loop runs | Go install only (`internal/agentloop`). Worker JSON path **and** in-process SSE share that package. Not Electron, not Deno, not MCP-host-side. |
+| Where the loop runs | Go install only (`internal/agentloop`). Worker JSON path **and** in-process SSE share that package. Not Electron, not the guest runtime, not MCP-host-side. |
 | Tool namespace | **MCP tool names** at execution time. AgentSpec `allowedTools` stays harness tokens (`sobjects.read`, …) and is **expanded** at admission. No customer YAML rewrite. |
 | How the model calls tools | Native OpenAI-compatible `tools` / `tool_calls` on `ChatRequest`. Fallback: parse ```oneEffects``` `toolCalls` **only if** each entry uses an MCP name. |
 | IDE fence | `graphCalls` / `proposal` / `boardHandoff` stay Control IDE Apply. The hosted executor **ignores** them (persist on run output for optional clients; do not Apply). |

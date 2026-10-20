@@ -18,7 +18,7 @@ Index of accepted ADRs. Open the ADR that locks the decision for your change; do
 | [011](./011-sales-service-managed-modules.md) | Sales & Service managed modules | Optional catalog/sales/service/crm_bridge; thin catalog vs CPQ; Quote-centric sales |
 | [012](./012-customer-repo-and-control-ide.md) | Customer repo + Control IDE | CodeCommit per `CUSTOMER_ID`, `one/v1`, pack/export APIs, `tools/control-ide` |
 | [013](./013-high-volume-flexible-storage.md) | High-volume flexible storage | Shared `records` scale, `storage_mode=high_volume`, LIST/RANGE partitioning |
-| [014](./014-customer-code-automations.md) | Customer code automations | Deno guest TS, PS automation grants, sync rollback, zero third-party imports |
+| [014](./014-customer-code-automations.md) | Customer code automations | Guest TS, PS automation grants, sync rollback, zero third-party imports (engine: [ADR-034](./034-node-guest-automations.md)) |
 | [016](./016-record-sharing.md) | Record sharing | OWD, data roles, criteria rules, materialized grants |
 | [017](./017-canonical-field-types.md) | Canonical field types | Metadata allowlist, DataEngine casts, compound/autonumber/richtext |
 | [018](./018-crm-canvas-document.md) | CRM CanvasDocument | Allowlisted declarative nodes; product IDE surface relocated to Run (ADR-021) |
@@ -37,5 +37,6 @@ Index of accepted ADRs. Open the ADR that locks the decision for your change; do
 | [031](./031-billing-managed-module.md) | Billing managed module | Optional `billing` Order/OrderLine; `quote.accept` ([BP-044](../../backlog/BP-044-billing-module-order-from-quote.md)) |
 | [032](./032-retire-messages-polymorphic-lookup.md) | Retire Messages + polymorphic lookup | Drop `messages` module and `polymorphic_lookup`; agent audit stays on conversations / `agent_runs` |
 | [033](./033-managed-package-automations.md) | Managed package automations | Product process wraps on managed packs; install `active` toggle; persisted description ([BP-069](../../backlog/BP-069-managed-package-automations.md)) |
+| [034](./034-node-guest-automations.md) | Node guest automations | Node 22 default-deny guest replaces Deno; product runtime stays Go |
 
 Agent entry: [architecture README](../architecture/README.md) · [module map](../architecture/module-map.md) · [agent routing](../architecture/agent-routing.md).

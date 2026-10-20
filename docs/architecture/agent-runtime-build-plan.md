@@ -177,7 +177,7 @@ Today `internal/mcp` projects Client describe/query/search/CRUD, Metadata `get_o
 3. Enqueue the same worker path as `POST /client/v1/automations/{apiName}/runs` (run-as = caller).
 4. Outbound HTTPS stays Go host RPC + egress allowlist (existing BP-014). Platform actions stay `invoke_action` / `ctx.invokeAction` (ADR-029), not a second skill type.
 
-Do not put skill execution in Electron or in Deno `fetch`.
+Do not put skill execution in Electron or in guest `fetch`.
 
 ---
 

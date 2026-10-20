@@ -47,7 +47,7 @@ Control IDE remains a **fixed vendor React surface**. Customers customize via `o
 
 ## Amendment — declarative CRM Canvas configure (2026-07)
 
-Control IDE may host an agent-constructed **CRM Canvas** ([ADR-018](./018-crm-canvas-document.md)). Configuration and agent output are **declarative** (`CanvasDocument` / `CanvasSpec` YAML) rendered by vendor node kinds only. This does **not** reopen customer React plugins, iframes, remote renderer scripts, or an OSS browser Experience host as a second IDE. Automations remain server-side Deno ([ADR-014](./014-customer-code-automations.md)) and must not import canvas UI.
+Control IDE may host an agent-constructed **CRM Canvas** ([ADR-018](./018-crm-canvas-document.md)). Configuration and agent output are **declarative** (`CanvasDocument` / `CanvasSpec` YAML) rendered by vendor node kinds only. This does **not** reopen customer React plugins, iframes, remote renderer scripts, or an OSS browser Experience host as a second IDE. Automations remain server-side Node guest programs ([ADR-014](./014-customer-code-automations.md), [ADR-034](./034-node-guest-automations.md)) and must not import canvas UI.
 
 ## Amendment — initialize from prod + managed baseline (2026-07)
 

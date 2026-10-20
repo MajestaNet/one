@@ -15,7 +15,7 @@ Each BP header includes an **`Area:`** field — preferred code scope. Resolve A
 | [BP-003](./BP-003-enterprise-auth.md) | High | Mitigated | Enterprise AuthZ (sharing + deny-by-default FLS) |
 | [BP-006](./BP-006-agent-guardrails.md) | High | Mitigated | Principal AuthZ + hosted `/agents/runs` loop |
 | [BP-008](./BP-008-production-packaging.md) | Medium | Partially mitigated | Observability (OTEL) gaps — optional logs exporter shipped |
-| [BP-009](./BP-009-no-in-kernel-language.md) | Medium | Mitigated | Customer code automations (Deno guest TS Phases 0–7; ExecutionRun debug stays BP-033) |
+| [BP-009](./BP-009-no-in-kernel-language.md) | Medium | Mitigated | Customer code automations (Node guest TS Phases 0–7; ExecutionRun debug stays BP-033) |
 | [BP-010](./BP-010-three-api-families.md) | High | Mitigated | Three API families (Client / Metadata / Deploy) |
 | [BP-011](./BP-011-container-marketplace-fargate.md) | High | Partially mitigated | OSS images; App Platform default; Helm multi-cloud |
 | [BP-013](./BP-013-jwt-unified-principals.md) | High | Partially mitigated | Majesta One JWT issuer + unified principals |

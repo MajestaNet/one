@@ -10,12 +10,12 @@
 
 ## Thesis
 
-> Customers call external HTTPS APIs from **async** Deno automations through a **platform-owned** host RPC (`ctx.http` / `ctx.connector`), using **secret refs** and an **egress allowlist**. Agents **grant named automations as skills** on AgentSpec (metadata contract shipped). **`invoke_skill`** on MCP and the hosted loop is shipped; remainders are in [03-bp-014-skill-invoke.md](./agentic-remainders/03-bp-014-skill-invoke.md). Operators get **OTLP** traces/metrics; customer debug objects stay BP-033.
+> Customers call external HTTPS APIs from **async** Node guest automations through a **platform-owned** host RPC (`ctx.http` / `ctx.connector`), using **secret refs** and an **egress allowlist**. Agents **grant named automations as skills** on AgentSpec (metadata contract shipped). **`invoke_skill`** on MCP and the hosted loop is shipped; remainders are in [03-bp-014-skill-invoke.md](./agentic-remainders/03-bp-014-skill-invoke.md). Operators get **OTLP** traces/metrics; customer debug objects stay BP-033.
 
 ```text
 Async automation TS
   → one:automation ctx.http | ctx.connector
-  → Go host (Deno deny-net)
+  → Go host (Node deny-net)
   → secretcrypt + egress allowlist + SSRF checks
   → HTTPS outbound
   → OTEL span (operator) + job/audit (customer)
@@ -30,7 +30,7 @@ AgentSpec.allowedSkills[] → automation apiNames (skill grants)
 | Decision | Choice |
 |---|---|
 | Primary outbound consumer | Async automations (ADR-014 Phase 7) |
-| Guest networking | Never — Deno default-deny; egress only via Go |
+| Guest networking | Never — Node default-deny; egress only via Go |
 | Sync automations | No outbound |
 | Secrets | `install_secrets` + `enc:v1:`; never in Deploy/Git |
 | Connectors | `install_connectors` (base URL, secret ref, methods) |
@@ -75,7 +75,7 @@ Instrument egress spans (redacted URLs); document env; backlog status.
 |---|---|
 | SSRF | HTTPS; no redirects; block private/metadata IPs |
 | Secrets | `enc:v1`; Metadata `hasSecret`; Deploy refs only |
-| Guest escape | Deno deny-net; import ban; SDK-only HTTP |
+| Guest escape | Node deny-net; import ban; SDK-only HTTP |
 | Sync integrity | Outbound forbidden in sync |
 | Agent overreach | Skills must name real automations; run-as + PS `canRun` when invoked |
 | OTEL | Never export Authorization / ciphertext |
@@ -86,7 +86,7 @@ Instrument egress spans (redacted URLs); document env; backlog status.
 
 - Hosted LLM / BYO model keys on AgentSpec
 - Full agent tool loop (BP-006 — [hosted-agent-tool-loop-build-plan.md](./hosted-agent-tool-loop-build-plan.md))
-- Customer `fetch`/npm inside Deno
+- Customer `fetch`/npm inside the Node guest
 - Sync outbound
 - Control IDE connector UI (contract only; follow [customer-ide-ux.md](../customer-ide-ux.md))
 - Outbound OAuth authorize/refresh (extends this plan under [integrations-build-plan.md](./integrations-build-plan.md) / [BP-047](../../backlog/BP-047-integrations-callable-oauth.md))

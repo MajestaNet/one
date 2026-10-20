@@ -8,7 +8,7 @@ TypeScript MCP server customers (or integrators) can run **outside** the Majesta
 - You need **custom vertical tools** that wrap Client/Metadata HTTP.
 - You want one stdio entrypoint that can optionally **proxy** product gateway tools (`ONE_PROXY_PRODUCT_TOOLS=1`).
 
-Do **not** confuse with Deno guest automations ([ADR-014](../../docs/adr/014-customer-code-automations.md)) — those cannot import npm and run inside the worker.
+Do **not** confuse with Node guest automations ([ADR-014](../../docs/adr/014-customer-code-automations.md)) — those cannot import npm and run inside the worker.
 
 **Prefer the install MCP** (`POST /mcp`) when the host supports Streamable HTTP. This scaffold is stdio fallback + custom vertical tools only. Builder recipes: [docs/builder-connect.md](../../docs/builder-connect.md).
 

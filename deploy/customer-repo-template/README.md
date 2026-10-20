@@ -14,7 +14,7 @@ one org validate -dir .
 one org deploy -dir . --suite CreateAccountFromContact
 ```
 
-`--suite` runs **after** the pack is applied so a first deploy can create the suite, then execute it. Guest automation assertions need Deno 2.9.3+ on `PATH`. `org deploy` does not delete extra customer metadata that exists only on the install (delete-by-absence is informational in v1).
+`--suite` runs **after** the pack is applied so a first deploy can create the suite, then execute it. Guest automation assertions need Node 22.22.2 on `PATH`. `org deploy` does not delete extra customer metadata that exists only on the install (delete-by-absence is informational in v1).
 
 See [docs/architecture/one-cli-build-plan.md](../../docs/architecture/one-cli-build-plan.md).
 
@@ -43,7 +43,7 @@ AGENTS.md
 skills/{connect,query,customize,ship,govern,skill}/SKILL.md
 one.yaml
 metadata/objects|fields|validation-rules|automations|permission-sets|webhooks|agents/playbooks|tools|canvases|experiences|…
-src/automations/          # guest TypeScript (Deno)
+src/automations/          # guest TypeScript (Node)
 tests/                    # Deploy suites + automations harness
 environments/             # non-secret install pointers (CLI/IDE stage order)
 changes/<slug>/CHANGE.yaml

@@ -1,6 +1,6 @@
 /**
  * Vendor-plane TypeScript stubs for Control IDE / editors.
- * Not an npm package for customers — guests resolve one:automation via Deno import map.
+ * Not an npm package for customers — guests resolve one:automation via the Node guest policy.
  */
 
 export type AutomationResult = {

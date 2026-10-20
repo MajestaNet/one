@@ -8,7 +8,7 @@ import (
 	"github.com/MajestaNet/ide/internal/authz"
 )
 
-// SyncMutatorBridge adapts SyncMutator to HostBridge (Phase 4 sync Deno path).
+// SyncMutatorBridge adapts SyncMutator to HostBridge (sync Node guest path).
 type SyncMutatorBridge struct {
 	Inner SyncMutator
 }

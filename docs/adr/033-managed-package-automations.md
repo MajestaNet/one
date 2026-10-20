@@ -24,7 +24,7 @@ Cloning templates to `ownership=custom` (the `agents_starter` pattern) is the wr
 | Noun | Author | Ownership | How it lands | Customer may |
 |---|---|---|---|---|
 | **Platform action** | Product Go | Image registry (no Metadata row) | Package enable unhides Client `/actions` | Invoke; not toggle as metadata |
-| **Managed package automation** | Product TypeScript (Deno guest) | `ownership=managed`, `package_name=<pack>` | Seeded on package enable / image migrate | **Toggle `active` only** |
+| **Managed package automation** | Product TypeScript (Node guest) | `ownership=managed`, `package_name=<pack>` | Seeded on package enable / image migrate | **Toggle `active` only** |
 | **Customer automation** | Customer TypeScript | `ownership=custom` | Metadata POST or `one org deploy` | Full definition CRUD + `active` |
 
 Managed package automations are Metadata automations. They are **not** platform actions. They **call** platform actions via `ctx.invokeAction`. They must not reimplement convert / accept / merge in guest TypeScript.
@@ -68,7 +68,7 @@ No dedicated `/automations/{apiName}/enable` route. On/off is `{ "active": true\
 
 GET list and GET-by-name always return `description` (empty string when unset).
 
-### 5. Guest runtime (same Deno path)
+### 5. Guest runtime (same Node path)
 
 Managed automations use the existing ADR-014 guest: `runtime=code`, `one:automation` only, no npm. Source lives in the product image (`internal/seed` / `internal/seed/automations/`) and is copied onto the install row. Customers do not pack that source. Deploy **rejects** `ownership=managed` automations in customer bundles (same reject list as managed objects).
 
