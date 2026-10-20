@@ -50,7 +50,7 @@ Each finding records the sink, the reachable adversary, and the control that clo
 ### Critical
 
 **CIDE-02 — Electron 34.5.8 was a year past end of life.** *Fixed (Phase 3).*
-Electron 34 went EOL 2025-06-24 and receives no security releases. OSV reported 18 Electron advisories against 34.5.8, including ASAR integrity bypass (`GHSA-vmqv-hx8q-j7mg`), renderer command-line switch injection (`GHSA-9wfr-w7mm-pc7f`), and several use-after-free issues; underneath sat an unpatched Chromium M132. Because `electron` is a `devDependency`, `npm audit` framed the shipped runtime as a dev-only problem. Control: Electron 43.2.x (supported major) with `electronFuses` in `electron-builder.yml` via `@electron/fuses` (`runAsNode`, `NODE_OPTIONS`, inspect args off; cookie encryption, ASAR integrity validation, and `onlyLoadAppFromAsar` on).
+Electron 34 went EOL 2025-06-24 and receives no security releases. OSV reported 18 Electron advisories against 34.5.8, including ASAR integrity bypass (`GHSA-vmqv-hx8q-j7mg`), renderer command-line switch injection (`GHSA-9wfr-w7mm-pc7f`), and several use-after-free issues; underneath sat an unpatched Chromium M132. Because `electron` is a `devDependency`, `npm audit` framed the shipped runtime as a dev-only problem. Control: Electron 43.8.x (supported major) with `electronFuses` in `electron-builder.yml` via `@electron/fuses` (`runAsNode`, `NODE_OPTIONS`, inspect args off; cookie encryption, ASAR integrity validation, and `onlyLoadAppFromAsar` on).
 
 ### High
 
