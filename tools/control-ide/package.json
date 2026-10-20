@@ -30,7 +30,7 @@
     "assert-artifacts": "bash ../../scripts/assert-ide-artifacts.sh"
   },
   "dependencies": {
-    "@assistant-ui/react": "^0.15.14",
+    "@assistant-ui/react": "^0.15.17",
     "@base-ui/react": "^1.7.0",
     "@dagrejs/dagre": "^1.1.4",
     "@dnd-kit/core": "^6.3.1",
