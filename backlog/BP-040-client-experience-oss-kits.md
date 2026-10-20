@@ -54,7 +54,7 @@ See [client-experience-build-plan.md](../docs/architecture/client-experience-bui
 - Customer Electron/React plugins in Control IDE
 - Product-hosted `/x` SPA router or embedding customer webpack in Go image
 - Global code-injection marketplace into `cmd/` / `internal/`
-- npm inside Deno guest ([ADR-014](../docs/adr/014-customer-code-automations.md))
+- npm inside Node guest ([ADR-014](../docs/adr/014-customer-code-automations.md))
 
 ## Related
 

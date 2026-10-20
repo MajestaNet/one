@@ -81,7 +81,7 @@ func (s SyncOutboundBan) ConnectorCall(context.Context, ConnectorCallArgs) (map[
 	return nil, fmt.Errorf("connector is not allowed in sync automations")
 }
 
-// OutboundHost performs allowlisted HTTPS via the Go host (Deno stays deny-net).
+// OutboundHost performs allowlisted HTTPS via the Go host (Node guest stays deny-net).
 type OutboundHost struct {
 	Inner          HostBridge
 	Pool           *db.Pool

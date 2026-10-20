@@ -1,7 +1,7 @@
 # Customer automation SDK (frozen v1)
 
 Guest TypeScript surface for sandboxed automations ([ADR-014](./adr/014-customer-code-automations.md)).  
-Runtime: Deno default-deny; only `one:automation` imports are allowed.
+Runtime: Node 22 default-deny ([ADR-034](./adr/034-node-guest-automations.md)); only `one:automation` imports are allowed. Guest TypeScript is erasable syntax (types and `import type`). Enums, namespaces, and parameter properties are rejected.
 
 ## Programming model
 
@@ -37,11 +37,11 @@ export default async function run(ctx: AutomationContext): Promise<AutomationRes
 | `http` | **no** | yes | Host HTTPS; secretRef / url; egress allowlist ([BP-014](../backlog/BP-014-agent-outbound-integrations.md)) |
 | `connector` | **no** | yes | Resolves install connector + secret |
 
-**Async outbound (BP-014 / ADR-014 Phase 7):** `http` and `connector` are **async-only** host RPCs (Deno stays deny-net). See [outbound-otel-build-plan.md](./architecture/outbound-otel-build-plan.md). npm/JSR/std imports remain banned.
+**Async outbound (BP-014 / ADR-014 Phase 7):** `http` and `connector` are **async-only** host RPCs (the Node guest stays deny-net). See [outbound-otel-build-plan.md](./architecture/outbound-otel-build-plan.md). npm/JSR/URL/Node builtin imports remain banned.
 
 **Fence vs CRM Canvas:** guest automations must **not** import Control IDE canvas UI, `@one/client`, or React. Canvas is an Operate/IDE concern ([ADR-018](./adr/018-crm-canvas-document.md)); automations stay on `one:automation` / ambient `ctx` only.
 
-**Platform actions:** `ctx.invokeAction({ apiName, input })` is the only guest path into product Go verbs. HTTP from Deno to `/client/v1/actions` is forbidden. See [platform-actions-build-plan.md](./architecture/platform-actions-build-plan.md).
+**Platform actions:** `ctx.invokeAction({ apiName, input })` is the only guest path into product Go verbs. HTTP from the guest to `/client/v1/actions` is forbidden. See [platform-actions-build-plan.md](./architecture/platform-actions-build-plan.md).
 
 ## Unit tests (`tests/automations/**`)
 
@@ -75,7 +75,7 @@ Optional IDE/editor stubs (not shipped to customers as npm): `tools/automation-s
 
 | Type | Purpose |
 |---|---|
-| `automationUnitPass` | `testFile` + `automationApiName` → Deno unit harness |
+| `automationUnitPass` | `testFile` + `automationApiName` → Node unit harness |
 | `automationContract` | Fixture create → invoke automation → `expectObjectApiName` + filters |
 
 Promote gate: set `DEPLOY_REQUIRED_TEST_SUITES=CreateAccountFromContact` (comma-separated) so non-dry-run promote requires those suites green.

@@ -171,7 +171,7 @@ API on `:8080`. Kernel migrate + optional core seed on boot when `AUTO_SEED=1`. 
 
 **Three sibling installs (dev / test / prod)** for the customer-install simulation: [deploy/docker-compose.dev-test-prod.yml](../deploy/docker-compose.dev-test-prod.yml) — ports `:8080` / `:8081` / `:8082`. Runbook: [customer-install-simulation-test-run.md](./customer-install-simulation-test-run.md). Do not run the lab overlays at the same time as this everyday Compose file (port collision).
 
-Without Docker, use the matching runbook’s native multi-DB fallback. Wait for each API `/readyz` before starting its worker (both binaries apply kernel SQL). Product images set `DENO_PATH`; native `go run` needs Deno 2.9.3 on `PATH` in **both** processes.
+Without Docker, use the matching runbook’s native multi-DB fallback. Wait for each API `/readyz` before starting its worker (both binaries apply kernel SQL). Product images set `NODE_BIN`; native `go run` needs Node 22.22.2 (minimum 22.15) on `PATH` in **both** processes.
 
 ### Helm on Kubernetes (DO / AWS / Azure / …)
 

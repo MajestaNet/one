@@ -20,7 +20,7 @@ Headless integrators running MDM or data-quality tools expect a governed merge p
 
 - Party spine ([data-model.md](../docs/data-model.md)) is Account + Contact only — dupes directly harm 360 trust
 - Ingest without [BP-041](./BP-041-record-external-id-upsert-bulk.md) upsert increases duplicate volume
-- Agents and automations should not implement unsafe merge logic in Deno ([BP-009](./BP-009-no-in-kernel-language.md))
+- Agents and automations should not implement unsafe merge logic in the guest ([BP-009](./BP-009-no-in-kernel-language.md))
 
 ## Scope (target)
 

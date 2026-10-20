@@ -15,7 +15,7 @@ Executable plan for package-gated **platform actions**: product Go verbs on the 
 > Integrity verbs (Lead convert, merge, later Quote accept) are **product Go**, not customer TypeScript and not locked package TS. They share **one** Client catalog (`/client/v1/actions/{apiName}`) so each new verb is a registry entry, not a new mux family. Customer automations call `ctx.invokeAction({ apiName, input })` as the run-as principal. Availability is the enabled-package set: `lead.convert` exists only when `lead_marketing` is on; `createOpportunity` requires `sales`.
 
 ```text
-Client / IDE / iPaaS          Customer automation (Deno)
+Client / IDE / iPaaS          Customer automation (Node guest)
         │                              │
         ▼                              ▼
 POST /client/v1/actions/{apiName}    ctx.invokeAction({ apiName, input })
@@ -135,7 +135,7 @@ Execute in order. Each phase is mergeable and test-gated.
 4. Metadata `PackageStatus` grows `actionApiNames` (declared on the module, independent of enable)
 5. AuthZ: scope `client`; invoke path wired to caller actor (object checks happen in handlers — Phase 2)
 
-**Exit:** `go test` HTTP: list empty-or-known; POST unknown → 404; POST known-but-pack-disabled → 409 `PACKAGE_NOT_ENABLED`. No Deno yet.
+**Exit:** `go test` HTTP: list empty-or-known; POST unknown → 404; POST known-but-pack-disabled → 409 `PACKAGE_NOT_ENABLED`. No guest yet.
 
 ### Phase 2 — `lead.convert` (proving verb)
 
@@ -159,7 +159,7 @@ Execute in order. Each phase is mergeable and test-gated.
 
 ### Phase 3 — Guest `invokeAction`
 
-**Packages:** `internal/automation` (deno host RPC, SDK freeze list, unit harness), `tools/automation-sdk/one_automation.d.ts`, `docs/automation-sdk.md`  
+**Packages:** `internal/automation` (Node host RPC, SDK freeze list, unit harness), `tools/automation-sdk/one_automation.d.ts`, `docs/automation-sdk.md`  
 **Agents:** `worker-jobs` (+ api-families if HTTP contract docs only)  
 **Playbook:** [agent-worker.md](./agent-worker.md) · ADR-014  
 **Status:** Done
@@ -209,7 +209,7 @@ If object CRUD is insufficient for a verb, a **new ADR** may add PS `actionAcces
 1. Confirm it is an **integrity / multi-object verb**, not customer process or CPQ.
 2. Pick owning managed package; list `RequiresPackages` / `OptionalPackages`.
 3. Claim a unique dotted `apiName` in ADR-029 reserved table (or this plan’s catalog).
-4. Implement Go handler using DataEngine (no guest TS, no `internal` imports from Deno).
+4. Implement Go handler using DataEngine (no guest TS, no `internal` imports from the Node guest).
 5. Register `ActionDef` on the module; bump module version if the pack already shipped.
 6. Document under `docs/modules/<package>.md`.
 7. HTTP + guest tests: pack off, AuthZ deny, happy path, optional-pack option.

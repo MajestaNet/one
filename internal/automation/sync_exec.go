@@ -45,11 +45,11 @@ type SyncAutomation struct {
 	EntryFile string
 	// Optional overrides for code runtime (tests / AuthZ wrapping).
 	Host     HostBridge
-	DenoPath string
+	NodePath string
 	Logger   func(message string)
 }
 
-// ExecuteSync runs a sync automation (actions JSON or Deno guest TypeScript).
+// ExecuteSync runs a sync automation (actions JSON or Node guest TypeScript).
 func ExecuteSync(ctx context.Context, m SyncMutator, trigger SyncTrigger, auto SyncAutomation) error {
 	if m == nil {
 		return fmt.Errorf("automation %s: nil sync mutator", auto.APIName)
@@ -67,7 +67,7 @@ func ExecuteSync(ctx context.Context, m SyncMutator, trigger SyncTrigger, auto S
 			EntryFile: auto.EntryFile,
 			Trigger:   trigger,
 			SyncMode:  true,
-			DenoPath:  auto.DenoPath,
+			NodePath:  auto.NodePath,
 			Logger:    auto.Logger,
 		})
 		return err

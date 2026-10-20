@@ -48,7 +48,7 @@ Canonical stack for Majesta One as of the current platform foundation. Prefer th
 | Jobs | Postgres `jobs` table (poll loop) | `FOR UPDATE SKIP LOCKED` + lease reclaim |
 | Events | Transactional outbox (`outbox_events`) | Same claim/lease pattern; `webhook_deliveries` for idempotent POSTs; system intents `install.claimed` / `principal.*` ([BP-038](../backlog/BP-038-no-product-mailer-byo-alerts.md)) — **no product mailer** |
 | Metadata cache | DB epoch token + short TTL | `metadata_cache_epoch` keeps multi-replica API describe coherent |
-| Customer code automations | Deno **2.9.3** guest (ADR-014) | Frozen SDK + unit harness; Deploy steps `automationUnitPass` / `automationContract`; `DEPLOY_REQUIRED_TEST_SUITES` promote gate; `invokeAction` for platform verbs ([ADR-029](./adr/029-platform-actions.md)); see [automation-sdk.md](./automation-sdk.md) |
+| Customer code automations | Node **22.22.2** guest ([ADR-034](./adr/034-node-guest-automations.md), [ADR-014](./adr/014-customer-code-automations.md)) | Default-deny install-side executor (not the platform runtime); frozen SDK + unit harness; Deploy steps `automationUnitPass` / `automationContract`; `DEPLOY_REQUIRED_TEST_SUITES` promote gate; `invokeAction` for platform verbs ([ADR-029](./adr/029-platform-actions.md)); see [automation-sdk.md](./automation-sdk.md) |
 | Platform actions | Go `internal/actions` | Client `GET/POST /client/v1/actions/{apiName}`; package-gated; first verb `lead.convert` ([BP-061](../backlog/BP-061-platform-actions.md)) |
 
 ## Auth (current vs planned)
@@ -145,11 +145,11 @@ Not product runtime. Lives outside `cmd/api`. IDE entitlement chrome is frozen (
 - GraphQL
 - Embedding Control IDE in the product image (client lives under `tools/control-ide`; Mac/Linux/Windows installers are a separate packaging track — [control-ide-build.md](./control-ide-build.md))
 - Admin / classic enterprise admin UI clone (Control IDE is the supported API consumer shell)
-- Custom proprietary in-kernel scripting language (customer **code automations** are sandboxed Deno TypeScript per [ADR-014](./adr/014-customer-code-automations.md) — not an in-kernel language; no third-party imports in v1)
-- Shipping Deno/Node as **platform** runtime (guest Deno is install-side executor for customer automation only; product binaries stay Go)
+- Custom proprietary in-kernel scripting language (customer **code automations** are sandboxed Node TypeScript per [ADR-014](./adr/014-customer-code-automations.md) / [ADR-034](./adr/034-node-guest-automations.md) — not an in-kernel language; no third-party imports in v1)
+- Shipping Node as **platform** runtime (the Node guest is an install-side executor for customer automation only; product binaries stay Go — [ADR-005](./adr/005-go-runtime.md), [ADR-034](./adr/034-node-guest-automations.md))
 - Using Deployment API to ship kernel/DDL or managed package internals
 - AMI / EC2 / Droplet Marketplace fulfillment (containers + Helm; preferred DO Kubernetes 1-Click)
-- Shipping Node/TypeScript or a Python sidecar as **platform runtime** (vendor TypeScript under `tools/control-ide` and `tools/one-mcp` is allowed; MCP product gateway remains Go; public docs Starlight is not in this repo)
+- Shipping Node/TypeScript or a Python sidecar as **platform runtime** (vendor TypeScript under `tools/control-ide` and `tools/one-mcp` is allowed; the Node guest executor is [ADR-034](./adr/034-node-guest-automations.md), not the API; MCP product gateway remains Go; public docs Starlight is not in this repo)
 
 ## Related docs
 

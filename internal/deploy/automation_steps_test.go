@@ -2,6 +2,7 @@ package deploy_test
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,8 +15,11 @@ import (
 )
 
 func TestAutomationUnitAndContractSuite(t *testing.T) {
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	ctx, pool, meta, data, engine := setupDeployTest(t)
 	ownerID := "00000000-0000-4000-8000-000000000001"

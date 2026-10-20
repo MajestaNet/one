@@ -20,7 +20,7 @@ Honest tree state. Do not re-plan shipped phases. Control IDE Govern connector c
 | **BP-008** queue-depth metrics | None. Jobs table is undifferentiated; BP-033 job classes / slots / quotas are **Open** | Pair gauges/counters **when BP-033 Phase 2 isolation budgets land** (plan Phase 5 hook) | [BP-033](../../../backlog/BP-033-customer-runtime-isolation.md) Phase 2 Open; [customer-runtime-isolation-build-plan.md](../customer-runtime-isolation-build-plan.md) Phase 5 item 3 |
 | **BP-008** Node packaging | Closed (Go-only runtime) | — | [BP-008](../../../backlog/BP-008-production-packaging.md) Closed |
 | **BP-026** disclosure + Dependabot | Root [SECURITY.md](../../../SECURITY.md); Dependabot npm / gomod / Actions; IDE CI `npm run audit:high` (npm audit, OSV fallback); one-time Go vuln-db baseline (not a CI `govulncheck` job); CONTRIBUTING has a one-line Security pointer | GitHub Security Advisories **publish-after-fix** policy; contact-alias verification; RFC 9116 `security.txt`; CONTRIBUTING blurb (no secrets / customer data / PoCs in public issues) | [dependabot.yml](../../../.github/dependabot.yml), [CONTRIBUTING.md](../../../CONTRIBUTING.md), [control-ide-security-audit.md](../control-ide-security-audit.md) Phase 5 row; **no** `.well-known/security.txt`, **no** GHSA process section in SECURITY.md |
-| **BP-009** Phases 0–5 | AuthZ grants, code metadata + import ban, sync TX rollback, Deno guest, SDK + Deploy test steps | Keep: do not regress | [customer-automations-build.md](../customer-automations-build.md) Phases 0–5 Done; tests `TestSyncAutomationCommitAndRollback`, `TestRunGuest_*`, `TestProcessJobsAutomationRunCode*`, `TestSyncCodeAutomationCommitAndRollback`, `internal/automation/imports_test.go` |
+| **BP-009** Phases 0–5 | AuthZ grants, code metadata + import ban, sync TX rollback, Node guest, SDK + Deploy test steps | Keep: do not regress | [customer-automations-build.md](../customer-automations-build.md) Phases 0–5 Done; tests `TestSyncAutomationCommitAndRollback`, `TestRunGuest_*`, `TestProcessJobsAutomationRunCode*`, `TestSyncCodeAutomationCommitAndRollback`, `internal/automation/imports_test.go` |
 | **BP-009** Phase 6 IDE | Automations panel (Monaco TS) shipped | Build write-loop → [BP-006](../../../backlog/BP-006-agent-guardrails.md); PS automation-list editor + review graph → **frozen IDE chrome**; Manual/Client invoke → BP-047 (**shipped**) | [customer-automations-build.md](../customer-automations-build.md) Phase 6 Partial; [ADR-030](../../adr/030-install-agent-runtime.md) |
 | **BP-009** Phase 7 async outbound | **Shipped:** Metadata secrets/connectors/egress; async `ctx.http` / `ctx.connector`; sync ban; AgentSpec `allowedSkills`; OTEL egress spans. BP-009 is **Mitigated**. | Optional fail-closed unit test on `OutboundHost`; ExecutionRun debug is BP-033 | [customer-automations-build.md](../customer-automations-build.md) Phase 7 **Done**; [outbound.go](../../../internal/automation/outbound.go); [BP-009](../../../backlog/BP-009-no-in-kernel-language.md) |
 | **BP-047** Phases 0–4 | Client invoke catalog + POST/GET runs; OAuth auth types + token/state tables; `/auth/v1` authorize/callback; host refresh; Deploy defs/refs; Govern catalog UX | No new product OAuth/invoke surface | [integrations-build-plan.md](../integrations-build-plan.md) Phases 0–4 Done; [client_automation_runs.go](../../../internal/httpapi/client_automation_runs.go), [client_automation_runs_test.go](../../../internal/httpapi/client_automation_runs_test.go), [connectoroauth/](../../../internal/connectoroauth/), [outbound_oauth_routes.go](../../../internal/httpapi/outbound_oauth_routes.go), [outbound_routes.go](../../../internal/httpapi/outbound_routes.go), [deploy/apply.go](../../../internal/deploy/apply.go) token drop on config-hash change |
@@ -67,7 +67,7 @@ When Phase 2 exists, register on the **worker** meter (API may scrape the same n
 | `one.jobs.queue_depth` | ObservableGauge (int64) | `job.class` = `automation` \| `agent` \| `deploy` \| `default` | queued (not leased) rows in that class |
 | `one.jobs.running` | ObservableGauge (int64) | `job.class` | leased/running |
 | `one.jobs.throttled` | Counter | `job.class`, `reason` = `quota` \| `slots` | increment on `QUOTA_EXCEEDED` / slot reject |
-| `one.deno.oom` | Counter | — | increment when BP-033 RSS/cgroup kill is detected |
+| `one.guest.oom` | Counter | — | increment when BP-033 RSS/cgroup kill is detected |
 
 Hook already named in [customer-runtime-isolation-build-plan.md](../customer-runtime-isolation-build-plan.md) Phase 5. Writers of throttle/OOM events belong to BP-033; BP-008 only **exports** them. Never put customer source, secret values, or `last_error` text into metric attrs.
 
@@ -121,8 +121,8 @@ Optional: `.github/ISSUE_TEMPLATE/config.yml` `contact_links` pointing at SECURI
 
 Remainder:
 
-1. **Status closeout:** mark BP-009 Phase 7 Done; refresh the plan’s “Current gaps” row that still says outbound is a Need; if no BP-009-owned product work remains, set BP-009 to **Mitigated — Keep** (import ban, Deno deny-net, sync rollback).
-2. **Verification gap from the original outbound plan:** add `TestOutboundHTTPDeniedWhenNotAllowlisted` (empty/mismatch allowlist fail-closed on `OutboundHost`). Optional: one `internal/testutil` async automation that `ctx.connector` GET succeeds under allowlist and fails closed without it — only if Deno is already available in that package’s tests. Do not add npm, guest `fetch`, or sync outbound ([ADR-014](../../adr/014-customer-code-automations.md)).
+1. **Status closeout:** mark BP-009 Phase 7 Done; refresh the plan’s “Current gaps” row that still says outbound is a Need; if no BP-009-owned product work remains, set BP-009 to **Mitigated — Keep** (import ban, Node deny-net, sync rollback).
+2. **Verification gap from the original outbound plan:** add `TestOutboundHTTPDeniedWhenNotAllowlisted` (empty/mismatch allowlist fail-closed on `OutboundHost`). Optional: one `internal/testutil` async automation that `ctx.connector` GET succeeds under allowlist and fails closed without it — only if Node is already available in that package’s tests. Do not add npm, guest `fetch`, or sync outbound ([ADR-014](../../adr/014-customer-code-automations.md)).
 3. **Not this BP:** Build-agent write loop (BP-006); ExecutionRun (BP-033); frozen IDE PS editor / review graph; Govern UI.
 
 ### 2.5 BP-047 — invoke status without a second debug object
@@ -149,7 +149,7 @@ AuthZ: Client scope + `AssertCanRunAutomation`; run-as = caller ([ADR-014](../..
 - BP-047 only **projects** an optional `executionRunId` on POST `202` and GET run JSON. Same GET AuthZ as today (caller-owned job or admin). Reading the debug object itself requires `debug.read` via normal Client sobject GET — do not bypass that on the invoke status route.
 - If `internal/seed` / `internal/packages` has no `ExecutionRun`, **stop**. Do not seed it from this remainder.
 
-**Frozen:** Govern connector catalog. No new Govern UI. Per-user OAuth, inbound provider webhooks, sync outbound, Deno `fetch` remain non-goals of [integrations-build-plan.md](../integrations-build-plan.md).
+**Frozen:** Govern connector catalog. No new Govern UI. Per-user OAuth, inbound provider webhooks, sync outbound, guest `fetch` remain non-goals of [integrations-build-plan.md](../integrations-build-plan.md).
 
 ---
 
@@ -223,7 +223,7 @@ AuthZ: Client scope + `AssertCanRunAutomation`; run-as = caller ([ADR-014](../..
 - Collector / Fluent Bit sidecar; Node/`tsx` packaging (closed)
 - Using OTEL or `audit_log` as the customer automation debugger
 - Creating `ExecutionRun` / `ExecutionLogEntry` from BP-047 or BP-009
-- Per-user OAuth, inbound provider webhooks, sync outbound, Deno `fetch` / npm
+- Per-user OAuth, inbound provider webhooks, sync outbound, guest `fetch` / npm
 - New Control IDE Govern (or any) chrome; unfreezing BP-015/016/018/019/021/024/027/034
 - Publishing live vulnerability detail, PoCs, or unfixed GHSA IDs in `backlog/`
 - A second public risk tracker parallel to `backlog/`
@@ -333,10 +333,10 @@ Edit scope (allowed):
 - docs/architecture/customer-automations-build.md (Current gaps row + phase status only)
 
 Do:
-1. Mark BP-009 Phase 7 Done. If nothing else is BP-009-owned, set status to Mitigated — Keep (import ban, Deno deny-net, sync rollback). Point leftover IDE write-loop at BP-006, debug objects at BP-033, invoke at BP-047.
+1. Mark BP-009 Phase 7 Done. If nothing else is BP-009-owned, set status to Mitigated — Keep (import ban, Node deny-net, sync rollback). Point leftover IDE write-loop at BP-006, debug objects at BP-033, invoke at BP-047.
 2. Fix stale “Current gaps” that still list outbound connectors as a Need.
 3. Add TestOutboundHTTPDeniedWhenNotAllowlisted (empty allowlist and wrong host fail closed). Do not weaken SSRF/HTTPS/no-redirect rules.
-4. Optional only: existing Deno guest test style — async connector GET under allowlist vs deny. Skip if it requires new infrastructure.
+4. Optional only: existing Node guest test style — async connector GET under allowlist vs deny. Skip if it requires new infrastructure.
 
 Tests:
 - go test ./internal/automation/...
@@ -379,7 +379,7 @@ Tests:
 
 Out of scope:
 - tools/control-ide/**
-- Per-user OAuth, inbound provider webhooks, sync outbound, Deno fetch
+- Per-user OAuth, inbound provider webhooks, sync outbound, guest fetch
 - Inventing job-class isolation (BP-033)
 - Re-implementing Client invoke or OAuth token store
 ```

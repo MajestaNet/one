@@ -34,7 +34,7 @@ BP-014 as a whole is **not** Mitigated until an owner accepts Deferred items (OA
 | Connector OAuth / Client automation HTTP invoke | Owned by **BP-047** (Phases 0–4 done; ExecutionRun projection stays BP-033) | Do not fold into BP-014 | [integrations-build-plan.md](../integrations-build-plan.md) |
 | Control IDE Govern Integrations catalog | Shipped; **frozen** | No new chrome | BP-014 shipped #5; BP-027 frozen |
 | Hosted multi-tool loop | BP-006 **mitigated** | Do not reopen | [hosted-agent-tool-loop-build-plan.md](../hosted-agent-tool-loop-build-plan.md) |
-| Sync outbound / Deno `fetch` / BYO LLM on AgentSpec | Explicit non-goals | Stay deferred | ADR-014; BP-052 |
+| Sync outbound / guest `fetch` / BYO LLM on AgentSpec | Explicit non-goals | Stay deferred | ADR-014; BP-052 |
 
 BP-014 **Track** is Keep (`invoke_skill` regression). Do not mark the whole item Mitigated until an owner accepts Deferred OAuth/ExecutionRun as BP-047/033 follow-ons.
 
@@ -101,7 +101,7 @@ Deny tests already lock the Finish slot. Remainder adds **positive** enqueue:
 | Metadata POST/PATCH playbook `allowedSkills: ["NoSuch__c"]` | 400 `VALIDATION_ERROR` |
 | Deploy validate artifact playbook `allowedSkills` naming neither bundle nor install automation | issue with error severity |
 
-Reuse `internal/testutil` (`RequireDatabase`, `BootstrapCore`, `NewTestServer`). Hosted loop tests follow `internal/agentloop/loop_integration_test.go` harness (`setupLoopHarness`, `llmScript`). Do not add Deno guest tests here.
+Reuse `internal/testutil` (`RequireDatabase`, `BootstrapCore`, `NewTestServer`). Hosted loop tests follow `internal/agentloop/loop_integration_test.go` harness (`setupLoopHarness`, `llmScript`). Do not add Node guest tests here.
 
 ### 2.4 Skill job-class builder DX
 
@@ -189,7 +189,7 @@ After Phases 2–3 (and 4 if in the same PR), an owner **may** set BP-014 Status
 - Snapshot-vs-live dual allowlist; pinning `Config.AllowedSkills` as AuthZ
 - Requiring non-empty `allowedSkills` on `jobClass=skill` create
 - Requiring `active=true` on granted automations
-- Sync automation outbound; Deno `fetch` / npm; guest OAuth
+- Sync automation outbound; guest `fetch` / npm; guest OAuth
 - BYO LLM / AgentSpec provider keys ([BP-052](../../../backlog/BP-052-customer-inference.md))
 - Connector OAuth token lifecycle / Client `POST /automations/.../runs` HTTP (already BP-047)
 - BP-033 `ExecutionRun` projection

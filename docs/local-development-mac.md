@@ -7,14 +7,14 @@ Run Majesta One API + Postgres and exercise Control IDE on a Mac (Apple Silicon 
 Install with [Homebrew](https://brew.sh):
 
 ```bash
-brew install go@1.25 node docker deno
+brew install go@1.25 node docker
 # optional
 brew install golangci-lint
 ```
 
 - **Go** 1.25+ (`go version`)
 - **Node** 22.22.2+ (`node -v`) — Control IDE / Electron 43 / jsdom 30; Node 20 is insufficient for current Electron engine requirements
-- **Deno** 2.9.3+ (`deno --version`) — guest customer automations and Deploy `automationUnitPass` / `automationContract` suites (`deploy/Dockerfile` installs the same version and sets `DENO_PATH=/usr/local/bin/deno`). Native `go run` / `make api` / `make worker` need Deno on `PATH` **or** `DENO_PATH` in **both** the API and worker shells. Suites execute Deno in the API; `execution: async` automations execute Deno in the worker. Without it, `--suite` / live automations fail with “deno binary not found (set DENO_PATH or install Deno 2.9.3)”.
+- **Node** 22.22.2 (`node --version`; minimum 22.15) — guest customer automations and Deploy `automationUnitPass` / `automationContract` suites (`deploy/Dockerfile` installs the same version and sets `NODE_BIN=/usr/local/bin/node`). Native `go run` / `make api` / `make worker` need Node on `PATH` **or** `NODE_BIN` in **both** the API and worker shells. Suites execute Node in the API; `execution: async` automations execute Node in the worker. Without it, `--suite` / live automations fail with “node binary not found (set NODE_BIN or install Node 22.22.2)”. Do not set `NODE_PATH` (that is Node’s module search path).
 - **Docker Desktop** — local Postgres (or any Postgres 16+ URL)
 - Open Docker Desktop before Compose commands
 
@@ -53,7 +53,7 @@ Important `.env` values for local IDE work:
 | `AUTH_JWT_SIGNING_KEY` | set in `.env.example` | Required to mint Majesta One JWTs |
 | `INSTALL_CLAIM_TOKEN` | set in `.env.example` | Day-0 `POST /auth/v1/install/claim` |
 | `FEATURE_FLAGS` | `agents` | Empty flags also enable MCP; a non-empty list without `agents` keeps it dark |
-| `DENO_PATH` | unset (use `PATH`) | Set if Deno is not on `PATH`; required in API **and** worker shells |
+| `NODE_BIN` | unset (use `PATH`) | Set if Node is not on `PATH`; required in API **and** worker shells |
 | `PLATFORM_PUBLIC_URL` | `http://localhost:8080` | JWT issuer + Google/Apple callback base |
 | `AUTO_SEED` | `1` | Seeds managed `core` on API boot |
 | `SEED_CONTROL_IDE` | `1` | Seeds managed `one.controlIde` PKCE app when `AUTO_SEED=1`; set `0` to skip |
@@ -87,7 +87,7 @@ curl -s http://localhost:8080/readyz
 curl -s -H "Authorization: Bearer dev-admin-key" http://localhost:8080/client/v1/me
 ```
 
-Start the worker after the API process is up (both call `EnsureKernel`; concurrent first migrate is serialized). Export the same `.env` / `DENO_PATH`:
+Start the worker after the API process is up (both call `EnsureKernel`; concurrent first migrate is serialized). Export the same `.env` / `NODE_BIN`:
 
 ```bash
 make worker
@@ -236,7 +236,7 @@ See [AGENTS.md](../AGENTS.md) and [architecture/agent-routing.md](./architecture
 | `DATABASE_URL` connection refused | Docker Desktop running; Compose Postgres up; port 5432 free |
 | `/auth/v1/token` 503 / disabled | `AUTH_JWT_SIGNING_KEY` non-empty; restart `make api` |
 | Google `PROVIDER_DISABLED` / unavailable | `AUTH_LOGIN_PROVIDERS=google` + client id/secret in the same shell as `make api` |
-| `one org deploy --suite` / live automation: `deno binary not found` | Deno 2.9.3 on `PATH` or `DENO_PATH` in **both** API and worker shells; product images already set `DENO_PATH` |
+| `one org deploy --suite` / live automation: `node binary not found` | Node 22.22.2 on `PATH` or `NODE_BIN` in **both** API and worker shells; product images already set `NODE_BIN` |
 | First boot migrate error from API and worker together | Concurrent `EnsureKernel` is serialized; retry `make worker` if a historical schema is mid-apply |
 | IDE Connect 401 | Token expired or wrong base URL; remint JWT |
 | IDE Connect works but Environments 403 | JWT scopes lack `deploy`; use admin bootstrap key to mint |

@@ -79,15 +79,14 @@ docker compose -f deploy/docker-compose.multi-env.yml down -v
 
 ### Native fallback (no Docker)
 
-Two empty databases on one Postgres 16, unique `INSTALL_ID` / JWT key / claim token / `PORT` per process. Export `DENO_PATH` (or put Deno 2.9.3 on `PATH`) in **both** API and worker shells — suites run Deno in the API; async automations run Deno in the worker.
+Two empty databases on one Postgres 16, unique `INSTALL_ID` / JWT key / claim token / `PORT` per process. Export `NODE_BIN` (or put Node 22.22.2 on `PATH`) in **both** API and worker shells — suites run Node in the API; async automations run Node in the worker.
 
 Start **prod API and worker together** (kernel migrate is serialized); repeat for test.
 
 ```bash
 # example — two DBs on 127.0.0.1:5432
 createdb one_prod && createdb one_test
-export PATH="$HOME/.deno/bin:$PATH"
-export DENO_PATH="$(command -v deno)"
+export NODE_BIN="$(command -v node)"
 export APP_ENV=development FEATURE_FLAGS=agents PRODUCT_VERSION=0.1.0 CUSTOMER_ID=acme-rollout
 # prod
 DATABASE_URL=postgres://one:one@127.0.0.1:5432/one_prod PORT=8080 \
@@ -149,7 +148,7 @@ curl -sS -H "Authorization: Bearer $PROD_JWT" -H "One-API-Revision: 1" \
 
 Pin `One-API-Revision` from `GET /version` (`apiRevision.recommended`, alias of `current`).
 
-5. Confirm workers are running (`docker compose -f deploy/docker-compose.multi-env.yml ps`). Guest automations and `--suite` need Deno **in the worker image** (the product Dockerfile installs 2.9.3). Host `PATH` Deno matters for `one org deploy --suite` when the CLI runs the suite from the operator machine.
+5. Confirm workers are running (`docker compose -f deploy/docker-compose.multi-env.yml ps`). Guest automations and `--suite` need Node **in the worker image** (the product Dockerfile installs 22.22.2). Host `PATH` Node matters for `one org deploy --suite` when the CLI runs the suite from the operator machine.
 
 6. Score: could you do this from [self-host.md](./self-host.md) alone, or did you need this runbook because the default Compose file is a single `INSTALL_ROLE=dev` stack?
 
@@ -296,7 +295,7 @@ curl -sS -X POST http://localhost:8081/client/v1/query \
   -d '{"object":"Project__c"}'
 ```
 
-**Record this card.** First run: JSONLogic / Deno docs closed in [#27](https://github.com/MajestaNet/one/pull/27); live path must still hit the worker.
+**Record this card.** First run: JSONLogic / guest-runtime docs closed in [#27](https://github.com/MajestaNet/one/pull/27); live path must still hit the worker. The guest engine is now Node ([ADR-034](./adr/034-node-guest-automations.md)).
 
 ### E. Deploy from source (repo → org)
 

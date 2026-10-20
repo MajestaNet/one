@@ -1,5 +1,5 @@
-// Package automation holds guest TypeScript automation helpers (ADR-014).
-// Import ban + validation (Phase 2); Deno guest executor (Phase 4).
+// Package automation holds guest TypeScript automation helpers (ADR-014 / ADR-034).
+// Import ban + validation (Phase 2); Node guest executor (ADR-034).
 package automation
 
 import (

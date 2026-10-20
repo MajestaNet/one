@@ -10,14 +10,14 @@
 
 ## Thesis
 
-> Integrations authenticate to Majesta One with platform auth (Connected App / service principal → JWT). They **invoke** customer automations on `/client/v1` as the calling principal. Async automations call external APIs through **Metadata-owned connectors** whose credentials are either static secret refs or **platform-managed OAuth** (authorize, store, refresh) — guest Deno never sees tokens or implements OAuth.
+> Integrations authenticate to Majesta One with platform auth (Connected App / service principal → JWT). They **invoke** customer automations on `/client/v1` as the calling principal. Async automations call external APIs through **Metadata-owned connectors** whose credentials are either static secret refs or **platform-managed OAuth** (authorize, store, refresh) — the Node guest never sees tokens or implements OAuth.
 
 ```text
 External integration
   → /auth/v1 (client_credentials | PKCE)
   → POST /client/v1/automations/{apiName}/runs
   → jobs.automation.run as caller (PS automationAccess)
-  → Deno guest (optional ctx.connector)
+  → Node guest (optional ctx.connector)
        → Go host
        → static Bearer | OAuth access token
        → HTTPS (egress allowlist)
@@ -117,7 +117,7 @@ This file, BP-047, API-family / connect / module-map cross-links, BP-009/014 poi
 | Run isolation | GET run filtered by `actorId` (admin exempt) |
 | SSRF | HTTPS; no redirects; private IP block; egress allowlist |
 | Secrets | `enc:v1`; Metadata `hasSecret` / token status only |
-| Guest escape | Deno deny-net; no token in `ctx` |
+| Guest escape | Node deny-net; no token in `ctx` |
 | OAuth CSRF | Hashed single-use state; PKCE when enabled; config hash bind |
 | Deploy | Never promote ciphertext or OAuth tokens |
 
@@ -128,7 +128,7 @@ This file, BP-047, API-family / connect / module-map cross-links, BP-009/014 poi
 - Per-user / end-user OAuth connections
 - BYO LLM / AgentSpec model keys (BP-006 / BP-014 remainder)
 - Sync automation outbound (ADR-014)
-- Customer `fetch` / npm inside Deno
+- Customer `fetch` / npm inside the Node guest
 - Inbound provider-webhook signature framework
 - Full BP-033 `ExecutionRun` projection (thin job status until then)
 
