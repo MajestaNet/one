@@ -67,7 +67,7 @@ Vendor/agent guidance in this tree (`docs/architecture/`, plus `docs/`, `backlog
 | [auth-adapters.md](../auth-adapters.md) | Operator runbooks: Okta / Entra / Keycloak / Cognito → token exchange; Okta/Entra SCIM UserCustom |
 | [scim-provisioning.md](./scim-provisioning.md) | SCIM 2.0 `/scim/v2` connector adapter (BP-017 Users + R1 Groups-as-tags; UserCustom on BP-058 mitigated; bulk/filters remain) |
 | [customer-connect.md](../customer-connect.md) | Customer connect paths: UI JWT · service accounts · MCP |
-| [customer-automations-build.md](./customer-automations-build.md) | Plan: Deno guest TS automations, PS grants, sync rollback (ADR-014 / BP-009) |
+| [customer-automations-build.md](./customer-automations-build.md) | Plan: Node guest TS automations, PS grants, sync rollback (ADR-014 / ADR-034 / BP-009) |
 | [package-automations-build-plan.md](./package-automations-build-plan.md) | **Active:** managed package automations — default-on at enable, Metadata `active` toggle, persisted description, IDE consume ([ADR-033](../adr/033-managed-package-automations.md) / [BP-069](../../backlog/BP-069-managed-package-automations.md)) |
 | [platform-actions-build-plan.md](./platform-actions-build-plan.md) | **Active (Phases 1–4 shipped; quote.accept on BP-044):** package-gated Client verbs + guest `invokeAction` (ADR-029 / BP-061) |
 | [billing-module-build-plan.md](./billing-module-build-plan.md) | **Active:** optional `billing` Order/OrderLine + `quote.accept` (ADR-031 / BP-044) |

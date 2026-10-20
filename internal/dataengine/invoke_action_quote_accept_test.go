@@ -2,6 +2,7 @@ package dataengine_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -16,8 +17,11 @@ import (
 )
 
 func TestSyncInvokeActionQuoteAccept(t *testing.T) {
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {

@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -20,17 +21,30 @@ import (
 //go:embed embed/bootstrap.ts
 var bootstrapTS string
 
+//go:embed embed/guest_io.ts
+var guestIOTS string
+
+//go:embed embed/guest_policy.mjs
+var guestPolicyMJS string
+
 //go:embed embed/one_automation.ts
 var oneAutomationTS string
 
-// DenoVersion is the pinned guest runtime (install-side executor only).
-const DenoVersion = "2.9.3"
+// NodeVersion is the Node guest pinned in product images (install-side executor only).
+const NodeVersion = "22.22.2"
 
-// DefaultAsyncDeadline caps async automation.run Deno wall time.
+// MinNodeVersion is the oldest Node that has in-process module.registerHooks.
+// The permission model can then deny worker threads (module.register needs a worker).
+const MinNodeVersion = "22.15.0"
+
+// DefaultAsyncDeadline caps async automation.run guest wall time.
 const DefaultAsyncDeadline = 30 * time.Second
 
-// ErrDenoUnavailable is returned when the Deno binary cannot be found.
-var ErrDenoUnavailable = errors.New("deno binary not found (set DENO_PATH or install Deno " + DenoVersion + ")")
+// ErrNodeUnavailable is returned when the Node binary cannot be found.
+var ErrNodeUnavailable = errors.New("node binary not found (set NODE_BIN or install Node " + NodeVersion + ")")
+
+// ErrNodeTooOld is returned when Node is present but older than MinNodeVersion.
+var ErrNodeTooOld = errors.New("node " + MinNodeVersion + "+ required (set NODE_BIN or install Node " + NodeVersion + ")")
 
 // HostBridge is the Go-side SDK implementation for guest ctx.* calls.
 type HostBridge interface {
@@ -42,7 +56,7 @@ type HostBridge interface {
 	InvokeAction(ctx context.Context, apiName string, input map[string]any) (map[string]any, error)
 }
 
-// GuestRequest is one Deno guest invocation.
+// GuestRequest is one Node guest invocation.
 type GuestRequest struct {
 	APIName   string
 	Source    string
@@ -51,8 +65,8 @@ type GuestRequest struct {
 	Timeout   time.Duration
 	// SyncMode selects the sync wall-clock default when Timeout is unset.
 	SyncMode bool
-	// DenoPath overrides binary discovery when non-empty.
-	DenoPath string
+	// NodePath overrides binary discovery when non-empty.
+	NodePath string
 	// Logger receives guest ctx.log lines (optional).
 	Logger func(message string)
 	// Bootstrap overrides the embedded runtime bootstrap (unit harness uses a variant).
@@ -68,26 +82,82 @@ type GuestResult struct {
 	Logs []string
 }
 
-// FindDeno returns the Deno binary path (DENO_PATH, then PATH).
-func FindDeno(explicit string) (string, error) {
+// FindNode returns the Node binary path (explicit, NODE_BIN, then PATH).
+// A missing binary is ErrNodeUnavailable. A binary older than MinNodeVersion is ErrNodeTooOld.
+func FindNode(explicit string) (string, error) {
 	if explicit != "" {
 		if st, err := os.Stat(explicit); err == nil && !st.IsDir() {
+			if err := verifyNodeVersion(explicit); err != nil {
+				return "", err
+			}
 			return explicit, nil
 		}
-		return "", fmt.Errorf("%w: %s", ErrDenoUnavailable, explicit)
+		return "", fmt.Errorf("%w: %s", ErrNodeUnavailable, explicit)
 	}
-	if p := os.Getenv("DENO_PATH"); p != "" {
+	if p := os.Getenv("NODE_BIN"); p != "" {
 		if st, err := os.Stat(p); err == nil && !st.IsDir() {
+			if err := verifyNodeVersion(p); err != nil {
+				return "", err
+			}
 			return p, nil
 		}
 	}
-	if p, err := exec.LookPath("deno"); err == nil {
+	if p, err := exec.LookPath("node"); err == nil {
+		if err := verifyNodeVersion(p); err != nil {
+			return "", err
+		}
 		return p, nil
 	}
-	return "", ErrDenoUnavailable
+	return "", ErrNodeUnavailable
 }
 
-// RunGuest executes customer TypeScript under Deno default-deny with host RPC.
+func verifyNodeVersion(bin string) error {
+	out, err := exec.Command(bin, "--version").CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%w: %s (%v)", ErrNodeUnavailable, bin, err)
+	}
+	major, minor, _, err := parseNodeVersion(string(out))
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrNodeUnavailable, err)
+	}
+	minMaj, minMin, _, err := parseNodeVersion(MinNodeVersion)
+	if err != nil {
+		return err
+	}
+	if major < minMaj || (major == minMaj && minor < minMin) {
+		return fmt.Errorf("%w: found %s", ErrNodeTooOld, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+func parseNodeVersion(raw string) (major, minor, patch int, err error) {
+	s := strings.TrimSpace(raw)
+	s = strings.TrimPrefix(s, "v")
+	if i := strings.IndexAny(s, "-+"); i >= 0 {
+		s = s[:i]
+	}
+	parts := strings.Split(s, ".")
+	if len(parts) < 2 {
+		return 0, 0, 0, fmt.Errorf("unrecognized node version %q", strings.TrimSpace(raw))
+	}
+	major, err = strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("unrecognized node version %q", strings.TrimSpace(raw))
+	}
+	minor, err = strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("unrecognized node version %q", strings.TrimSpace(raw))
+	}
+	if len(parts) > 2 {
+		patch, err = strconv.Atoi(parts[2])
+		if err != nil {
+			return 0, 0, 0, fmt.Errorf("unrecognized node version %q", strings.TrimSpace(raw))
+		}
+	}
+	return major, minor, patch, nil
+}
+
+// RunGuest executes customer TypeScript under Node default-deny with host RPC.
 func RunGuest(ctx context.Context, host HostBridge, req GuestRequest) (*GuestResult, error) {
 	if host == nil {
 		return nil, fmt.Errorf("automation %s: nil host bridge", req.APIName)
@@ -106,7 +176,7 @@ func RunGuest(ctx context.Context, host HostBridge, req GuestRequest) (*GuestRes
 		return nil, err
 	}
 
-	denoPath, err := FindDeno(req.DenoPath)
+	nodePath, err := FindNode(req.NodePath)
 	if err != nil {
 		return nil, err
 	}
@@ -133,20 +203,21 @@ func RunGuest(ctx context.Context, host HostBridge, req GuestRequest) (*GuestRes
 	}
 
 	args := []string{
-		"run",
-		"--no-npm",
-		"--no-remote",
-		"--quiet",
-		"--allow-read=" + workDir,
-		"--import-map=" + filepath.Join(workDir, "import_map.json"),
+		"--permission",
+		"--allow-fs-read=" + workDir,
+		"--disallow-code-generation-from-strings",
+		"--disable-warning=ExperimentalWarning",
+		"--experimental-strip-types",
+		"--import", filepath.Join(workDir, "guest_policy.mjs"),
 		filepath.Join(workDir, "bootstrap.ts"),
 	}
-	cmd := exec.CommandContext(runCtx, denoPath, args...)
+	cmd := exec.CommandContext(runCtx, nodePath, args...)
 	cmd.Dir = workDir
+	// Replace the environment. Do not inherit NODE_OPTIONS, NODE_PATH, or parent secrets.
 	cmd.Env = []string{
 		"HOME=" + workDir,
-		"DENO_DIR=" + filepath.Join(workDir, ".deno"),
-		"NO_COLOR=1",
+		"TMPDIR=" + workDir,
+		"NODE_NO_WARNINGS=1",
 	}
 
 	stdin, err := cmd.StdinPipe()
@@ -161,7 +232,7 @@ func RunGuest(ctx context.Context, host HostBridge, req GuestRequest) (*GuestRes
 	cmd.Stderr = &stderrBuf
 
 	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("automation %s: start deno: %w", req.APIName, err)
+		return nil, fmt.Errorf("automation %s: start node: %w", req.APIName, err)
 	}
 
 	result, runErr := serveGuestRPC(runCtx, host, req, stdin, stdout)
@@ -170,22 +241,22 @@ func RunGuest(ctx context.Context, host HostBridge, req GuestRequest) (*GuestRes
 
 	if runErr != nil {
 		if stderrBuf.Len() > 0 {
-			return nil, fmt.Errorf("%w\ndeno stderr: %s", runErr, strings.TrimSpace(stderrBuf.String()))
+			return nil, fmt.Errorf("%w\nnode stderr: %s", runErr, strings.TrimSpace(stderrBuf.String()))
 		}
 		return nil, runErr
 	}
 	if waitErr != nil && result == nil {
 		if runCtx.Err() != nil {
-			return nil, fmt.Errorf("automation %s: deno deadline exceeded: %w", req.APIName, runCtx.Err())
+			return nil, fmt.Errorf("automation %s: node deadline exceeded: %w", req.APIName, runCtx.Err())
 		}
 		msg := strings.TrimSpace(stderrBuf.String())
 		if msg == "" {
 			msg = waitErr.Error()
 		}
-		return nil, fmt.Errorf("automation %s: deno exited: %s", req.APIName, msg)
+		return nil, fmt.Errorf("automation %s: node exited: %s", req.APIName, msg)
 	}
 	if result == nil {
-		return nil, fmt.Errorf("automation %s: deno produced no result", req.APIName)
+		return nil, fmt.Errorf("automation %s: node produced no result", req.APIName)
 	}
 	return result, nil
 }
@@ -197,9 +268,10 @@ func materializeGuestWorkdir(workDir string, req GuestRequest) error {
 	}
 	files := map[string][]byte{
 		"bootstrap.ts":      []byte(boot),
+		"guest_io.ts":       []byte(guestIOTS),
+		"guest_policy.mjs":  []byte(guestPolicyMJS),
 		"one_automation.ts": []byte(oneAutomationTS),
 		"user_entry.ts":     []byte(req.Source),
-		"import_map.json":   []byte(`{"imports":{"one:automation":"./one_automation.ts"}}`),
 	}
 	for name, body := range req.ExtraFiles {
 		if name == "" {
@@ -311,7 +383,7 @@ func serveGuestRPC(ctx context.Context, host HostBridge, req GuestRequest, stdin
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("automation %s: read deno stdout: %w", req.APIName, err)
+		return nil, fmt.Errorf("automation %s: read node stdout: %w", req.APIName, err)
 	}
 	return nil, nil
 }

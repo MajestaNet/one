@@ -11,7 +11,7 @@
 A single Majesta One install is both the **live CRM** and the **Build/Ship/automation/agent** runtime. Without isolation:
 
 1. Repo→org validate / deploy / customer tests can run synchronously on the API process and shared DB pool, starving Client traffic while the org is still “operational.”
-2. A buggy automation or agent can enqueue unbounded work; today’s Deno wall/depth/mutation caps help per-run but there is no install-level concurrency/daily budget, and no RSS limit story — yet the product still wants **more headroom than typical incumbent platform** governors.
+2. A buggy automation or agent can enqueue unbounded work; today’s guest wall/depth/mutation caps help per-run but there is no install-level concurrency/daily budget, and no RSS limit story — yet the product still wants **more headroom than typical incumbent platform** governors.
 3. Customers cannot effectively debug their own code: failures land in operator `slog`, `jobs.last_error`, or stub `agent_runs` — not in queryable, retained, AuthZ’d developer objects.
 
 ## Why it matters
@@ -26,7 +26,7 @@ Follow the build plan:
 
 1. **Admission lanes** — reserve most RPM/concurrency for Client; budget Deploy/Metadata.
 2. **Async Deploy by default** for expensive org validate/deploy/test; `JOB_SLOTS_DEPLOY=1` with queue/`DEPLOY_BUSY` (repo→org only — no peer promote).
-3. **Worker job classes** + daily quotas + raised-but-finite Deno/agent budgets (env-overridable with install size).
+3. **Worker job classes** + daily quotas + raised-but-finite Node guest and agent budgets (env-overridable with install size).
 4. **Two managed objects:** `ExecutionRun` (flexible) + `ExecutionLogEntry` (`high_volume`) with `debug.read`, SDK `ctx.log.*`, retention purge.
 5. Keep **BP-008 OTEL** as the operator plane; do not overload `audit_log`.
 
@@ -36,7 +36,7 @@ Follow the build plan:
 |---|---|
 | Build plan + this BP | Done (this change) |
 | Phase 1 — API admission + async Deploy | **Done** (lanes + expanded-artifact size-gated 202 / `DEPLOY_BUSY` + `deploy.validate`/`deploy.apply`; uploaded archives are capped at 128 MiB expanded / 10,000 files; no `jobs.class` yet) |
-| Phase 2 — Job classes + quotas + Deno RSS soft limit | Open |
+| Phase 2 — Job classes + quotas + guest RSS soft limit | Open |
 | Phase 3 — ExecutionRun / ExecutionLogEntry + writers | Open |
 | Phase 4 — IDE/docs debug UX | Open |
 | Phase 5 — Elastic knobs + OTEL hooks | Open |

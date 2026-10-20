@@ -137,7 +137,7 @@ flowchart TB
 - OSS Experience as Operate canvas ([ADR-018](../adr/018-crm-canvas-document.md) fence stands)
 - Customer Electron plugins ([ADR-012](../adr/012-customer-repo-and-control-ide.md))
 - Product `/x` host or webpack customer UI into Go image
-- npm inside Deno guest ([ADR-014](../adr/014-customer-code-automations.md))
+- npm inside Node guest ([ADR-014](../adr/014-customer-code-automations.md))
 
 ---
 

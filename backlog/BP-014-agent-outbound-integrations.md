@@ -8,7 +8,7 @@
 
 ## Problem
 
-Customer AgentSpecs and MCP-over-API let external runtimes call Majesta One under AuthZ. Customers also need **outbound** HTTPS from async automations (and later agents) without baking secrets into product Git, giving Deno network, or inventing a parallel AuthZ plane.
+Customer AgentSpecs and MCP-over-API let external runtimes call Majesta One under AuthZ. Customers also need **outbound** HTTPS from async automations (and later agents) without baking secrets into product Git, giving the guest network, or inventing a parallel AuthZ plane.
 
 ## Why it matters
 
@@ -17,7 +17,7 @@ Without a documented config surface, teams hard-code endpoints in instructions o
 ## Shipped
 
 1. Install **secret refs** + **connectors** + **egress allowlist** (Metadata; secrets install-local; Deploy refs only)
-2. Async Deno SDK `ctx.http` / `ctx.connector` via Go host RPC (guest stays deny-net; sync rejected)
+2. Async Node guest SDK `ctx.http` / `ctx.connector` via Go host RPC (guest stays deny-net; sync rejected)
 3. AgentSpec **`allowedSkills`** — grant named automation functions as skills (Metadata create/PATCH + worker existence check + **Deploy name-check** against bundle automations or install `metadata_automations`)
 4. Shared OTEL spans for outbound calls ([BP-008](./BP-008-production-packaging.md))
 5. Control IDE **Govern → Integrations** catalog for static-secret and OAuth connectors, with guided secret binding, egress allowlisting, OAuth connect/status, and installed-connector management (**frozen** — no new chrome)
@@ -37,7 +37,7 @@ Phases 1–4 of [03-bp-014-skill-invoke.md](../docs/architecture/agentic-remaind
 ## Explicit non-goals
 
 - Blocking MCP-over-API or customer AgentSpec CRUD on this item
-- Customer npm/`fetch` inside Deno
+- Customer npm/`fetch` inside the Node guest
 - Replacing BP-033 customer debug objects with OTEL
 
 ## Related

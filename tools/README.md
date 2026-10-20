@@ -5,7 +5,7 @@ Helpers used by MajestaNet engineers and CI. **Nothing in this directory is copi
 | Path | Role |
 |---|---|
 | [`control-ide/`](./control-ide/) | Control IDE (Electron; Apache-2.0) |
-| [`automation-sdk/`](./automation-sdk/) | Type stubs for Deno guest automations (not an npm runtime package) |
+| [`automation-sdk/`](./automation-sdk/) | Type stubs for Node guest automations (not an npm runtime package) |
 | [`one-mcp/`](./one-mcp/) | Optional TypeScript MCP scaffold (`@modelcontextprotocol/sdk`) for stdio / custom vertical tools against a Majesta One install |
 | ~~`one-docs/`~~ | **Do not add.** Public docs are a separate CMS aggregator ([public-docs-site.md](../docs/architecture/public-docs-site.md)). |
 

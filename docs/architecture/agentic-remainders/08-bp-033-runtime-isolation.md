@@ -19,14 +19,14 @@
 | Async org validate / apply | Size-gated 202 + `DEPLOY_BUSY` + worker `deploy.validate` / `deploy.apply`; `GET /deploy/v1/work/{jobId}`; CLI/MCP poll | Phase 2 slot claim; Phase 3 `executionRunId` | `internal/deploy/async.go`; `internal/httpapi/deploy_routes.go`; `internal/worker/process.go`; `internal/mcp/builder.go`; `cmd/one/org.go` |
 | Worker execution classes + slot caps | FIFO claim by `run_at`; **no** `jobs.class` | Per-class SKIP LOCKED claim + `JOB_SLOTS_*` | `migrations/0000_kernel.sql` `jobs` (`job_type`, no `class`); `migrations/0006_cache_and_worker_leases.sql` `FOR UPDATE SKIP LOCKED` + `locked_at` / `locked_by`; `internal/worker/claim.go` `ClaimJobs` (pending + `run_at`, no class predicate); `internal/worker/process.go` `ProcessJobs` claims one-at-a-time. **Do not confuse** with AgentSpec harness `job_class` (`query\|customize\|ship\|govern\|operate\|skill`) on `agent_playbooks` — `migrations/0059_agent_job_class.sql` / BP-064 |
 | Daily quotas | — | `install_quota_counters` + `QUOTA_*` | No table, no `QUOTA_EXCEEDED` in Go; grep hits only the isolation plan / BP-033 |
-| Deno RSS / raised async wall | Sync 5s / async 30s wall; mutation 50 / depth 3 | `DENO_RSS_LIMIT_MB`; optional 120s async opt-in | `internal/automation/deno.go` `DefaultAsyncDeadline = 30s`; `internal/automation/sync_exec.go` `SyncDeadline` / `MaxSyncDepth` / `MaxSyncOps`; no `Setrlimit` / cgroup RSS |
+| guest RSS / raised async wall | Sync 5s / async 30s wall; mutation 50 / depth 3 | `GUEST_RSS_LIMIT_MB`; optional 120s async opt-in | `internal/automation/node.go` `DefaultAsyncDeadline = 30s`; `internal/automation/sync_exec.go` `SyncDeadline` / `MaxSyncDepth` / `MaxSyncOps`; no `Setrlimit` / cgroup RSS |
 | Hosted agent budgets | Loop shipped (BP-006) | Count tool calls into class quota + `Stats.toolCalls` | `internal/agentloop/loop.go` `processCalls`; `internal/worker/process.go` `case "agent.run"` — no daily/slot quota |
 | `ExecutionRun` / `ExecutionLogEntry` | Planned in docs only | Seed + HV + writers + Client read | No `platform_debug` in `internal/seed` / `internal/packages`; `docs/data-model.md` “Planned debug objects”; HV path exists for `messages` (`internal/seed/module_messages.go`, `internal/dataengine/storage.go` guardrails, `migrations/0019_high_volume_records.sql`) |
 | `debug.read` capability string | Constant + Admin union | Gate Client reads of debug objects; `DebugViewer` PS | `internal/authz/system_perms.go` `CapDebugRead`; `CanonicalCapabilities` includes it so Admin seed has it (`internal/db/system_admin.go`); `migrations/0045_ide_caps_fls_freeze.sql` unions `debug.read` onto Admin. **No** HTTP `requireCapability(CapDebugRead)` and **no** `DebugViewer` in `internal/seed/seed.go` `capabilityPermissionSetDefs` |
-| Guest `ctx.log` | Single `ctx.log(...)` → host `Logger` / in-memory `Logs` | `ctx.log.info/warn/error` → HV lines + cap | `internal/automation/embed/bootstrap.ts` `log: (...a) => emit({ kind: "log", ...})`; `internal/automation/deno.go` case `"log"`; `docs/automation-sdk.md` |
+| Guest `ctx.log` | Single `ctx.log(...)` → host `Logger` / in-memory `Logs` | `ctx.log.info/warn/error` → HV lines + cap | `internal/automation/embed/bootstrap.ts` `log: (...a) => emit({ kind: "log", ...})`; `internal/automation/node.go` case `"log"`; `docs/automation-sdk.md` |
 | Retention / purge of log lines | jobs/outbox/audit_log only | `execution_log.purge` + `EXECUTION_LOG_RETENTION_DAYS` | `internal/worker/retention.go`; `internal/config/config.go` `RetentionJobsDays` / `Outbox` / `AuditLog` |
 | Phase 4 IDE Monitor | Control IDE chrome **frozen** | Docs-only debug recipe | [BP-034](../../adr/030-install-agent-runtime.md) Status Frozen; do **not** edit `tools/control-ide/**` |
-| Phase 5 elastic knobs + OTEL | OTEL exporter exists (BP-008 partial) | Document replica×slot math; optional metrics | `internal/otel`; no queue-depth / throttle / Deno-OOM meters |
+| Phase 5 elastic knobs + OTEL | OTEL exporter exists (BP-008 partial) | Document replica×slot math; optional metrics | `internal/otel`; no queue-depth / throttle / guest OOM meters |
 
 **Honest summary:** Phase 1 (admission lanes + async repo→org Deploy) is in product Go. Phase 2–3 (job classes, quotas, ExecutionRun) have not landed. BP-005 lease/SKIP LOCKED **must stay**; later remainders add classes and quotas **on top**.
 
@@ -136,9 +136,9 @@ Enqueue sites must set `class` (or a helper `worker.Enqueue(ctx, pool, jobType, 
 - `ProcessJobs` order per tick: **`default` first** (Client-critical ingest/search/sharing), then `automation`, `agent`, `deploy` up to their slot caps. Deploy/automation/agent must not starve `default`.
 - Install-wide slots (not per-worker): `JOB_SLOTS_AUTOMATION` default 4, `JOB_SLOTS_AGENT` default 2, `JOB_SLOTS_DEPLOY` default 1. Document `min(env, replicas*k)` in Phase 5; v1 may treat env as the hard cap.
 
-**Daily quotas:** `INSERT INTO install_quota_counters (day, class, count) VALUES (CURRENT_DATE, $class, 1) ON CONFLICT (day, class) DO UPDATE SET count = install_quota_counters.count + 1 RETURNING count`. If `count > QUOTA_*` → fail job with `QUOTA_EXCEEDED` (do not run Deno/loop). `default` class has **no** daily quota. UTC day is fine (install-local).
+**Daily quotas:** `INSERT INTO install_quota_counters (day, class, count) VALUES (CURRENT_DATE, $class, 1) ON CONFLICT (day, class) DO UPDATE SET count = install_quota_counters.count + 1 RETURNING count`. If `count > QUOTA_*` → fail job with `QUOTA_EXCEEDED` (do not run the guest/loop). `default` class has **no** daily quota. UTC day is fine (install-local).
 
-**Deno remainder:** keep sync 5s / 50 mutations / depth 3. Raise **async** wall only via `AUTOMATION_ASYNC_DEADLINE_SECONDS` (default **30** until operators opt in to 120 — isolation plan). Apply RSS soft limit: `syscall.Setrlimit(RLIMIT_AS)` / `RLIMIT_DATA` when available; on failure log and continue with wall timeout. Stream guest logs into a byte buffer capped by `EXECUTION_LOG_BYTES_PER_RUN` (truncate + `truncated=true` on the run once Phase 3 exists).
+**Guest remainder:** keep sync 5s / 50 mutations / depth 3. Raise **async** wall only via `AUTOMATION_ASYNC_DEADLINE_SECONDS` (default **30** until operators opt in to 120 — isolation plan). Apply RSS soft limit: `syscall.Setrlimit(RLIMIT_AS)` / `RLIMIT_DATA` when available; on failure log and continue with wall timeout. Stream guest logs into a byte buffer capped by `EXECUTION_LOG_BYTES_PER_RUN` (truncate + `truncated=true` on the run once Phase 3 exists).
 
 **Agent remainder:** hosted loop already runs as `agent.run`. Increment automation-style daily `agent` counter at claim (or first tool call). Record `toolCalls` into ExecutionRun `Stats` in Phase 3. Do not block BP-006 behavior on missing ExecutionRun — quotas still apply.
 
@@ -165,7 +165,7 @@ Wire:
 
 | Producer | Kind | Files |
 |---|---|---|
-| `automation.run` + sync guest | `automation` | `internal/worker/automation_run.go`, `internal/dataengine/sync_automations.go`, `internal/automation/deno.go` Logger |
+| `automation.run` + sync guest | `automation` | `internal/worker/automation_run.go`, `internal/dataengine/sync_automations.go`, `internal/automation/node.go` Logger |
 | `agent.run` | `agent` | `internal/worker/process.go` + `internal/agentloop` (tool call count in `Stats`) |
 | `deploy.validate` / `deploy.apply` / `customer.test.run` | `deploy_validate` / `deploy_apply` / `customer_test` | `internal/worker/process.go`, `internal/deploy` |
 | Guest SDK | log lines | `embed/bootstrap.ts` + `one_automation.ts`: add `log.info` / `log.warn` / `log.error`; keep `log(...)` as info alias (`docs/automation-sdk.md`) |
@@ -178,7 +178,7 @@ Wire:
 
 **Phase 4:** docs-only UX. Update [customer-developer-workflow.md](../../customer-developer-workflow.md) with a debug recipe (`debug.read`, query ExecutionRun, page ExecutionLogEntry with `ExecutionRunId` + time). Update [automation-sdk.md](../../automation-sdk.md) for `ctx.log.*`. **Do not** edit `tools/control-ide`. Operate Monitor IDE is [BP-034](../../adr/030-install-agent-runtime.md) **Frozen**.
 
-**Phase 5:** document how App Platform/Helm worker replica count interacts with slot defaults; optional admin-only Metadata/Deploy exposure of quota knobs (install-local, not multi-tenant metering). Pair OTEL meters (queue depth, `DEPLOY_BUSY` count, `QUOTA_EXCEEDED`, Deno OOM) with BP-008 — do not replace ExecutionLogEntry with operator spans.
+**Phase 5:** document how App Platform/Helm worker replica count interacts with slot defaults; optional admin-only Metadata/Deploy exposure of quota knobs (install-local, not multi-tenant metering). Pair OTEL meters (queue depth, `DEPLOY_BUSY` count, `QUOTA_EXCEEDED`, guest OOM) with BP-008 — do not replace ExecutionLogEntry with operator spans.
 
 ### 2.7 Failure modes
 
@@ -188,7 +188,7 @@ Wire:
 | Deploy/Metadata RPM exhausted | `429 RATE_LIMITED` | Client lane unaffected |
 | Deploy slots + queue full | `429 DEPLOY_BUSY` | No extra `deploy.*` jobs |
 | Daily automation/agent cap | job `failed` / `QUOTA_EXCEEDED`; ExecutionRun `throttled` when objects exist | Guest does not start |
-| Deno wall / RSS | job failed; run `failed` + error entry | Sync path still rolls back the write tx (ADR-014) |
+| guest wall / RSS | job failed; run `failed` + error entry | Sync path still rolls back the write tx (ADR-014) |
 | Lease lost mid-run | existing heartbeat fencing | At-least-once; writers upsert by JobId |
 | HV query without selective filter | existing DataEngine validation error | Do not raise `HighVolumeLocatorMaxRows` to “fix” debug scans |
 | Customer invents ExecutionRun | `403` on create | Platform writer only |
@@ -207,12 +207,12 @@ Wire:
 - **Exit criteria:** Under concurrent Deploy validate, Client CRUD is not charged to the Deploy RPM lane; expensive validate/apply returns 202 and completes on the worker; `one org validate` still prints a report (via sync tiny path or poll).
 - **Depends on:** BP-005 mitigated (leases). BP-032/BP-048 are consumers. Does **not** wait for Phase 3 objects (`jobId` is enough).
 
-### Phase 2 — Execution classes + quotas + Deno RSS
+### Phase 2 — Execution classes + quotas + guest RSS
 
 - **Owner:** `worker-jobs`
 - **Packages allowed:** `internal/worker`, `internal/automation`, `internal/config`, `migrations/` (+ `migrations/meta/_journal.json`), enqueue call sites listed in §2.4, `cmd/worker` if config wiring is needed
 - **Packages forbidden:** `tools/control-ide/**`; do not replace Postgres jobs with an external queue; do not alter `agent_playbooks.job_class`
-- **Files likely to change:** `migrations/0060_job_execution_class_quotas.sql` (name may shift if 0060 is taken — next free number); `internal/worker/claim.go`, `claim_test.go`, `process.go`, `process_test.go`, `loop.go`, `automation_run.go`; `internal/automation/deno.go`; `internal/config/config.go`; enqueue `INSERT INTO jobs` sites
+- **Files likely to change:** `migrations/0060_job_execution_class_quotas.sql` (name may shift if 0060 is taken — next free number); `internal/worker/claim.go`, `claim_test.go`, `process.go`, `process_test.go`, `loop.go`, `automation_run.go`; `internal/automation/node.go`; `internal/config/config.go`; enqueue `INSERT INTO jobs` sites
 - **Tests:** `go test ./internal/worker/... ./internal/automation/... ./internal/config/...`. Must include: two workers cannot exceed `JOB_SLOTS_AUTOMATION`; `default` still claims while deploy class is saturated; daily cap fails with `QUOTA_EXCEEDED`; SKIP LOCKED + lease reclaim + heartbeat still pass (`claim_test.go`).
 - **Exit criteria:** A runaway `automation.run` loop hits concurrent + daily caps without exhausting the API DB pool; Client-critical `default` jobs still claim.
 - **Depends on:** Phase 1 job types `deploy.validate` / `deploy.apply` (or map existing types). ExecutionRun `throttled` status can wait for Phase 3 (`last_error` is enough in v1).
@@ -222,7 +222,7 @@ Wire:
 - **Owner:** `db-backend-perf` then `authz-security` then `api-families` / `worker-jobs` for writers
 - **Packages allowed:** `internal/seed`, `internal/packages`, `internal/dataengine`, `internal/db`, `internal/authz`, `internal/httpapi` (capability gate on Client read; 403 on customer write), `internal/automation`, `internal/worker`, `internal/deploy`, `internal/agentloop` (stats only), `migrations/` if HV/partition helpers need a nudge, `docs/data-model.md`, `docs/modules/platform-debug.md`, `docs/modules/README.md`, `docs/automation-sdk.md`, `docs/architecture/system-capabilities.md`
 - **Packages forbidden:** `tools/control-ide/**`; do not use `audit_log` as the developer stream; do not add a fourth API family
-- **Files likely to change:** `internal/seed/module_platform_debug.go` (new), `seed.go`, `modules.go`; `internal/seed/seed.go` `capabilityPermissionSetDefs` (`DebugViewer`); `internal/httpapi/server.go` sobject handlers (deny CUD; require `debug.read` on GET/query); new `internal/execution` writer; `internal/worker/automation_run.go`, `process.go`, `retention.go`; `internal/automation/embed/bootstrap.ts`, `one_automation.ts`, `deno.go`; `internal/dataengine` only if HV predicates need an indexed-lookup hint
+- **Files likely to change:** `internal/seed/module_platform_debug.go` (new), `seed.go`, `modules.go`; `internal/seed/seed.go` `capabilityPermissionSetDefs` (`DebugViewer`); `internal/httpapi/server.go` sobject handlers (deny CUD; require `debug.read` on GET/query); new `internal/execution` writer; `internal/worker/automation_run.go`, `process.go`, `retention.go`; `internal/automation/embed/bootstrap.ts`, `one_automation.ts`, `node.go`; `internal/dataengine` only if HV predicates need an indexed-lookup hint
 - **Tests:** `go test ./internal/seed/... ./internal/packages/... ./internal/dataengine/... ./internal/authz/... ./internal/httpapi/... ./internal/worker/... ./internal/automation/... ./internal/execution/...`. Cover: HV query without `ExecutionRunId`/time rejected; customer POST ExecutionRun 403; `debug.read` principal can GET; guest `ctx.log.error` persists a line; purge deletes aged HV rows; job retry does not duplicate ExecutionRun for the same `JobId`.
 - **Exit criteria:** A failing automation is reproducible from Client: open `ExecutionRun`, page `ExecutionLogEntry`, see exception text — no SSH / operator `slog`.
 - **Depends on:** Phase 2 class column useful for Kind mapping but not a hard schema dep (Kind comes from job_type). BP-034 Monitor **must not** block this phase.
@@ -251,7 +251,7 @@ Wire:
 
 - Multi-tenant fair-share across customers (ADR-001)
 - Unfreezing Control IDE Operate Monitor / Build-Ship ExecutionRun chrome (BP-034 Frozen; ADR-030)
-- Removing Deno import/network bans (ADR-014)
+- Removing the Node guest import/network bans (ADR-014)
 - External queue (SQS/etc.) as the default (would need a new ADR)
 - Replacing BP-008 operator OTEL with ExecutionLogEntry
 - Using `audit_log` as the developer debug stream
@@ -308,7 +308,7 @@ Out of scope:
 ### Prompt B — Phase 2 job classes + quotas
 
 ```text
-Implement Majesta One BP-033 Phase 2 only (worker execution classes, slot caps, daily quotas, Deno RSS soft limit). Do not seed ExecutionRun. Do not edit Control IDE. Do not regress BP-005 SKIP LOCKED leases.
+Implement Majesta One BP-033 Phase 2 only (worker execution classes, slot caps, daily quotas, guest RSS soft limit). Do not seed ExecutionRun. Do not edit Control IDE. Do not regress BP-005 SKIP LOCKED leases.
 
 Read first:
 - docs/architecture/agentic-remainders/08-bp-033-runtime-isolation.md (§2.1, §2.4, Phase 2)
@@ -320,8 +320,8 @@ Edit scope (allowed):
 - migrations/ next free SQL + meta/_journal.json: jobs.class CHECK (automation|agent|deploy|default) DEFAULT 'default'; index (status, class, run_at); install_quota_counters (day, class, count)
 - internal/worker: ClaimJobsOfClass with running-count cap in the same SKIP LOCKED statement; ProcessJobs claims default first, then automation/agent/deploy; Enqueue helper; process.go QUOTA_EXCEEDED; tests in claim_test.go / process_test.go
 - All INSERT INTO jobs sites: set class via helper (dataengine, httpapi, deploy, mcp, metadata, db/sharing)
-- internal/automation/deno.go: optional AUTOMATION_ASYNC_DEADLINE_SECONDS (default 30); RSS soft limit when OS allows
-- internal/config: JOB_SLOTS_AUTOMATION/AGENT/DEPLOY, QUOTA_AUTOMATION_RUNS_PER_DAY, QUOTA_AGENT_RUNS_PER_DAY, DENO_RSS_LIMIT_MB, EXECUTION_LOG_BYTES_PER_RUN (buffer cap even without objects)
+- internal/automation/node.go: optional AUTOMATION_ASYNC_DEADLINE_SECONDS (default 30); RSS soft limit when OS allows
+- internal/config: JOB_SLOTS_AUTOMATION/AGENT/DEPLOY, QUOTA_AUTOMATION_RUNS_PER_DAY, QUOTA_AGENT_RUNS_PER_DAY, GUEST_RSS_LIMIT_MB, EXECUTION_LOG_BYTES_PER_RUN (buffer cap even without objects)
 - cmd/worker if ProcessOptions needs the new knobs
 - .env.example + docs/tech-stack.md / docs/security.md env table
 
@@ -378,6 +378,6 @@ Out of scope:
 - tools/control-ide/** and BP-034 TraceFlag / Monitor poll API (unless already specified elsewhere — do not build IDE chrome)
 - Changing admission lanes or SKIP LOCKED claim (Phase 1–2)
 - audit_log as debug stream; OTEL operator console
-- npm in Deno; removing sandbox bans
+- npm in the Node guest; removing sandbox bans
 - Peer promote
 ```

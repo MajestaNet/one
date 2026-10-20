@@ -14,7 +14,7 @@ import (
 	"github.com/MajestaNet/ide/internal/metadata"
 )
 
-// processAutomationRun executes an automation.run job (actions or Deno code).
+// processAutomationRun executes an automation.run job (actions or Node guest code).
 func processAutomationRun(ctx context.Context, pool *db.Pool, payload map[string]any, opts *ProcessOptions) error {
 	apiName, _ := payload["apiName"].(string)
 	automationID, _ := payload["automationId"].(string)

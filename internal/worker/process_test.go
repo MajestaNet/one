@@ -2,6 +2,7 @@ package worker_test
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -112,8 +113,11 @@ VALUES ('agent.run', $1::jsonb, 'pending') RETURNING id::text`, string(payload))
 }
 
 func TestProcessJobsAutomationRunCodeCreate(t *testing.T) {
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	ctx, pool := setupWorkerDB(t)
 
@@ -237,8 +241,11 @@ SELECT count(*) FROM records WHERE object_api_name=$1 AND data->>'Name'='ParentA
 }
 
 func TestProcessJobsAutomationRunCodeAuthzDenied(t *testing.T) {
-	if _, err := automation.FindDeno(""); err != nil {
-		t.Skip(err.Error())
+	if _, err := automation.FindNode(""); err != nil {
+		if errors.Is(err, automation.ErrNodeUnavailable) {
+			t.Skip(err.Error())
+		}
+		t.Fatal(err)
 	}
 	ctx, pool := setupWorkerDB(t)
 

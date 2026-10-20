@@ -1,7 +1,7 @@
 # Customer code automations — build plan
 
 Executable plan for sandboxed TypeScript automations on a Majesta One install.  
-**ADR:** [ADR-014](../adr/014-customer-code-automations.md)  
+**ADR:** [ADR-014](../adr/014-customer-code-automations.md) · guest engine [ADR-034](../adr/034-node-guest-automations.md)  
 **Backlog:** [BP-009](../../backlog/BP-009-no-in-kernel-language.md)  
 **Playbooks:** [agent-authz.md](./agent-authz.md), [agent-worker.md](./agent-worker.md), [agent-data-architecture.md](./agent-data-architecture.md), [agent-deploy.md](./agent-deploy.md), [agent-control-ide.md](./agent-control-ide.md), [agent-api-families.md](./agent-api-families.md)
 
@@ -11,8 +11,8 @@ Executable plan for sandboxed TypeScript automations on a Majesta One install.
 |---|---|
 | Authoring | Real TypeScript; Build agent chat primary; hand-write OK |
 | Viz | Review/approval only |
-| Engine | Deno **default-deny** |
-| Libraries | **Ban all** third-party / Deno std / URL imports in v1 (agents included) |
+| Engine | Node **22.22.2** default-deny ([ADR-034](../adr/034-node-guest-automations.md)) |
+| Libraries | **Ban all** third-party / Node builtin / URL imports in v1 (agents included) |
 | Allowed module | Only virtual `one:automation` (or ambient `ctx` with zero imports) |
 | PS grants | Automation **list** (or `allAutomations`) on the permission set |
 | Run-as | Starter principal; schedules require explicit `runAsPrincipalId` |
@@ -30,7 +30,7 @@ Executable plan for sandboxed TypeScript automations on a Majesta One install.
 | Optional: `import type { AutomationContext } from "one:automation"` | `require`, dynamic `import()`, `eval`, `new Function`, Workers |
 | Platform-injected bridge only | Vendoring `node_modules` into the customer repo |
 
-Enforcement: static parse at pack/validate + Deno permission flags + CI on customer pack. Playbook text for Build agents must state the ban explicitly.
+Enforcement: static parse at pack/validate + Node permission model and guest policy + CI on customer pack. Playbook text for Build agents must state the ban explicitly.
 
 Revisit only with a new ADR (signed allowlist, hashed pins, legal review).
 
@@ -41,8 +41,8 @@ Revisit only with a new ADR (signed allowlist, hashed pins, legal review).
 | Area | Today | Need |
 |---|---|---|
 | `metadata_automations` | apiName, trigger, JSON `actions` | `execution`, `sourcePath` / blob ref, `runAsPrincipalId` (schedule), ownership already exists |
-| `afterWrite` | Sync + async + Deno guest (Phases 3–4) | Build agent + Control IDE (Phase 6) |
-| Worker `automation.run` | Deno invoke + AuthZ as run-as + audit | Outbound connectors (Phase 7) |
+| `afterWrite` | Sync + async + Node guest (Phases 3–4) | Build agent + Control IDE (Phase 6) |
+| Worker `automation.run` | Node invoke + AuthZ as run-as + audit | Outbound connectors (Phase 7) |
 | Deploy tests | `automationUnitPass` / `automationContract` + optional promote gate | IDE wiring (Phase 6) |
 | Permission sets | object/field + system caps | `automation_permissions` catalog (+ `allAutomations`) |
 | Customer repo | `metadata/automations/*.yaml` actions | `src/automations/**/*.ts` + `tests/automations/**` |
@@ -79,7 +79,7 @@ Execute in order. Each phase is mergeable and test-gated. Prefer domain agents n
 4. Enforce helper: `ActorCanRunAutomation` (OR-union across PSs)
 5. Tests: stub on create; grant via PS; deny without grant; Admin / allAutomations
 
-**Exit criteria:** `go test` AuthZ + Metadata PS round-trip; no Deno yet.
+**Exit criteria:** `go test` AuthZ + Metadata PS round-trip; no guest yet.
 
 ### Phase 2 — Metadata model for code automations
 
@@ -111,20 +111,20 @@ Execute in order. Each phase is mergeable and test-gated. Prefer domain agents n
 3. Failure / AuthZ / timeout → `ROLLBACK` entire unit
 4. Async automations enqueue `automation.run` on the same tx
 5. Caps: 5s deadline, max depth 3, max 50 mutations
-6. Sync forbids outbound actions; code runtime uses Deno guest (Phase 4)
+6. Sync forbids outbound actions; code runtime uses the Node guest (Phase 4, [ADR-034](../adr/034-node-guest-automations.md))
 
 **Exit criteria:** Integration test — sync fail → triggering create absent; success → parent + child committed (`TestSyncAutomationCommitAndRollback`, needs `DATABASE_URL`).
 
-### Phase 4 — Deno sandbox executor (async + sync bridge)
+### Phase 4 — Guest sandbox executor (async + sync bridge)
 
-**Packages:** `internal/automation`, `internal/worker`, `deploy/Dockerfile` (pinned Deno binary), config  
+**Packages:** `internal/automation`, `internal/worker`, `deploy/Dockerfile` (pinned Node binary), config  
 **Agents:** `worker-jobs`, `deploy-ops`  
 **Playbook:** [agent-worker.md](./agent-worker.md)  
-**Status:** Done (Deno `2.9.3` guest via NDJSON host RPC; worker `automation.run`; sync code path; import ban before run; AuthZ as run-as)
+**Status:** Done. Originally Deno `2.9.3`. Current engine is Node `22.22.2` ([ADR-034](../adr/034-node-guest-automations.md)): NDJSON host RPC, worker `automation.run`, sync code path, import ban before run, AuthZ as run-as.
 
 **Deliverables**
 
-1. Pin Deno version; invoke with `--no-npm --no-remote` (or equivalent) + custom `one:automation` resolver
+1. Pin Node 22.22.2; invoke with `--permission` (workdir read only) + guest policy that resolves `one:automation` and denies network, workers, and child processes
 2. Default-deny permissions; only host callbacks for SDK
 3. `run(ctx)` protocol: JSON stdin/stdout or native bridge; capture logs; map errors
 4. Worker `automation.run`: resolve definition, resolve run-as (starter from payload or schedule principal), check `ActorCanRunAutomation`, execute, audit
@@ -142,7 +142,7 @@ Execute in order. Each phase is mergeable and test-gated. Prefer domain agents n
 **Deliverables**
 
 1. Frozen SDK: `getRecord`, `createRecord`, `updateRecord`, `deleteRecord`, `query`, `log` (+ async-only `http`/`connector` stubs behind feature flag / BP-014)
-2. Unit harness: Deno test runner with mock ctx; pack runs `tests/automations/**`
+2. Unit harness: Node guest with mock ctx; pack runs `tests/automations/**`
 3. Deploy test step types: `automationUnitPass`, `automationContract` (fixture → assert records)
 4. Activate gate: promotion requires configured suite green (`DEPLOY_REQUIRED_TEST_SUITES`)
 5. Retire reliance on opaque JSON `actions` for new automations (legacy actions still supported; new examples use `runtime=code`)
@@ -181,7 +181,7 @@ Allowlisted GET/POST via secret refs; async only; egress allowlist; still **no**
 | Control | Where |
 |---|---|
 | Import ban | Pack validate, Deploy validate, runtime loader |
-| Deno default-deny | Executor flags |
+| Node default-deny | Executor flags + guest policy |
 | PS `canRun` | Manual invoke + (optional) activation UI; schedule uses definition run-as + that principal’s `canRun` |
 | Object/FLS | Every SDK mutate as run-as |
 | Sync rollback | Single tx in dataengine |

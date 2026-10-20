@@ -12,7 +12,7 @@ Executable plan so a customer install can **seed, describe, and toggle** product
 
 ## Thesis
 
-> Packages ship **process wrappers** as `ownership=managed` Metadata automations: product Deno TypeScript that calls platform actions. Enable of the pack turns them **on**. The install may turn each one **off** with `PATCH /metadata/v1/automations/{apiName}` `{ "active": false }` without forking source. Every automation (managed and custom) persists a short **description**. Integrity verbs stay product Go. Control IDE is a JWT client of those routes, not a second SoR.
+> Packages ship **process wrappers** as `ownership=managed` Metadata automations: product TypeScript that calls platform actions in the Node guest. Enable of the pack turns them **on**. The install may turn each one **off** with `PATCH /metadata/v1/automations/{apiName}` `{ "active": false }` without forking source. Every automation (managed and custom) persists a short **description**. Integrity verbs stay product Go. Control IDE is a JWT client of those routes, not a second SoR.
 
 ```text
 Image registry (packages.Module.Automations)
@@ -25,7 +25,7 @@ metadata_automations  ownership=managed  active=true (insert) | preserve active 
         └─ afterWrite dispatch     skip if !active OR owning pack soft-disabled
                  │
                  ▼
-           Deno guest → ctx.invokeAction → platform action (same tx when execution=sync)
+           Node guest → ctx.invokeAction → platform action (same tx when execution=sync)
 ```
 
 ---
@@ -41,7 +41,7 @@ metadata_automations  ownership=managed  active=true (insert) | preserve active 
 | Off | `PATCH` `{ "active": false }` only; no `/enable` alias |
 | Soft-disable pack | Do not fire, even if `active=true` |
 | Description | `metadata_automations.description` text, max 500 chars; required on managed; optional on custom |
-| Guest | Existing Deno + `one:automation`; source in product image |
+| Guest | Node guest + `one:automation`; source in product image |
 | Integrity | `ctx.invokeAction` only; no reimplementation of `lead.convert` / `quote.accept` |
 | Sync wraps | `execution: sync` when calling `syncSafe` actions |
 | Family | Metadata definitions; Client still invokes runs |
