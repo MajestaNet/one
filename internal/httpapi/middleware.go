@@ -159,11 +159,13 @@ func (s *Server) Handler() http.Handler {
 		r = r.WithContext(ctx)
 		defer span.End()
 
-		// Development CORS for Control IDE browser preview (`npm run dev:web` on loopback).
-		// Electron loadFile does not need this; production stays closed by default.
+		// Development CORS for the Vite-hosted Control IDE (`npm run dev` / `dev:web` on loopback).
+		// Packaged Electron loadFile does not need this; production stays closed by default.
+		// If-Match is required: Run graph PUT/PATCH sends it for optimistic concurrency, and a
+		// missing allow-list entry fails the browser preflight as "Failed to fetch".
 		if corsOrigin := devCORSOrigin(r, s.cfg); corsOrigin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", corsOrigin)
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Request-Id, X-One-Device-Id, One-API-Revision")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, If-Match, X-Request-Id, X-One-Device-Id, One-API-Revision")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 			w.Header().Set("Vary", "Origin")
 			if r.Method == http.MethodOptions {
