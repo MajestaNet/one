@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/MajestaNet/ide/internal/config"
@@ -37,8 +38,8 @@ func TestHandlerDevCORSPreflight(t *testing.T) {
 	}})
 	req := httptest.NewRequest(http.MethodOptions, "/client/v1/me", nil)
 	req.Header.Set("Origin", "http://localhost:5173")
-	req.Header.Set("Access-Control-Request-Method", "GET")
-	req.Header.Set("Access-Control-Request-Headers", "authorization")
+	req.Header.Set("Access-Control-Request-Method", "PUT")
+	req.Header.Set("Access-Control-Request-Headers", "authorization,content-type,if-match")
 	rec := httptest.NewRecorder()
 	s.Handler().ServeHTTP(rec, req)
 	if rec.Code != http.StatusNoContent {
@@ -46,5 +47,11 @@ func TestHandlerDevCORSPreflight(t *testing.T) {
 	}
 	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "http://localhost:5173" {
 		t.Fatalf("Allow-Origin=%q", got)
+	}
+	allow := rec.Header().Get("Access-Control-Allow-Headers")
+	for _, header := range []string{"Authorization", "Content-Type", "If-Match"} {
+		if !strings.Contains(allow, header) {
+			t.Fatalf("Allow-Headers=%q missing %s", allow, header)
+		}
 	}
 }
