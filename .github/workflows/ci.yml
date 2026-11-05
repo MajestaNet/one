@@ -46,6 +46,8 @@ jobs:
         env:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
         run: gitleaks detect --verbose --redact --exit-code 1
+      - name: Check commit emails
+        run: scripts/check-commit-emails.sh
 
   changes:
     name: Path filter

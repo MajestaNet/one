@@ -12,6 +12,14 @@ Confirmed test-campaign defects (SI rollout) **are** public GitHub issues titled
 
 Do not commit secrets, customer data, exploit PoCs, or live advisory detail. The public architecture-risk list is [`backlog/`](backlog/README.md) ([BP-026](backlog/BP-026-oss-security-public-backlog.md)).
 
+## Commit identity
+
+Author and committer addresses in this repository are limited to GitHub noreply addresses and the Cursor agent address. Personal and workplace mailboxes do not belong in commit metadata or trailers.
+
+Humans: in GitHub **Settings → Emails**, enable **Keep my email addresses private**, then set `user.email` to the `*@users.noreply.github.com` address shown there. Cursor agents commit as `Cursor Agent <cursoragent@cursor.com>`. GitHub web commits and Dependabot sign-offs use `noreply@github.com` and `support@github.com`.
+
+`scripts/check-commit-emails.sh` checks authors, committers, and `Co-authored-by` / `Signed-off-by` / `Reviewed-by` trailers. CI runs it on every pull request and on `main`.
+
 ## Tests
 
 - Go: `make test`

@@ -6,7 +6,7 @@ How a Majesta One change becomes a published, installable product version. Custo
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `.github/workflows/ci.yml` | Push / PR | **Path-filtered:** Go jobs in parallel (lint, tests+coverage, `one` GOOS/GOARCH compile-only, Docker smoke) gated by a `Go platform` check, and/or Control IDE job (Vitest, build, AppImage smoke, IDE artifact assert). **Gitleaks** on every run. IDE-only changes skip Go. PR Go tests omit `-race` (kept on `main`). Docker image smoke runs on `main` and on PRs that touch Dockerfile / `.dockerignore` / migrations / image-assert. |
+| `.github/workflows/ci.yml` | Push / PR | **Path-filtered:** Go jobs in parallel (lint, tests+coverage, `one` GOOS/GOARCH compile-only, Docker smoke) gated by a `Go platform` check, and/or Control IDE job (Vitest, build, AppImage smoke, IDE artifact assert). **Gitleaks** and `scripts/check-commit-emails.sh` on every run. IDE-only changes skip Go. PR Go tests omit `-race` (kept on `main`). Docker image smoke runs on `main` and on PRs that touch Dockerfile / `.dockerignore` / migrations / image-assert. |
 | `.github/workflows/release.yml` | Version tag `v*` | Boundary + gitleaks + build versioned api/worker images, image-contents audit, **push to GHCR**, attach digests + static binaries, create GitHub Release |
 | `.github/workflows/control-ide-release.yml` | Tag `control-ide-v*` | Gitleaks + private Mac/Windows/Linux installers + IDE artifact assert (not product images) |
 

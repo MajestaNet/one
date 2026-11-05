@@ -2,6 +2,27 @@
 
 Dedicated install, metadata-driven enterprise platform (API-first). Product runtime has **no embedded UI**. The install is the **agent runtime** ([ADR-030](docs/adr/030-install-agent-runtime.md)): builders use MCP + `one`; Control IDE under `tools/control-ide` is an optional JWT client (ADR-012) — **refactor it when that cleans the install** ([BP-065](backlog/BP-065-ide-backend-coupling.md)).
 
+## Commit identity
+
+Before every `git commit` in this repository, set the author and check it:
+
+```bash
+git config user.name "Cursor Agent"
+git config user.email "cursoragent@cursor.com"
+git config user.email
+```
+
+Allowed author, committer, and trailer addresses (`Co-authored-by`, `Signed-off-by`, `Reviewed-by`):
+
+- `cursoragent@cursor.com` — Cursor agents, including cloud agents
+- `noreply@github.com` — GitHub web commits
+- `support@github.com` — Dependabot `Signed-off-by` trailers
+- `*@users.noreply.github.com` — human maintainers and Dependabot authors. Humans take this from GitHub **Settings → Emails** with **Keep my email addresses private** enabled
+
+Do not commit with a personal or workplace mailbox. Do not copy a laptop `user.email` into this repo. Do not put a personal address in a commit message, trailer, document, or `.mailmap`. If `git config user.email` is anything else, reset it to `cursoragent@cursor.com` before staging.
+
+`scripts/check-commit-emails.sh` enforces the allowlist on full history. CI runs it in the Gitleaks job. Run it before pushing.
+
 ## Starting instructions (do this first)
 
 Before implementing or proposing architecture changes, get oriented:
