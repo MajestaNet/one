@@ -159,7 +159,7 @@ jobs:
           go run ./scripts/check-go-coverage coverage.out "${GO_COVERAGE_MIN}"
       - name: Save Go module cache
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: |
             ~/.cache/go-build
@@ -298,7 +298,7 @@ jobs:
         with:
           node-version: "22.22.2"
       - name: Restore npm cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: ~/.npm
           key: npm-ide-${{ hashFiles('tools/control-ide/package-lock.json') }}
@@ -325,7 +325,7 @@ jobs:
         run: bash ./scripts/assert-ide-artifacts.sh
       - name: Save npm cache
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: ~/.npm
           key: npm-ide-${{ hashFiles('tools/control-ide/package-lock.json') }}
