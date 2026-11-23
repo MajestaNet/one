@@ -13,7 +13,7 @@ This file is a pointer plus the **source map** the CMS overlay should use after 
 - Customer-cut family HTTP: [`docs/api/`](../api/) (`client`, `metadata`, `deploy`, `ops`, `auth`) plus overview [`api-families.md`](../api-families.md).
 - Managed module pages [`docs/modules/*.md`](../modules/README.md) (already customer voice).
 - Public object catalog [`docs/objects.md`](../objects.md) (core tables + module index).
-- Other operator markdown (`docs/self-host.md`, connect/CLI/install).
+- Other operator markdown (`docs/setup.md`, `docs/self-host.md`, connect/CLI/install). Screenshots for the setup guide live in `docs/images/setup/`.
 - Agent playbooks and build plans — **GitHub only**, never a public nav target.
 
 ## CMS overlay (after notify — not this repo)
@@ -30,6 +30,7 @@ Do **not** generate a second wiki in CMS overlays. Do **not** generate OpenAPI h
 | `/api/auth` | `docs/api/auth.md` | `true` | |
 | `/modules` · `/modules/*` | `docs/modules/README.md` · `docs/modules/*.md` | `true` | Package source is already customer voice. |
 | `/objects` | `docs/objects.md` | `true` | Static catalog. |
+| `/setup` | `docs/setup.md` | `true` | DigitalOcean App Platform install, then Control IDE on a local machine. Publish `docs/images/setup/` with the page. |
 | — | `docs/data-model.md` | `false` | Contributor storage/performance. Not the public objects page. |
 | — | `GET /client/v1/describe` | **never** | Authenticated runtime schema. Forbidden as a public catalog. |
 | — | `docs/architecture/**`, `backlog/` | `false` | Playbooks and risk list stay on GitHub. |

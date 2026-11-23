@@ -35,7 +35,7 @@ Marketplace / one-click publish is **deferred** ([BP-028](../backlog/BP-028-digi
 
 ## Path A — DigitalOcean App Platform (managed)
 
-No cluster or Helm required. Active packaging: [deploy/digitalocean/app.yaml](../deploy/digitalocean/app.yaml) · [BP-029](../backlog/BP-029-app-platform-install.md). Day-2 manage/scale/provision: Deploy API ([BP-030](../backlog/BP-030-deploy-api-digitalocean-apps.md)).
+No cluster or Helm required. Illustrated setup (App Platform, then Control IDE on your computer): [setup.md](./setup.md). Active packaging: [deploy/digitalocean/app.yaml](../deploy/digitalocean/app.yaml) · [BP-029](../backlog/BP-029-app-platform-install.md). Day-2 manage/scale/provision: Deploy API ([BP-030](../backlog/BP-030-deploy-api-digitalocean-apps.md)).
 
 ### Install (copy-paste)
 

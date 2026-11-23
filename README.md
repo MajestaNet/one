@@ -20,7 +20,7 @@ Majesta One is a metadata platform with optional Sales, Service, and Billing mod
 | **A — DigitalOcean App Platform** | First targeted managed install |
 | **B — Self-install from image** | Compose (local/dev) or Helm on Kubernetes |
 
-Details: [docs/self-host.md](docs/self-host.md).
+Walk through App Platform plus a local Control IDE connection: [docs/setup.md](docs/setup.md). Operator reference (App Platform, Compose, Helm): [docs/self-host.md](docs/self-host.md).
 
 **Control IDE** (`tools/control-ide`, `0.1.0`) is an optional desktop JWT client ([ADR-012](docs/adr/012-customer-repo-and-control-ide.md)). It is not in the product image and is not required to install, ship metadata, or run agents. Builders use MCP + `one` ([docs/builder-connect.md](docs/builder-connect.md)).
 
