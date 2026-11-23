@@ -27,7 +27,7 @@ Community review can make Majesta One **more** secure when practiced (more eyes 
 
 ## Remaining
 
-1. **Advisory policy** — publish after fix (GitHub Security Advisories); wire contact alias if `security@majestanet.com` is not yet live
+1. **Advisory policy** — publish after fix (GitHub Security Advisories); wire contact alias if `hello@majesta.net` is not yet live
 2. Optional: security.txt
 3. Contributor guidance: expand the CONTRIBUTING Security blurb (no secrets / customer data / exploit PoCs in public issues)
 

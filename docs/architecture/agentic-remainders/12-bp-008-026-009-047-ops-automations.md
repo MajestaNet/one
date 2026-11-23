@@ -79,11 +79,11 @@ Process/docs. Concrete artifacts (not a second tracking system):
 
 Extend [SECURITY.md](../../../SECURITY.md) (do not put live vuln detail in `backlog/`):
 
-1. **Intake:** private GitHub vulnerability report (enable in repo settings) **or** `security@majestanet.com`. Public issues are not an intake path.
+1. **Intake:** private GitHub vulnerability report (enable in repo settings) **or** `hello@majesta.net`. Public issues are not an intake path.
 2. **Ack:** 5 business days (already stated).
 3. **Fix first:** patch on the latest product `v*` tag (supported-versions paragraph stays).
 4. **Then publish:** GitHub Security Advisory (GHSA), CVE via GHSA if severity warrants. No GHSA / CVE / PoC in `backlog/` while unfixed.
-5. **Contact alias:** if `security@majestanet.com` is not yet live, SECURITY.md must say GitHub private reporting is the **authoritative** intake until MX works. Do not invent a second alias.
+5. **Contact alias:** if `hello@majesta.net` is not yet live, SECURITY.md must say GitHub private reporting is the **authoritative** intake until MX works. Do not invent a second alias.
 
 Operator checklist (cannot be fully encoded in git): GitHub → Settings → Code security → Private vulnerability reporting **on**; Security advisories **on**.
 
@@ -92,7 +92,7 @@ Operator checklist (cannot be fully encoded in git): GitHub → Settings → Cod
 Commit vendor-plane source of truth at repo-root `.well-known/security.txt` (create in the implementing PR). Fields:
 
 ```text
-Contact: mailto:security@majestanet.com
+Contact: mailto:hello@majesta.net
 Preferred-Languages: en
 Canonical: <raw GitHub URL of this file on main>
 Policy: <GitHub blob URL of SECURITY.md>
@@ -298,7 +298,7 @@ Edit scope (allowed):
 - backlog/BP-026-oss-security-public-backlog.md (remaining list / status)
 
 Do:
-1. SECURITY.md: intake = GitHub private vulnerability reporting OR security@majestanet.com; publish GHSA only after a fix on the latest v* tag; no unfixed GHSA/PoC in backlog/; if the mailbox is not live, GitHub private reporting is authoritative.
+1. SECURITY.md: intake = GitHub private vulnerability reporting OR hello@majesta.net; publish GHSA only after a fix on the latest v* tag; no unfixed GHSA/PoC in backlog/; if the mailbox is not live, GitHub private reporting is authoritative.
 2. Commit .well-known/security.txt (Contact, Preferred-Languages: en, Canonical, Policy, Expires ≤ 1 year). No invented PGP key.
 3. CONTRIBUTING Security: no public vuln issues; no secrets, customer data, exploit PoCs, or unfixed advisory IDs in issues/PRs/backlog.
 4. Optional: serve GET /.well-known/security.txt unauthenticated as text/plain.

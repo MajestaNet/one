@@ -12,7 +12,7 @@ Self-host operators are responsible for applying image upgrades promptly ([docs/
 
 **Do not** open a public GitHub issue for security vulnerabilities.
 
-Email **security@majestanet.com** (or the address listed in the GitHub Security Advisories contact for this repository) with:
+Email **hello@majesta.net** (or the address listed in the GitHub Security Advisories contact for this repository) with:
 
 - Affected component (`cmd/api`, `cmd/worker`, Helm chart, Control IDE, etc.)
 - Product version / image digest if known
